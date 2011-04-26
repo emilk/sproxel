@@ -33,7 +33,7 @@ GLModelWidget::GLModelWidget(QWidget *parent)
 
     Imath::M44d transform;
     Imath::V3d dDims = m_gvg.cellDimensions();
-    transform.setTranslation(-dDims/2.0);
+    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
     //transform.rotate(Imath::V3d(0.0, 0.0, radians(45.0)));
     m_gvg.setTransform(transform);
 }
@@ -124,7 +124,14 @@ void GLModelWidget::paintGL()
 
 
     if (m_drawGrid)
+    {
+        // Shift the grid to the floor of the voxel grid
+        Imath::Box3d worldBox = m_gvg.worldBounds();
+        glPushMatrix();
+        glTranslatef(0, worldBox.min.y, 0);
         glDrawGrid(16);
+        glPopMatrix();
+    }
     
     glDrawAxes();
 
@@ -264,10 +271,6 @@ void GLModelWidget::glDrawGrid(const int size)
     // TODO: Query and restore depth test
     glDisable(GL_DEPTH_TEST);
 
-
-    // Get world floor
-    Imath::Box3d worldBox = m_gvg.worldBounds();
-
     // Lighter grid lines
     glBegin(GL_LINES);
     glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
@@ -275,11 +278,11 @@ void GLModelWidget::glDrawGrid(const int size)
     {
         if (i == 0) continue;
 
-        glVertex3f(i, worldBox.min.y,  size);
-        glVertex3f(i, worldBox.min.y, -size);
+        glVertex3f(i, 0,  size);
+        glVertex3f(i, 0, -size);
 
-        glVertex3f( size, worldBox.min.y, i);
-        glVertex3f(-size, worldBox.min.y, i);
+        glVertex3f( size, 0, i);
+        glVertex3f(-size, 0, i);
     }
     glEnd();
 
@@ -287,10 +290,10 @@ void GLModelWidget::glDrawGrid(const int size)
     glLineWidth(2);
     glBegin(GL_LINES);
     glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-    glVertex3f( size, worldBox.min.y, 0);
-    glVertex3f(-size,  worldBox.min.y, 0);
-    glVertex3f(0, worldBox.min.y,  size);
-    glVertex3f(0,  worldBox.min.y, -size);
+    glVertex3f( size, 0, 0);
+    glVertex3f(-size, 0, 0);
+    glVertex3f(0, 0,  size);
+    glVertex3f(0, 0, -size);
     glEnd();
     glLineWidth(1);
 
