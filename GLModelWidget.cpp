@@ -12,19 +12,22 @@
 
 #define DEBUG_ME (0)
 
+#define DEFAULT_VOXGRID_SZ (8)
+
 Imath::Line3d fakeLine;
 Imath::Box3d fakeBounds(Imath::V3d(-50, -50, -50), Imath::V3d(50, 50, 50));
 
 GLModelWidget::GLModelWidget(QWidget *parent)
     : QGLWidget(parent),
       m_cam(),
-      m_gvg(Imath::V3i(8, 8, 8)),
+      m_gvg(Imath::V3i( DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ)),
       m_intersects(),
       m_activeVoxel(-1,-1,-1),
       m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_lastMouse(),
       m_drawGrid(true),
-      m_drawVoxelGrid(true)
+      m_drawVoxelGrid(true),
+      m_currAxis( 1 )
 {
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
 
@@ -121,7 +124,7 @@ void GLModelWidget::paintGL()
 
 
     if (m_drawGrid)
-        glDrawGrid(12);
+        glDrawGrid(16);
     
     glDrawAxes();
 
@@ -208,6 +211,18 @@ void GLModelWidget::paintGL()
 
     glDisable(GL_BLEND); 
 
+    // draw text stuff
+    QFont font;
+    font.setPointSize(10);
+    glColor3f( 1.0, 1.0f, 1.0f );
+    const char *sliceName[3] = { "Axis X, Slice YZ",
+                                 "Axis Y, Slice XZ",
+                                 "Axis Z, Slice XY" };
+    renderText( 10, 20, QString( sliceName[ m_currAxis]),font);
+    //renderText( 10, 32, QString("%1, %2, %3")
+    //                .arg( m_activeVoxel.x )
+    //                .arg( m_activeVoxel.y )
+    //                .arg( m_activeVoxel.z ));
 
 //     // DRAW EXTENTS
 //     Imath::Box3d ext = dataBounds();
@@ -249,6 +264,10 @@ void GLModelWidget::glDrawGrid(const int size)
     // TODO: Query and restore depth test
     glDisable(GL_DEPTH_TEST);
 
+
+    // Get world floor
+    Imath::Box3d worldBox = m_gvg.worldBounds();
+
     // Lighter grid lines
     glBegin(GL_LINES);
     glColor4f(0.5f, 0.5f, 0.5f, 1.0f);
@@ -256,11 +275,11 @@ void GLModelWidget::glDrawGrid(const int size)
     {
         if (i == 0) continue;
 
-        glVertex3f(i, 0,  size);
-        glVertex3f(i, 0, -size);
+        glVertex3f(i, worldBox.min.y,  size);
+        glVertex3f(i, worldBox.min.y, -size);
 
-        glVertex3f( size, 0, i);
-        glVertex3f(-size, 0, i);
+        glVertex3f( size, worldBox.min.y, i);
+        glVertex3f(-size, worldBox.min.y, i);
     }
     glEnd();
 
@@ -268,10 +287,10 @@ void GLModelWidget::glDrawGrid(const int size)
     glLineWidth(2);
     glBegin(GL_LINES);
     glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-    glVertex3f( size, 0, 0);
-    glVertex3f(-size, 0, 0);
-    glVertex3f(0, 0,  size);
-    glVertex3f(0, 0, -size);
+    glVertex3f( size, worldBox.min.y, 0);
+    glVertex3f(-size,  worldBox.min.y, 0);
+    glVertex3f(0, worldBox.min.y,  size);
+    glVertex3f(0,  worldBox.min.y, -size);
     glEnd();
     glLineWidth(1);
 
@@ -563,8 +582,11 @@ void GLModelWidget::glDrawVoxelCenter(const size_t x, const size_t y, const size
 
 void GLModelWidget::mousePressEvent(QMouseEvent *event)
 {
+    // TODO: move to a "tool" style interaction before we
+    // run out of modifiers :)
     const bool altDown = event->modifiers() & Qt::AltModifier;
     const bool ctrlDown = event->modifiers() & Qt::ControlModifier;
+    const bool shiftDown = event->modifiers() & Qt::ShiftModifier;
     
     if (altDown)
     {
@@ -597,6 +619,17 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
             Imath::Color4f result = colorPick(m_intersects);
             if (result.a != 0.0f)
                 m_activeColor = result;
+        }
+    }
+    else if (shiftDown)
+    {
+        // SHIFT+Left click means fill slice
+        if (event->buttons() & Qt::LeftButton)
+        {
+            fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
+            m_intersects = m_gvg.rayIntersection(fakeLine, true);
+            paintGunFillSlice(m_intersects, m_activeColor);
+            updateGL();
         }
     }
     else
@@ -736,6 +769,51 @@ void GLModelWidget::paintGunReplace(const std::vector<Imath::V3i>& sortedInput, 
     
     m_gvg.set(hit, color);
 }
+
+void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
+{
+    Imath::V3i startPos;
+
+    for (int i = 0; i < sortedInput.size(); i++)
+    {
+        if (m_gvg.get(sortedInput[i]).a != 0.0f)
+        {
+            // Hit a voxel at the near edge of the grid?  Start there.
+            if (i == 0)
+            {
+                startPos = sortedInput[0];
+                break;
+            }
+            else
+            {
+                // Hit a voxel in the middle?
+                startPos = sortedInput[i-1];
+                break;
+            }
+        }
+
+        // Didn't hit anything?  Just fill in the last voxel.
+        if (i == sortedInput.size()-1)
+        {
+            startPos  = sortedInput[i];
+        }
+    }
+
+    if (m_currAxis==1)
+    {
+        for (int x=0; x < m_gvg.cellDimensions().x; x++ )
+        {
+            for (int z=0; z < m_gvg.cellDimensions().z; z++)
+            {
+                Imath::V3i p = startPos;
+                p.x = x; p.z = z;
+                m_gvg.set( p, color);
+            }
+        }
+    }
+    // TODO: other axis
+}
+
 
 void GLModelWidget::setNeighborsRecurse(const Imath::V3i& alreadySet, 
                                         const Imath::Color4f& repColor, 
@@ -1011,7 +1089,7 @@ bool GLModelWidget::loadGridCSV(const std::string& filename)
 
     // Read the dimensions
     Imath::V3i size;
-    fscanf(fp, "(%d,%d,%d)\n", &size.x, &size.y, &size.z);
+    fscanf(fp, "%d,%d,%d\n", &size.x, &size.y, &size.z);
     m_gvg.setCellDimensions(size);
     
     // Read the data
@@ -1023,7 +1101,14 @@ bool GLModelWidget::loadGridCSV(const std::string& filename)
         {
             for (int x = 0; x < cellDim.x; x++)
             {
-                fscanf(fp, "(%f,%f,%f,%f)", &color.r, &color.g, &color.b, &color.a);
+                int r, g, b, a;
+                fscanf(fp, "#%02X%02X%02X%02X,", &r, &g, &b, &a);
+                printf("read RGBA %d %d %d %d\n" , r, g, b, a);
+
+                color.r = r / (float)0xff;
+                color.g = g / (float)0xff;
+                color.b = b / (float)0xff;
+                color.a = a / (float)0xff;
                 m_gvg.set(Imath::V3i(x,y,z), color);
 
                 if (x != cellDim.x-1)
@@ -1044,7 +1129,7 @@ bool GLModelWidget::saveGridCSV(const std::string& filename)
     if (!fp) return false;
     
     const Imath::V3i& cellDim = m_gvg.cellDimensions();
-    fprintf(fp, "(%d,%d,%d)\n", cellDim.x, cellDim.y, cellDim.z);
+    fprintf(fp, "%d,%d,%d\n", cellDim.x, cellDim.y, cellDim.z);
     
     // The csv is laid out human-readable (top->bottom, Y-up, XZ, etc)
     for (int y = cellDim.y-1; y >= 0; y--)
@@ -1054,10 +1139,13 @@ bool GLModelWidget::saveGridCSV(const std::string& filename)
             for (int x = 0; x < cellDim.x; x++)
             {
                 const Imath::V3i curLoc(x,y,z);
-                fprintf(fp, "(%f,%f,%f,%f)", m_gvg.get(curLoc).r, 
-                                             m_gvg.get(curLoc).g, 
-                                             m_gvg.get(curLoc).b, 
-                                             m_gvg.get(curLoc).a);
+                Imath::Color4f col = m_gvg.get(curLoc);
+                fprintf(fp, "#%02X%02X%02X%02X",
+                        (int)(col.r*0xff),
+                        (int)(col.g*0xff),
+                        (int)(col.b*0xff),
+                        (int)(col.a*0xff) )
+                ;
                 if (x != cellDim.x-1)
                     fprintf(fp, ",");
             }

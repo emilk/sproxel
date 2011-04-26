@@ -9,15 +9,66 @@
 #include <QFileDialog>
 #include <QColorDialog>
 
-MainWindow::MainWindow()
+MainWindow::MainWindow( QWidget *parent ) : QMainWindow(parent)
 {
     m_glModelWidget = new GLModelWidget;
 
-    QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(m_glModelWidget);
-    setLayout(mainLayout);
+    // Actions & Menus
+    menuBar()->show();
+    m_menuFile = menuBar()->addMenu( "&File" );
+    m_toolbarFile = addToolBar( "&File" );
+
+    m_actFileOpen = new QAction( "&Open", this );
+    m_menuFile->addAction( m_actFileOpen );
+
+    connect( m_actFileOpen, SIGNAL(triggered()),
+             this, SLOT( openFile() ) );
+
+    m_actFileSave = new QAction( "&Save", this );
+    m_menuFile->addAction( m_actFileSave );
+
+    connect( m_actFileSave, SIGNAL(triggered()),
+             this, SLOT(saveFile()));
+
+    m_menuFile->addSeparator();
+    m_actQuit = new QAction( "&Quit", this );
+    m_menuFile->addAction( m_actQuit );
+    m_toolbarFile->addAction( m_actQuit );
+
+    connect( m_actQuit, SIGNAL(triggered()),
+             qApp, SLOT(quit()) );
+
+
+    // ------ view menu
+    m_menuView = menuBar()->addMenu( "&View");
+
+    m_actViewGrid = new QAction( "View Grid", this );
+    m_actViewGrid->setShortcut( Qt::CTRL + Qt::Key_G );
+    m_actViewGrid->setCheckable( true );
+    m_actViewGrid->setChecked( m_glModelWidget->drawGrid() );
+    m_menuView->addAction( m_actViewGrid );
+
+    connect( m_actViewGrid, SIGNAL(toggled(bool)),
+               m_glModelWidget, SLOT( setDrawGrid(bool)) );
+
+    m_actViewVoxgrid = new QAction( "Voxel Grid", this );
+    m_actViewVoxgrid->setShortcut( Qt::Key_G );
+    m_actViewVoxgrid->setCheckable( true );
+    m_actViewVoxgrid->setChecked( m_glModelWidget->drawVoxelGrid() );
+    m_menuView->addAction( m_actViewVoxgrid );
+
+    connect( m_actViewVoxgrid, SIGNAL(toggled(bool)),
+               m_glModelWidget, SLOT( setDrawVoxelGrid(bool)) );
+
+    // add the voxel widget
+    //QVBoxLayout *mainLayout = new QVBoxLayout;
+    //mainLayout->addWidget(m_glModelWidget);
+    //setLayout(mainLayout);
+    setCentralWidget( m_glModelWidget );
+
 
     setWindowTitle(tr("Sproxel"));
+    statusBar()->showMessage(tr("Ready"));
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
@@ -33,14 +84,6 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     {
         m_glModelWidget->handleArrows(event);
     }
-    else if (ctrlDown && event->key() == Qt::Key_G)
-    {
-        m_glModelWidget->setDrawGrid(!m_glModelWidget->drawGrid());
-    }
-    else if (event->key() == Qt::Key_G)
-    {
-        m_glModelWidget->setDrawVoxelGrid(!m_glModelWidget->drawVoxelGrid());
-    }
     else if (event->key() == Qt::Key_Space)
     {
         m_glModelWidget->setVoxelColor(m_glModelWidget->activeVoxel(), 
@@ -53,6 +96,18 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
                                        Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
         m_glModelWidget->updateGL();
     }
+    else if (event->key() == Qt::Key_X)
+    {
+        m_glModelWidget->setCurrentAxis( 0 );
+    }
+    else if (event->key() == Qt::Key_Y)
+    {
+        m_glModelWidget->setCurrentAxis( 1 );
+    }
+    else if (event->key() == Qt::Key_Z)
+    {
+        m_glModelWidget->setCurrentAxis( 2 );
+    }
     else if (ctrlDown && event->key() == Qt::Key_C)
     {
         // TODO: Why can i not add the additional two parameters to this?
@@ -62,29 +117,33 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
                                                        (float)color.blue()/255.0f, 
                                                        (float)color.alpha()/255.0f));
     }
-    else if (ctrlDown && event->key() == Qt::Key_S)
+
+}
+
+void MainWindow::saveFile()
+{
+    QString filename = QFileDialog::getSaveFileName(this,
+        tr("Save voxels (CSV format) file as..."),
+        QString(""),
+        tr("CSV Files (*.csv)"));
+    if (!filename.isEmpty())
     {
-        QString filename = QFileDialog::getSaveFileName(this, 
-            tr("Save fur project (CSV format) file as..."), 
-            QString(""),
-            tr("CSV Files (*.csv)"));
-        if (!filename.isEmpty())
-        {
-            m_glModelWidget->saveGridCSV(filename.toStdString());
-        }
-    }
-    else if (ctrlDown && event->key() == Qt::Key_O)
-    {
-        QString filename = QFileDialog::getOpenFileName(this, 
-            tr("Select CSV file..."), 
-            QString(),
-            tr("CSV Files (*.csv)"));
-        if (!filename.isEmpty())
-        {
-            m_glModelWidget->loadGridCSV(filename.toStdString());
-        }
+        m_glModelWidget->saveGridCSV(filename.toStdString());
     }
 }
+
+void MainWindow::openFile()
+{
+    QString filename = QFileDialog::getOpenFileName(this,
+        tr("Select CSV file..."),
+        QString(),
+        tr("CSV Files (*.csv)"));
+    if (!filename.isEmpty())
+    {
+        m_glModelWidget->loadGridCSV(filename.toStdString());
+    }
+}
+
 
 // void MainWindow::keyReleaseEvent(QKeyEvent *event)
 // {

@@ -34,18 +34,19 @@ public:
 
     void setVoxelColor(const Imath::V3i& index, const Imath::Color4f color);
     void setActiveColor(const Imath::Color4f& c) { m_activeColor = c; }
-    void setDrawGrid(const bool value) { m_drawGrid = value; updateGL(); }
-    void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
 
     // Accessors
     const Imath::V3i& activeVoxel() const { return m_activeVoxel; }
     const Imath::Color4f& activeColor() const { return m_activeColor; }
-    bool drawGrid() { return m_drawGrid; }
-    bool drawVoxelGrid() { return m_drawVoxelGrid; }
+    bool drawGrid() const { return m_drawGrid; }
+    bool drawVoxelGrid() const { return m_drawVoxelGrid; }
+    int currentAxis() const { return m_currAxis; }
 
 
 public slots:
-    
+    void setDrawGrid(const bool value) { m_drawGrid = value; updateGL(); }
+    void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
+    void setCurrentAxis( int val ) { m_currAxis = val; updateGL(); }
     
 protected:
     void initializeGL();
@@ -71,6 +72,8 @@ private:
     bool m_drawGrid;
     bool m_drawVoxelGrid;
 
+    int m_currAxis;
+
     double* glMatrix(const Imath::M44d& m);
 
     void rayGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color);
@@ -79,6 +82,8 @@ private:
     void paintGunFlood(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color);
     Imath::Color4f colorPick(const std::vector<Imath::V3i>& sortedInput);
     void paintGunDelete(const std::vector<Imath::V3i>& sortedInput);
+    void paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color);
+
 
     // Paint Gun Flood helper
     void setNeighborsRecurse(const Imath::V3i& alreadySet, 
