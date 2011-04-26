@@ -9,8 +9,13 @@ QT       += core gui opengl
 TARGET = sproxel
 TEMPLATE = app
 
-INCLUDEPATH += /usr/local/include/OpenEXR
-LIBS += -lImath -lIex
+
+CONFIG += link_pkgconfig
+PKGCONFIG += IlmBase
+
+#INCLUDEPATH += /usr/local/include/OpenEXR
+#LIBS += -lImath -lIex
+
 
 SOURCES += \
     GLCamera.cpp \
