@@ -145,13 +145,22 @@ void GLModelWidget::paintGL()
     glEnable(GL_LIGHTING);
     glEnable(GL_COLOR_MATERIAL);
     glEnable(GL_LIGHT0);
-    
+        
     GLfloat ambient[] = {0.0, 0.0, 0.0, 1.0};
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-    Imath::V3f zzz = m_cam.translation();
-    glLightfv(GL_LIGHT0, GL_POSITION, (float*)&zzz);
-    //GLfloat diffuse[] = {0.8, 0.8, 0.8, 1.0};
-    //glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+
+    
+    Imath::V3f camPos = m_cam.translation();
+    GLfloat lightDir[4];
+    lightDir[0] = camPos.x;
+    lightDir[1] = camPos.y;
+    lightDir[2] = camPos.z;
+    lightDir[3] = 0.0; // w=0.0 means directional
+     
+    glLightfv(GL_LIGHT0, GL_POSITION, lightDir );
+
+    GLfloat diffuse[] = {0.8, 0.8, 0.8, 1.0};
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
 
     const Imath::V3i& dim = m_gvg.cellDimensions();
     for (int x = 0; x < dim.x; x++)
@@ -225,7 +234,7 @@ void GLModelWidget::paintGL()
     const char *sliceName[3] = { "Axis X, Slice YZ",
                                  "Axis Y, Slice XZ",
                                  "Axis Z, Slice XY" };
-    renderText( 10, 20, QString( sliceName[ m_currAxis]),font);
+    //renderText( 10, 20, QString( sliceName[ m_currAxis]),font);
     //renderText( 10, 32, QString("%1, %2, %3")
     //                .arg( m_activeVoxel.x )
     //                .arg( m_activeVoxel.y )
@@ -939,7 +948,7 @@ void GLModelWidget::handleArrows(QKeyEvent *event)
 
     // Which way does camera up go?
     int udInc;
-    int* camUD;
+    int* camUD=NULL;
     Imath::V3d camYVec; m_cam.transform().multDirMatrix(Imath::V3d(0.0, 1.0, 0.0), camYVec);
 
     // TODO: Optimize since these are all obvious dot product results
@@ -1106,7 +1115,6 @@ bool GLModelWidget::loadGridCSV(const std::string& filename)
             {
                 int r, g, b, a;
                 fscanf(fp, "#%02X%02X%02X%02X,", &r, &g, &b, &a);
-                printf("read RGBA %d %d %d %d\n" , r, g, b, a);
 
                 color.r = r / (float)0xff;
                 color.g = g / (float)0xff;
