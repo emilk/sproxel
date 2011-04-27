@@ -46,6 +46,20 @@ GLModelWidget::~GLModelWidget()
     //glDeleteLists(object, 1);
 }
 
+void GLModelWidget::resizeVoxelGrid( Imath::V3i size )
+{
+    m_gvg = GameVoxelGrid<Imath::Color4f>( size );
+
+    m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
+
+    Imath::M44d transform;
+    Imath::V3d dDims = m_gvg.cellDimensions();
+    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
+
+    m_gvg.setTransform(transform);
+
+     updateGL();
+}
 
 QSize GLModelWidget::minimumSizeHint() const
 {

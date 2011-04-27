@@ -7,6 +7,8 @@
 #include <QMenu>
 #include <QToolBar>
 
+#include "newprojectdialog.h"
+
 class QSlider;
 class GLModelWidget;
 
@@ -35,10 +37,13 @@ private:
     QAction *m_actViewVoxgrid;
     QAction *m_actViewBBox;
 
+    QAction *m_actFileNew;
     QAction *m_actFileOpen;
     QAction *m_actFileSave;
 
 public slots:
+    void newProject();
+
     void saveFile();
     void openFile();
 

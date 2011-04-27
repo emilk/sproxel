@@ -18,6 +18,13 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow(parent)
     m_menuFile = menuBar()->addMenu("&File");
     m_toolbarFile = addToolBar("&File");
 
+    m_actFileNew = new QAction( "&New", this );
+    m_menuFile->addAction( m_actFileNew );
+    connect( m_actFileNew, SIGNAL(triggered()),
+             this, SLOT(newProject()) );
+
+    m_menuFile->addSeparator();
+
     m_actFileOpen = new QAction("&Open", this);
     m_menuFile->addAction(m_actFileOpen);
     connect(m_actFileOpen, SIGNAL(triggered()), 
@@ -146,6 +153,16 @@ void MainWindow::openFile()
     }
 }
 
+void MainWindow::newProject()
+{
+    NewProjectDialog dlg( this );
+
+    dlg.setModal(true);
+    if (dlg.exec())
+    {
+        m_glModelWidget->resizeVoxelGrid( dlg.getVoxelSize() );
+    }
+}
 
 // void MainWindow::keyReleaseEvent(QKeyEvent *event)
 // {

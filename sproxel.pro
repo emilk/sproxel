@@ -27,11 +27,16 @@ SOURCES += \
     GLCamera.cpp \
     GLModelWidget.cpp \
     MainWindow.cpp \
-    main.cpp
+    main.cpp \
+    newprojectdialog.cpp
 
 HEADERS  += \
     Foundation.h \
     GLCamera.h \
     GLModelWidget.h \
     GameVoxelGrid.h \
-    MainWindow.h
+    MainWindow.h \
+    newprojectdialog.h
+
+FORMS += \
+    newprojectdialog.ui
