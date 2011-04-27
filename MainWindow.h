@@ -33,6 +33,7 @@ private:
 
     QAction *m_actViewGrid;
     QAction *m_actViewVoxgrid;
+    QAction *m_actViewBBox;
 
     QAction *m_actFileOpen;
     QAction *m_actFileSave;

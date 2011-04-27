@@ -40,12 +40,14 @@ public:
     const Imath::Color4f& activeColor() const { return m_activeColor; }
     bool drawGrid() const { return m_drawGrid; }
     bool drawVoxelGrid() const { return m_drawVoxelGrid; }
+    bool drawBoundingBox() const { return m_drawBoundingBox; }
     int currentAxis() const { return m_currAxis; }
 
 
 public slots:
     void setDrawGrid(const bool value) { m_drawGrid = value; updateGL(); }
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
+    void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
     void setCurrentAxis( int val ) { m_currAxis = val; updateGL(); }
     
 protected:
@@ -71,6 +73,7 @@ private:
     QPoint m_lastMouse;
     bool m_drawGrid;
     bool m_drawVoxelGrid;
+    bool m_drawBoundingBox;
 
     int m_currAxis;
 

@@ -53,7 +53,15 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow(parent)
     m_actViewVoxgrid->setChecked(m_glModelWidget->drawVoxelGrid());
     m_menuView->addAction(m_actViewVoxgrid);
     connect(m_actViewVoxgrid, SIGNAL(toggled(bool)),
-            m_glModelWidget, SLOT( setDrawVoxelGrid(bool)) );
+            m_glModelWidget, SLOT(setDrawVoxelGrid(bool)));
+
+    m_actViewBBox = new QAction("Bounding Box", this);
+    m_actViewBBox->setShortcut(Qt::CTRL + Qt::Key_B);
+    m_actViewBBox->setCheckable(true);
+    m_actViewBBox->setChecked(m_glModelWidget->drawBoundingBox());
+    m_menuView->addAction(m_actViewBBox);
+    connect(m_actViewBBox, SIGNAL(toggled(bool)),
+            m_glModelWidget, SLOT(setDrawBoundingBox(bool)));
 
     // add the voxel widget
     //QVBoxLayout *mainLayout = new QVBoxLayout;

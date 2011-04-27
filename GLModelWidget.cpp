@@ -27,6 +27,7 @@ GLModelWidget::GLModelWidget(QWidget *parent)
       m_lastMouse(),
       m_drawGrid(true),
       m_drawVoxelGrid(true),
+      m_drawBoundingBox(false),
       m_currAxis( 1 )
 {
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
@@ -70,6 +71,7 @@ void GLModelWidget::initializeGL()
     m_cam.setFovy(37.849289);
 }
 
+
 void GLModelWidget::resizeGL(int width, int height)
 {
     m_cam.setSize(width, height);
@@ -96,8 +98,6 @@ void GLModelWidget::paintGL()
     glDrawAxes();
 
 
-
-
     // Draw colored centers
     //glEnable(GL_BLEND); 
     //glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -108,7 +108,6 @@ void GLModelWidget::paintGL()
         
     GLfloat ambient[] = {0.0, 0.0, 0.0, 1.0};
     glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-
     
     Imath::V3f camPos = m_cam.translation();
     GLfloat lightDir[4];
@@ -200,31 +199,43 @@ void GLModelWidget::paintGL()
     //                .arg( m_activeVoxel.y )
     //                .arg( m_activeVoxel.z ));
 
-//     // DRAW EXTENTS
-//     Imath::Box3d ext = dataBounds();
-//     Imath::V3d& min = ext.min;
-//     Imath::V3d& max = ext.max;
-// 
-//     if (!ext.isEmpty())
-//     {
-//         glPushMatrix();
-//         glColor3f(1.0f, 0.0f, 0.0f);
-//         glBegin(GL_LINE_LOOP);
-//         glVertex3f(min.x, min.y, min.z);
-//         glVertex3f(max.x, min.y, min.z);
-//         glVertex3f(max.x, min.y, max.z);
-//         glVertex3f(min.x, min.y, max.z);
-//         glEnd();
-// 
-//         glBegin(GL_LINE_LOOP);
-//         glVertex3f(min.x, max.y, min.z);
-//         glVertex3f(max.x, max.y, min.z);
-//         glVertex3f(max.x, max.y, max.z);
-//         glVertex3f(min.x, max.y, max.z);
-//         glEnd();
-//         glPopMatrix();
-//     }
+    // DRAW BOUNDING BOX
+    if (m_drawBoundingBox)
+    {
+        Imath::Box3d ext = dataBounds();
+        Imath::V3d& min = ext.min;
+        Imath::V3d& max = ext.max;
 
+        if (!ext.isEmpty())
+        {
+            glColor3f(1.0f, 0.0f, 0.0f);
+            glBegin(GL_LINE_LOOP);
+            glVertex3f(min.x, min.y, min.z);
+            glVertex3f(max.x, min.y, min.z);
+            glVertex3f(max.x, min.y, max.z);
+            glVertex3f(min.x, min.y, max.z);
+            glEnd();
+
+            glBegin(GL_LINE_LOOP);
+            glVertex3f(min.x, max.y, min.z);
+            glVertex3f(max.x, max.y, min.z);
+            glVertex3f(max.x, max.y, max.z);
+            glVertex3f(min.x, max.y, max.z);
+            glEnd();
+
+            glBegin(GL_LINES);
+            glVertex3f(min.x, min.y, min.z);
+            glVertex3f(min.x, max.y, min.z);
+            glVertex3f(max.x, min.y, min.z);
+            glVertex3f(max.x, max.y, min.z);
+            glVertex3f(min.x, min.y, max.z);
+            glVertex3f(min.x, max.y, max.z);
+            glVertex3f(max.x, min.y, max.z);
+            glVertex3f(max.x, max.y, max.z);
+            glEnd();
+        }
+    }
+    
     glLoadIdentity();
 }
 
