@@ -116,7 +116,7 @@ public:
         // Return only what's needed
         std::vector<Imath::V3i> orderedCells;
         orderedCells.resize(sortList.size());
-        for (int i = 0; i < sortList.size(); i++)
+        for (size_t i = 0; i < sortList.size(); i++)
             orderedCells[i] = sortList[i].index;
         return orderedCells;
     }

@@ -73,7 +73,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow(parent)
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
-    const bool altDown = event->modifiers() & Qt::AltModifier;
+    //const bool altDown = event->modifiers() & Qt::AltModifier;
     const bool ctrlDown = event->modifiers() & Qt::ControlModifier;
 
     if (event->key() == Qt::Key_F)

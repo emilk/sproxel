@@ -231,9 +231,9 @@ void GLModelWidget::paintGL()
     QFont font;
     font.setPointSize(10);
     glColor3f( 1.0, 1.0f, 1.0f );
-    const char *sliceName[3] = { "Axis X, Slice YZ",
-                                 "Axis Y, Slice XZ",
-                                 "Axis Z, Slice XY" };
+    //const char *sliceName[3] = { "Axis X, Slice YZ",
+    //                             "Axis Y, Slice XZ",
+    //                             "Axis Z, Slice XY" };
     //renderText( 10, 20, QString( sliceName[ m_currAxis]),font);
     //renderText( 10, 32, QString("%1, %2, %3")
     //                .arg( m_activeVoxel.x )
@@ -669,7 +669,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
 void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
 {
     const bool altDown = event->modifiers() & Qt::AltModifier;
-    const bool ctrlDown = event->modifiers() & Qt::ControlModifier;
+    //const bool ctrlDown = event->modifiers() & Qt::ControlModifier;
     
     if (altDown)
     {
@@ -733,7 +733,7 @@ Imath::Box3d GLModelWidget::dataBounds()
 
 void GLModelWidget::rayGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
 {
-    for (int i = 0; i < sortedInput.size(); i++)
+    for (size_t i = 0; i < sortedInput.size(); i++)
     {
         m_gvg.set(sortedInput[i], color);
     }
@@ -741,7 +741,7 @@ void GLModelWidget::rayGunBlast(const std::vector<Imath::V3i>& sortedInput, cons
 
 void GLModelWidget::paintGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
 {
-    for (int i = 0; i < sortedInput.size(); i++)
+    for (size_t i = 0; i < sortedInput.size(); i++)
     {
         if (m_gvg.get(sortedInput[i]).a != 0.0f)
         {
@@ -766,7 +766,7 @@ void GLModelWidget::paintGunReplace(const std::vector<Imath::V3i>& sortedInput, 
 {
     // Get the first voxel hit
     Imath::V3i hit(-1,-1,-1);
-    for (int i = 0; i < sortedInput.size(); i++)
+    for (size_t i = 0; i < sortedInput.size(); i++)
     {
         if (m_gvg.get(sortedInput[i]).a != 0.0f)
         {
@@ -784,9 +784,9 @@ void GLModelWidget::paintGunReplace(const std::vector<Imath::V3i>& sortedInput, 
 
 void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
 {
-    Imath::V3i startPos;
+    Imath::V3i startPos(0,0,0);
 
-    for (int i = 0; i < sortedInput.size(); i++)
+    for (size_t i = 0; i < sortedInput.size(); i++)
     {
         if (m_gvg.get(sortedInput[i]).a != 0.0f)
         {
@@ -860,7 +860,7 @@ void GLModelWidget::paintGunFlood(const std::vector<Imath::V3i>& sortedInput, co
 {
     // Get the first voxel hit
     Imath::V3i hit(-1,-1,-1);
-    for (int i = 0; i < sortedInput.size(); i++)
+    for (size_t i = 0; i < sortedInput.size(); i++)
     {
         if (m_gvg.get(sortedInput[i]).a != 0.0f)
         {
@@ -887,7 +887,7 @@ void GLModelWidget::paintGunFlood(const std::vector<Imath::V3i>& sortedInput, co
 
 Imath::Color4f GLModelWidget::colorPick(const std::vector<Imath::V3i>& sortedInput)
 {
-    for (int i = 0; i < sortedInput.size(); i++)
+    for (size_t i = 0; i < sortedInput.size(); i++)
     {
         const Imath::Color4f color = m_gvg.get(sortedInput[i]);
         if (color.a != 0.0f)
@@ -899,7 +899,7 @@ Imath::Color4f GLModelWidget::colorPick(const std::vector<Imath::V3i>& sortedInp
 
 void GLModelWidget::paintGunDelete(const std::vector<Imath::V3i>& sortedInput)
 {
-    for (int i = 0; i < sortedInput.size(); i++)
+    for (size_t i = 0; i < sortedInput.size(); i++)
     {
         if (m_gvg.get(sortedInput[i]).a != 0.0f)
         {
@@ -947,8 +947,8 @@ void GLModelWidget::handleArrows(QKeyEvent *event)
 
 
     // Which way does camera up go?
-    int udInc;
-    int* camUD=NULL;
+    int udInc = 0;
+    int* camUD = NULL;
     Imath::V3d camYVec; m_cam.transform().multDirMatrix(Imath::V3d(0.0, 1.0, 0.0), camYVec);
 
     // TODO: Optimize since these are all obvious dot product results
@@ -981,8 +981,8 @@ void GLModelWidget::handleArrows(QKeyEvent *event)
 
 
     // Which way does camera right go?    
-    int rlInc;
-    int* camRL;
+    int rlInc = 0;
+    int* camRL = NULL;
     Imath::V3d camXVec; m_cam.transform().multDirMatrix(Imath::V3d(1.0, 0.0, 0.0), camXVec);
     xDot = camXVec.dot(objectXVec);
     yDot = camXVec.dot(objectYVec);
@@ -1009,8 +1009,8 @@ void GLModelWidget::handleArrows(QKeyEvent *event)
 
 
     // Which way does camera depth go?
-    int fbInc;
-    int* camFB;
+    int fbInc = 0;
+    int* camFB = NULL;
     Imath::V3d camZVec; m_cam.transform().multDirMatrix(Imath::V3d(0.0, 0.0, -1.0), camZVec);
     xDot = camZVec.dot(objectXVec);
     yDot = camZVec.dot(objectYVec);
