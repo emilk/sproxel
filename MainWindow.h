@@ -42,7 +42,7 @@ private:
     QAction *m_actFileSave;
 
 public slots:
-    void newProject();
+    void newGrid();
 
     void saveFile();
     void openFile();

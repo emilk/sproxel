@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>NewProjectDialog</class>
- <widget class="QDialog" name="NewProjectDialog">
+ <class>NewGridDialog</class>
+ <widget class="QDialog" name="NewGridDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>New Project</string>
+   <string>New Grid</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -92,7 +92,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>NewProjectDialog</receiver>
+   <receiver>NewGridDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -108,7 +108,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>NewProjectDialog</receiver>
+   <receiver>NewGridDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

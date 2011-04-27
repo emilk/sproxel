@@ -22,7 +22,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow(parent)
     m_actFileNew->setShortcut(Qt::CTRL + Qt::Key_N);
     m_menuFile->addAction(m_actFileNew);
     connect(m_actFileNew, SIGNAL(triggered()),
-            this, SLOT(newProject()));
+            this, SLOT(newGrid()));
 
     m_menuFile->addSeparator();
 
@@ -156,9 +156,9 @@ void MainWindow::openFile()
     }
 }
 
-void MainWindow::newProject()
+void MainWindow::newGrid()
 {
-    NewProjectDialog dlg( this );
+    NewGridDialog dlg(this);
 
     dlg.setModal(true);
     if (dlg.exec())

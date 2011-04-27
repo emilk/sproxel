@@ -1,26 +1,26 @@
-#ifndef NEWPROJECTDIALOG_H
-#define NEWPROJECTDIALOG_H
+#ifndef NEWGRIDDIALOG_H
+#define NEWGRIDDIALOG_H
 
 #include <QDialog>
 
 #include <ImathVec.h>
 
 namespace Ui {
-    class NewProjectDialog;
+    class NewGridDialog;
 }
 
-class NewProjectDialog : public QDialog
+class NewGridDialog : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit NewProjectDialog(QWidget *parent = 0);
-    ~NewProjectDialog();
+    explicit NewGridDialog(QWidget *parent = 0);
+    ~NewGridDialog();
 
     Imath::V3i getVoxelSize();
 
 private:
-    Ui::NewProjectDialog *ui;
+    Ui::NewGridDialog *ui;
 };
 
-#endif // NEWPROJECTDIALOG_H
+#endif // NEWGRIDDIALOG_H

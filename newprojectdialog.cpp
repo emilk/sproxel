@@ -1,22 +1,21 @@
 #include "newprojectdialog.h"
 #include "ui_newprojectdialog.h"
 
-NewProjectDialog::NewProjectDialog(QWidget *parent) :
+NewGridDialog::NewGridDialog(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::NewProjectDialog)
+    ui(new Ui::NewGridDialog)
 {
     ui->setupUi(this);
-
 }
 
-NewProjectDialog::~NewProjectDialog()
+NewGridDialog::~NewGridDialog()
 {
     delete ui;
 }
 
-Imath::V3i NewProjectDialog::getVoxelSize()
- {
-    return Imath::V3i( ui->width->value(),
-                        ui->height->value(),
-                        ui->depth->value() );
- }
+Imath::V3i NewGridDialog::getVoxelSize()
+{
+    return Imath::V3i(ui->width->value(),
+                      ui->height->value(),
+                      ui->depth->value());
+}
