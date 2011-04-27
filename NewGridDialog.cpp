@@ -1,5 +1,5 @@
-#include "newprojectdialog.h"
-#include "ui_newprojectdialog.h"
+#include "NewGridDialog.h"
+#include "ui_NewGridDialog.h"
 
 NewGridDialog::NewGridDialog(QWidget *parent) :
     QDialog(parent),

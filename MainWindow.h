@@ -7,7 +7,7 @@
 #include <QMenu>
 #include <QToolBar>
 
-#include "newprojectdialog.h"
+#include "NewGridDialog.h"
 
 class QSlider;
 class GLModelWidget;

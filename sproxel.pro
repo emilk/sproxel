@@ -28,7 +28,7 @@ SOURCES += \
     GLModelWidget.cpp \
     MainWindow.cpp \
     main.cpp \
-    newprojectdialog.cpp
+    NewGridDialog.cpp
 
 HEADERS  += \
     Foundation.h \
@@ -36,7 +36,7 @@ HEADERS  += \
     GLModelWidget.h \
     GameVoxelGrid.h \
     MainWindow.h \
-    newprojectdialog.h
+    NewGridDialog.h
 
 FORMS += \
-    newprojectdialog.ui
+    NewGridDialog.ui
