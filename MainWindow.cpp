@@ -15,57 +15,51 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow(parent)
 
     // Actions & Menus
     menuBar()->show();
-    m_menuFile = menuBar()->addMenu( "&File" );
-    m_toolbarFile = addToolBar( "&File" );
+    m_menuFile = menuBar()->addMenu("&File");
+    m_toolbarFile = addToolBar("&File");
 
-    m_actFileOpen = new QAction( "&Open", this );
-    m_menuFile->addAction( m_actFileOpen );
+    m_actFileOpen = new QAction("&Open", this);
+    m_menuFile->addAction(m_actFileOpen);
+    connect(m_actFileOpen, SIGNAL(triggered()), 
+            this, SLOT(openFile()));
 
-    connect( m_actFileOpen, SIGNAL(triggered()),
-             this, SLOT( openFile() ) );
-
-    m_actFileSave = new QAction( "&Save", this );
-    m_menuFile->addAction( m_actFileSave );
-
-    connect( m_actFileSave, SIGNAL(triggered()),
-             this, SLOT(saveFile()));
+    m_actFileSave = new QAction("&Save", this);
+    m_menuFile->addAction(m_actFileSave);
+    connect(m_actFileSave, SIGNAL(triggered()), 
+            this, SLOT(saveFile()));
 
     m_menuFile->addSeparator();
-    m_actQuit = new QAction( "&Quit", this );
-    m_menuFile->addAction( m_actQuit );
-    m_toolbarFile->addAction( m_actQuit );
-
-    connect( m_actQuit, SIGNAL(triggered()),
-             qApp, SLOT(quit()) );
+    m_actQuit = new QAction("&Quit", this);
+    m_menuFile->addAction(m_actQuit);
+    m_toolbarFile->addAction(m_actQuit);
+    connect(m_actQuit, SIGNAL(triggered()), 
+            qApp, SLOT(quit()));
 
 
     // ------ view menu
     m_menuView = menuBar()->addMenu( "&View");
 
-    m_actViewGrid = new QAction( "View Grid", this );
-    m_actViewGrid->setShortcut( Qt::CTRL + Qt::Key_G );
-    m_actViewGrid->setCheckable( true );
-    m_actViewGrid->setChecked( m_glModelWidget->drawGrid() );
-    m_menuView->addAction( m_actViewGrid );
+    m_actViewGrid = new QAction("View Grid", this);
+    m_actViewGrid->setShortcut(Qt::CTRL + Qt::Key_G);
+    m_actViewGrid->setCheckable(true);
+    m_actViewGrid->setChecked(m_glModelWidget->drawGrid());
+    m_menuView->addAction(m_actViewGrid);
+    connect(m_actViewGrid, SIGNAL(toggled(bool)),
+            m_glModelWidget, SLOT(setDrawGrid(bool)));
 
-    connect( m_actViewGrid, SIGNAL(toggled(bool)),
-               m_glModelWidget, SLOT( setDrawGrid(bool)) );
-
-    m_actViewVoxgrid = new QAction( "Voxel Grid", this );
-    m_actViewVoxgrid->setShortcut( Qt::Key_G );
-    m_actViewVoxgrid->setCheckable( true );
-    m_actViewVoxgrid->setChecked( m_glModelWidget->drawVoxelGrid() );
-    m_menuView->addAction( m_actViewVoxgrid );
-
-    connect( m_actViewVoxgrid, SIGNAL(toggled(bool)),
-               m_glModelWidget, SLOT( setDrawVoxelGrid(bool)) );
+    m_actViewVoxgrid = new QAction("Voxel Grid", this);
+    m_actViewVoxgrid->setShortcut(Qt::Key_G);
+    m_actViewVoxgrid->setCheckable(true);
+    m_actViewVoxgrid->setChecked(m_glModelWidget->drawVoxelGrid());
+    m_menuView->addAction(m_actViewVoxgrid);
+    connect(m_actViewVoxgrid, SIGNAL(toggled(bool)),
+            m_glModelWidget, SLOT( setDrawVoxelGrid(bool)) );
 
     // add the voxel widget
     //QVBoxLayout *mainLayout = new QVBoxLayout;
     //mainLayout->addWidget(m_glModelWidget);
     //setLayout(mainLayout);
-    setCentralWidget( m_glModelWidget );
-
+    setCentralWidget(m_glModelWidget);
 
     setWindowTitle(tr("Sproxel"));
     statusBar()->showMessage(tr("Ready"));

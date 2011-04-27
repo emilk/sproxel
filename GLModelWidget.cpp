@@ -83,46 +83,6 @@ void GLModelWidget::paintGL()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//     // OTHERCAM
-//     GLCamera otherCam;
-//     otherCam.lookAt(Imath::V3d(28, 21, 28), Imath::V3d(0.0, 0.0, 0.0));
-//     otherCam.setSize(400, 400);
-//
-//     Imath::V3d inCam;
-//     otherCam.transform().multVecMatrix(Imath::V3d(5,0,0), inCam);
-//     glBegin(GL_LINES);
-//     glColor3f(1.0f, 0.0f, 0.0f);
-//     glVertex3f((float)otherCam.transform().translation().x, (float)otherCam.transform().translation().y, (float)otherCam.transform().translation().z);
-//     glVertex3f(inCam.x, inCam.y, inCam.z);
-//     glEnd();
-//
-//     otherCam.transform().multVecMatrix(Imath::V3d(0,5,0), inCam);
-//     glBegin(GL_LINES);
-//     glColor3f(0.0f, 1.0f, 0.0f);
-//     glVertex3f((float)otherCam.transform().translation().x, (float)otherCam.transform().translation().y, (float)otherCam.transform().translation().z);
-//     glVertex3f(inCam.x, inCam.y, inCam.z);
-//     glEnd();
-//
-//     otherCam.transform().multVecMatrix(Imath::V3d(0,0,5), inCam);
-//     glBegin(GL_LINES);
-//     glColor3f(0.0f, 0.0f, 1.0f);
-//     glVertex3f((float)otherCam.transform().translation().x, (float)otherCam.transform().translation().y, (float)otherCam.transform().translation().z);
-//     glVertex3f(inCam.x, inCam.y, inCam.z);
-//     glEnd();
-//
-//     // UNPROJECT
-//     Imath::Line3d resultLine = otherCam.unproject(Imath::V2d(200, 200));
-//     glBegin(GL_LINES);
-//     glColor3f(1.0, 0.0, 1.0);
-//     glVertex3f(resultLine.pos.x, resultLine.pos.y, resultLine.pos.z);
-//     glVertex3f(resultLine.pos.x + resultLine.dir.x, resultLine.pos.y + resultLine.dir.y, resultLine.pos.z + resultLine.dir.z);
-//     glEnd();
-
-
-//     // PROJECT
-//     std::cout << m_cam.project(Imath::V3f(0,0,0)) << std::endl;
-
-
     if (m_drawGrid)
     {
         // Shift the grid to the floor of the voxel grid
@@ -374,6 +334,7 @@ void GLModelWidget::glDrawCubeWire()
     glEnd();
 }
 
+
 void GLModelWidget::glDrawCubePoly()
 {
     glBegin(GL_QUADS);
@@ -414,6 +375,7 @@ void GLModelWidget::glDrawCubePoly()
     glVertex3f( 0.5f,-0.5f,-0.5f);
     glEnd();
 }
+
 
 void GLModelWidget::glDrawVoxelGrid()
 {
@@ -708,6 +670,7 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
+
 Imath::Box3d GLModelWidget::dataBounds()
 {
     Imath::Box3d retBox;
@@ -731,6 +694,7 @@ Imath::Box3d GLModelWidget::dataBounds()
     return Imath::transform(retBox, m_gvg.transform());
 }
 
+
 void GLModelWidget::rayGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
 {
     for (size_t i = 0; i < sortedInput.size(); i++)
@@ -738,6 +702,7 @@ void GLModelWidget::rayGunBlast(const std::vector<Imath::V3i>& sortedInput, cons
         m_gvg.set(sortedInput[i], color);
     }
 }
+
 
 void GLModelWidget::paintGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
 {
@@ -762,6 +727,7 @@ void GLModelWidget::paintGunBlast(const std::vector<Imath::V3i>& sortedInput, co
     }
 }
 
+
 void GLModelWidget::paintGunReplace(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
 {
     // Get the first voxel hit
@@ -781,6 +747,7 @@ void GLModelWidget::paintGunReplace(const std::vector<Imath::V3i>& sortedInput, 
     
     m_gvg.set(hit, color);
 }
+
 
 void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
 {
@@ -856,6 +823,7 @@ void GLModelWidget::setNeighborsRecurse(const Imath::V3i& alreadySet,
     }
 }
 
+
 void GLModelWidget::paintGunFlood(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
 {
     // Get the first voxel hit
@@ -885,6 +853,7 @@ void GLModelWidget::paintGunFlood(const std::vector<Imath::V3i>& sortedInput, co
     setNeighborsRecurse(hit, repColor, color);
 }
 
+
 Imath::Color4f GLModelWidget::colorPick(const std::vector<Imath::V3i>& sortedInput)
 {
     for (size_t i = 0; i < sortedInput.size(); i++)
@@ -908,6 +877,7 @@ void GLModelWidget::paintGunDelete(const std::vector<Imath::V3i>& sortedInput)
         }
     }
 }
+
 
 void GLModelWidget::frame()
 {
@@ -1035,43 +1005,6 @@ void GLModelWidget::handleArrows(QKeyEvent *event)
         else          fbInc = -1;
     }
 
-    /*
-    // Determine which way the arrow keys will move the cursor
-    Imath::V3d cameraDir;
-    m_cam.transform().multDirMatrix(Imath::V3d(0.0f, 0.0f, -1.0f), cameraDir);
-
-    const Imath::V3d cameraDirVert = cameraDir;
-    const Imath::V3d gridDirVert = Imath::V3d(0.0, 1.0, 0.0);
-    const double angleVert = acos(gridDirVert.dot(cameraDirVert)) * 180.0/M_PI;
-
-    const Imath::V3d cameraDirHoriz = Imath::V3d(cameraDir.x, 0.0, cameraDir.z).normalized();
-    const Imath::V3d gridDirHoriz = Imath::V3d(1.0, 0.0, 1.0).normalized();
-    const double angleHoriz = acos(gridDirHoriz.dot(cameraDirHoriz)) * 180.0/M_PI;
-    const double sideHoriz = (gridDirHoriz.cross(cameraDirHoriz).y > 0) ? 1.0 : -1.0;
-    const double signedAngleHoriz = angleHoriz * sideHoriz;
-
-    if (signedAngleHoriz >= 0.0 && signedAngleHoriz < 90.0)
-    {
-        camLR = &m_activeVoxel.z; lInc = -1; rInc = 1;
-        camFB = &m_activeVoxel.x; fInc = 1;  bInc = -1;
-    }
-    else if (signedAngleHoriz >= 90.0 && signedAngleHoriz <= 180.0)
-    {
-        camLR = &m_activeVoxel.x; lInc = -1; rInc = 1;
-        camFB = &m_activeVoxel.z; fInc = -1; bInc = 1;
-    }
-    else if (signedAngleHoriz <= 0.0 && signedAngleHoriz > -90.0)
-    {
-        camLR = &m_activeVoxel.x; lInc = 1;  rInc = -1;
-        camFB = &m_activeVoxel.z; fInc = 1;  bInc = -1;
-    }
-    else if (signedAngleHoriz <= -90.0 && signedAngleHoriz >= -180.0)
-    {
-        camLR = &m_activeVoxel.z; lInc = 1;  rInc = -1;
-        camFB = &m_activeVoxel.x; fInc = -1; bInc = 1;
-    }
-    */
-
     // Apply the results   
     switch (event->key())
     {
@@ -1093,6 +1026,7 @@ void GLModelWidget::handleArrows(QKeyEvent *event)
     
     updateGL();
 }
+
 
 bool GLModelWidget::loadGridCSV(const std::string& filename)
 {
@@ -1134,6 +1068,7 @@ bool GLModelWidget::loadGridCSV(const std::string& filename)
     return true;
 }
 
+
 bool GLModelWidget::saveGridCSV(const std::string& filename)
 {
     FILE* fp = fopen(filename.c_str(), "wb");
@@ -1168,6 +1103,7 @@ bool GLModelWidget::saveGridCSV(const std::string& filename)
     fclose(fp);
     return true;
 }
+
 
 void GLModelWidget::setVoxelColor(const Imath::V3i& index, const Imath::Color4f color)
 {
