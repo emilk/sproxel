@@ -32,7 +32,7 @@ public:
     bool loadGridCSV(const std::string& filename);
     bool saveGridCSV(const std::string& filename);
 
-    void resizeVoxelGrid( Imath::V3i size );
+    void resizeVoxelGrid(Imath::V3i size);
 
     void setVoxelColor(const Imath::V3i& index, const Imath::Color4f color);
     void setActiveColor(const Imath::Color4f& c) { m_activeColor = c; }
@@ -50,7 +50,7 @@ public slots:
     void setDrawGrid(const bool value) { m_drawGrid = value; updateGL(); }
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
     void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
-    void setCurrentAxis( int val ) { m_currAxis = val; updateGL(); }
+    void setCurrentAxis(int val) { m_currAxis = val; updateGL(); }
     
 protected:
     void initializeGL();

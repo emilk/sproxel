@@ -58,7 +58,7 @@ void GLModelWidget::resizeVoxelGrid( Imath::V3i size )
 
     m_gvg.setTransform(transform);
 
-     updateGL();
+    updateGL();
 }
 
 QSize GLModelWidget::minimumSizeHint() const

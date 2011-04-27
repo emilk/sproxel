@@ -18,19 +18,22 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow(parent)
     m_menuFile = menuBar()->addMenu("&File");
     m_toolbarFile = addToolBar("&File");
 
-    m_actFileNew = new QAction( "&New", this );
-    m_menuFile->addAction( m_actFileNew );
-    connect( m_actFileNew, SIGNAL(triggered()),
-             this, SLOT(newProject()) );
+    m_actFileNew = new QAction("&New", this);
+    m_actFileNew->setShortcut(Qt::CTRL + Qt::Key_N);
+    m_menuFile->addAction(m_actFileNew);
+    connect(m_actFileNew, SIGNAL(triggered()),
+            this, SLOT(newProject()));
 
     m_menuFile->addSeparator();
 
     m_actFileOpen = new QAction("&Open", this);
+    m_actFileOpen->setShortcut(Qt::CTRL + Qt::Key_O);
     m_menuFile->addAction(m_actFileOpen);
     connect(m_actFileOpen, SIGNAL(triggered()), 
             this, SLOT(openFile()));
 
     m_actFileSave = new QAction("&Save", this);
+    m_actFileSave->setShortcut(Qt::CTRL + Qt::Key_S);
     m_menuFile->addAction(m_actFileSave);
     connect(m_actFileSave, SIGNAL(triggered()), 
             this, SLOT(saveFile()));
@@ -144,7 +147,7 @@ void MainWindow::saveFile()
 void MainWindow::openFile()
 {
     QString filename = QFileDialog::getOpenFileName(this,
-        tr("Select CSV file..."),
+        tr("Select CSV file to Open..."),
         QString(),
         tr("CSV Files (*.csv)"));
     if (!filename.isEmpty())
