@@ -27,11 +27,16 @@ private:
     GLModelWidget* m_glModelWidget;
 
     // Menus & Toolbars
-    QMenu *m_menuFile, *m_menuView;
+    QMenu *m_menuFile;
+    QMenu *m_menuView;
+    QMenu *m_menuEdit;
     QToolBar *m_toolbarFile;
     
     // Actions
     QAction *m_actQuit;
+
+    QAction *m_actUndo;
+    QAction *m_actRedo;
 
     QAction *m_actViewGrid;
     QAction *m_actViewVoxgrid;

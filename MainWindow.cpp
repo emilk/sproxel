@@ -46,6 +46,22 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             qApp, SLOT(quit()));
 
 
+    // ------ edit menu
+    m_menuEdit = menuBar()->addMenu("&Edit");
+
+    m_actUndo = new QAction("Undo", this);
+    m_actUndo->setShortcut(Qt::CTRL + Qt::Key_Z);
+    m_menuEdit->addAction(m_actUndo);
+    connect(m_actUndo, SIGNAL(triggered()),
+            m_glModelWidget, SLOT(undo()));
+
+    m_actRedo = new QAction("Redo", this);
+    m_actRedo->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_Z);
+    m_menuEdit->addAction(m_actRedo);
+    connect(m_actRedo, SIGNAL(triggered()),
+            m_glModelWidget, SLOT(redo()));
+
+
     // ------ view menu
     m_menuView = menuBar()->addMenu("&View");
 
@@ -98,12 +114,14 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     }
     else if (event->key() == Qt::Key_Space)
     {
+        // It's okay to call setVoxelColor once on the model widget, but any more requires an internal wrapper
         m_glModelWidget->setVoxelColor(m_glModelWidget->activeVoxel(), 
                                        m_glModelWidget->activeColor());
         m_glModelWidget->updateGL();
     }
     else if (event->key() == Qt::Key_Delete)
     {
+        // It's okay to call setVoxelColor once on the model widget, but any more requires an internal wrapper
         m_glModelWidget->setVoxelColor(m_glModelWidget->activeVoxel(), 
                                        Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
         m_glModelWidget->updateGL();

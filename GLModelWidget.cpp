@@ -724,7 +724,7 @@ void GLModelWidget::rayGunBlast(const std::vector<Imath::V3i>& sortedInput, cons
 {
     for (size_t i = 0; i < sortedInput.size(); i++)
     {
-        m_gvg.set(sortedInput[i], color);
+        setVoxelColor(sortedInput[i], color);
     }
 }
 
@@ -739,14 +739,14 @@ void GLModelWidget::paintGunBlast(const std::vector<Imath::V3i>& sortedInput, co
             if (i == 0) return;
             
             // Hit a voxel in the middle?  Set the previous voxel and return.
-            m_gvg.set(sortedInput[i-1], color); 
+            setVoxelColor(sortedInput[i-1], color); 
             return;
         }
         
         // Didn't hit anything?  Just fill in the last voxel.
         if (i == sortedInput.size()-1)
         {
-            m_gvg.set(sortedInput[i], color);
+            setVoxelColor(sortedInput[i], color);
             return;
         }
     }
@@ -770,7 +770,7 @@ void GLModelWidget::paintGunReplace(const std::vector<Imath::V3i>& sortedInput, 
     if (hit == Imath::V3i(-1,-1,-1))
         return;
     
-    m_gvg.set(hit, color);
+    setVoxelColor(hit, color);
 }
 
 
@@ -817,7 +817,7 @@ void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput
             {
                 for (int z=0; z < m_gvg.cellDimensions().z; z++)
                 {
-                    m_gvg.set(Imath::V3i(fillPos.x, y, z), color);
+                    setVoxelColor(Imath::V3i(fillPos.x, y, z), color);
                 }
             }
             break;
@@ -826,7 +826,7 @@ void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput
             {
                 for (int z=0; z < m_gvg.cellDimensions().z; z++)
                 {
-                    m_gvg.set(Imath::V3i(x, fillPos.y, z), color);
+                    setVoxelColor(Imath::V3i(x, fillPos.y, z), color);
                 }
             }
             break;
@@ -835,7 +835,7 @@ void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput
             {
                 for (int y=0; y < m_gvg.cellDimensions().y; y++)
                 {
-                    m_gvg.set(Imath::V3i(x, y, fillPos.z), color);
+                    setVoxelColor(Imath::V3i(x, y, fillPos.z), color);
                 }
             }
             break;
@@ -866,7 +866,7 @@ void GLModelWidget::setNeighborsRecurse(const Imath::V3i& alreadySet,
         // Recurse
         if (m_gvg.get(doUs[i]) == repColor)
         {
-            m_gvg.set(doUs[i], newColor);
+            setVoxelColor(doUs[i], newColor);
             setNeighborsRecurse(doUs[i], repColor, newColor);
         }
     }
@@ -898,7 +898,7 @@ void GLModelWidget::paintGunFlood(const std::vector<Imath::V3i>& sortedInput, co
         return;
     
     // Recurse
-    m_gvg.set(hit, color);
+    setVoxelColor(hit, color);
     setNeighborsRecurse(hit, repColor, color);
 }
 
@@ -921,7 +921,7 @@ void GLModelWidget::paintGunDelete(const std::vector<Imath::V3i>& sortedInput)
     {
         if (m_gvg.get(sortedInput[i]).a != 0.0f)
         {
-            m_gvg.set(sortedInput[i], Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
+            setVoxelColor(sortedInput[i], Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
             return;
         }
     }
@@ -1161,5 +1161,5 @@ void GLModelWidget::setVoxelColor(const Imath::V3i& index, const Imath::Color4f 
         index.x >= cd.x || index.y >= cd.y || index.z >= cd.z)
         return;
     
-    m_gvg.set(index, color);
+    m_undoStack.push(new CmdSetVoxelColor(&m_gvg, index, color));
 }

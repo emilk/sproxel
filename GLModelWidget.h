@@ -4,6 +4,8 @@
 #include <vector>
 
 #include <QGLWidget>
+#include <QUndoStack>
+#include <QUndoCommand>
 
 #include "GLCamera.h"
 #include "GameVoxelGrid.h"
@@ -55,6 +57,9 @@ public slots:
     void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
     void setCurrentAxis(const Axis val) { m_currAxis = val; updateGL(); }
     
+    void undo() { m_undoStack.undo(); updateGL(); }
+    void redo() { m_undoStack.redo(); updateGL(); }
+    
 protected:
     void initializeGL();
     void paintGL();
@@ -92,7 +97,6 @@ private:
     void paintGunDelete(const std::vector<Imath::V3i>& sortedInput);
     void paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color);
 
-
     // Paint Gun Flood helper
     void setNeighborsRecurse(const Imath::V3i& alreadySet, 
                              const Imath::Color4f& repColor, 
@@ -110,6 +114,51 @@ private:
     void glDrawActiveVoxel();
     void glDrawSelectedVoxels();
     void glDrawVoxelCenter(const size_t sx, const size_t sy, const size_t sz);
+    
+    QUndoStack m_undoStack;
+};
+
+
+// The only real command this GUI does - any more should be broken out into their own file.
+class CmdSetVoxelColor : public QUndoCommand
+{
+public:
+    CmdSetVoxelColor(GameVoxelGrid<Imath::Color4f>* gvg, const Imath::V3i& index, const Imath::Color4f color) : 
+        m_pGvg(gvg),
+        m_index(),
+        m_newColor(),
+        m_oldColor()
+    {
+        m_index.push_back(index);
+        m_newColor.push_back(color);
+        m_oldColor.push_back(gvg->get(index));
+        setText("Set voxel");
+    }
+    
+    virtual void redo()
+    {
+        m_pGvg->set(m_index[0], m_newColor[0]);
+    }
+    
+    virtual void undo()
+    {
+        m_pGvg->set(m_index[0], m_oldColor[0]);
+    }
+    
+protected:
+//     virtual bool mergeMeWith(QUndoCommand* other)
+//     {
+//         if (other->id() != id())
+//             return false;
+//          m_text += static_cast<const CmdSetVoxelColor*>(other)->m_text;
+//          return true;
+//     }
+
+private:
+    GameVoxelGrid<Imath::Color4f>* m_pGvg;
+    std::vector<Imath::V3i> m_index;
+    std::vector<Imath::Color4f> m_newColor;
+    std::vector<Imath::Color4f> m_oldColor;
 };
 
 #endif
