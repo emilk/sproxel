@@ -673,7 +673,6 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
         }
         else if (event->buttons() & Qt::LeftButton)
         {
-            // TODO: Inverse axes
             m_cam.rotate(Imath::V2d(dx, dy));
             m_cam.autoSetClippingPlanes(fakeBounds);
         }
@@ -777,8 +776,14 @@ void GLModelWidget::paintGunReplace(const std::vector<Imath::V3i>& sortedInput, 
 
 void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
 {
-    Imath::V3i startPos(0,0,0);
+    // TODO: Should this do an intersection at all, or maybe just fill in the row based on the first hit?
+    
+    // Sanity
+    if (sortedInput.size() == 0)
+        return;
 
+    // Get the position to fill from
+    Imath::V3i fillPos(-1,-1,-1);
     for (size_t i = 0; i < sortedInput.size(); i++)
     {
         if (m_gvg.get(sortedInput[i]).a != 0.0f)
@@ -786,40 +791,53 @@ void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput
             // Hit a voxel at the near edge of the grid?  Start there.
             if (i == 0)
             {
-                startPos = sortedInput[0];
+                fillPos = sortedInput[0];
                 break;
             }
             else
             {
                 // Hit a voxel in the middle?
-                startPos = sortedInput[i-1];
+                fillPos = sortedInput[i-1];
                 break;
             }
         }
-
-        // Didn't hit anything?  Just fill in the last voxel.
-        if (i == sortedInput.size()-1)
-        {
-            startPos  = sortedInput[i];
-        }
     }
 
-    // TODO: Other axes
+    // Didn't hit anything?  Just fill in the last voxel.
+    if (fillPos == Imath::V3i(-1,-1,-1))
+    {
+        fillPos  = sortedInput[0];
+    }
+
+    // Fill
     switch (m_currAxis)
     {
         case X_AXIS:
+            for (int y=0; y < m_gvg.cellDimensions().y; y++)
+            {
+                for (int z=0; z < m_gvg.cellDimensions().z; z++)
+                {
+                    m_gvg.set(Imath::V3i(fillPos.x, y, z), color);
+                }
+            }
             break;
         case Y_AXIS:
             for (int x=0; x < m_gvg.cellDimensions().x; x++)
             {
                 for (int z=0; z < m_gvg.cellDimensions().z; z++)
                 {
-                    const Imath::V3i pos(x, startPos.y, z);
-                    m_gvg.set(pos, color);
+                    m_gvg.set(Imath::V3i(x, fillPos.y, z), color);
                 }
             }
             break;
-        case Z_AXIS: 
+        case Z_AXIS:
+            for (int x=0; x < m_gvg.cellDimensions().x; x++)
+            {
+                for (int y=0; y < m_gvg.cellDimensions().y; y++)
+                {
+                    m_gvg.set(Imath::V3i(x, y, fillPos.z), color);
+                }
+            }
             break;
     }
 }
