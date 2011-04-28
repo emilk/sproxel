@@ -722,10 +722,12 @@ Imath::Box3d GLModelWidget::dataBounds()
 
 void GLModelWidget::rayGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
 {
+    m_undoStack.beginMacro("Ray Blast");
     for (size_t i = 0; i < sortedInput.size(); i++)
     {
         setVoxelColor(sortedInput[i], color);
     }
+    m_undoStack.endMacro();
 }
 
 
@@ -813,6 +815,7 @@ void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput
     switch (m_currAxis)
     {
         case X_AXIS:
+            m_undoStack.beginMacro("Fill X Slice");
             for (int y=0; y < m_gvg.cellDimensions().y; y++)
             {
                 for (int z=0; z < m_gvg.cellDimensions().z; z++)
@@ -820,8 +823,10 @@ void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput
                     setVoxelColor(Imath::V3i(fillPos.x, y, z), color);
                 }
             }
+            m_undoStack.endMacro();
             break;
         case Y_AXIS:
+            m_undoStack.beginMacro("Fill Y Slice");
             for (int x=0; x < m_gvg.cellDimensions().x; x++)
             {
                 for (int z=0; z < m_gvg.cellDimensions().z; z++)
@@ -829,8 +834,10 @@ void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput
                     setVoxelColor(Imath::V3i(x, fillPos.y, z), color);
                 }
             }
+            m_undoStack.endMacro();
             break;
         case Z_AXIS:
+            m_undoStack.beginMacro("Fill Z Slice");
             for (int x=0; x < m_gvg.cellDimensions().x; x++)
             {
                 for (int y=0; y < m_gvg.cellDimensions().y; y++)
@@ -838,6 +845,7 @@ void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput
                     setVoxelColor(Imath::V3i(x, y, fillPos.z), color);
                 }
             }
+            m_undoStack.endMacro();
             break;
     }
 }
@@ -886,7 +894,7 @@ void GLModelWidget::paintGunFlood(const std::vector<Imath::V3i>& sortedInput, co
         }
     }
     
-    // Crap out if there was no hit
+    // Dump out if there was no hit
     if (hit == Imath::V3i(-1,-1,-1))
         return;
 
@@ -898,8 +906,10 @@ void GLModelWidget::paintGunFlood(const std::vector<Imath::V3i>& sortedInput, co
         return;
     
     // Recurse
+    m_undoStack.beginMacro("Flood Fill");
     setVoxelColor(hit, color);
     setNeighborsRecurse(hit, repColor, color);
+    m_undoStack.endMacro();
 }
 
 

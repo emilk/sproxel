@@ -137,22 +137,28 @@ public:
     
     virtual void redo()
     {
-        m_pGvg->set(m_index[0], m_newColor[0]);
+        for (size_t i = 0; i < m_index.size(); i++)
+            m_pGvg->set(m_index[i], m_newColor[i]);
     }
     
     virtual void undo()
     {
-        m_pGvg->set(m_index[0], m_oldColor[0]);
+        for (size_t i = 0; i < m_index.size(); i++)
+            m_pGvg->set(m_index[i], m_oldColor[i]);
     }
     
 protected:
-//     virtual bool mergeMeWith(QUndoCommand* other)
-//     {
-//         if (other->id() != id())
-//             return false;
-//          m_text += static_cast<const CmdSetVoxelColor*>(other)->m_text;
-//          return true;
-//     }
+    virtual bool mergeMeWith(QUndoCommand* other)
+    {
+        if (other->id() != id())
+            return false;
+        
+        const CmdSetVoxelColor* otherSet = static_cast<const CmdSetVoxelColor*>(other);
+        m_index.push_back(otherSet->m_index[0]);
+        m_newColor.push_back(otherSet->m_newColor[0]);
+        m_oldColor.push_back(otherSet->m_oldColor[0]);
+        return true;
+    }
 
 private:
     GameVoxelGrid<Imath::Color4f>* m_pGvg;
