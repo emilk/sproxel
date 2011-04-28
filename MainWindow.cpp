@@ -9,7 +9,7 @@
 #include <QFileDialog>
 #include <QColorDialog>
 
-MainWindow::MainWindow( QWidget *parent ) : QMainWindow(parent)
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     m_glModelWidget = new GLModelWidget;
 
@@ -47,7 +47,7 @@ MainWindow::MainWindow( QWidget *parent ) : QMainWindow(parent)
 
 
     // ------ view menu
-    m_menuView = menuBar()->addMenu( "&View");
+    m_menuView = menuBar()->addMenu("&View");
 
     m_actViewGrid = new QAction("View Grid", this);
     m_actViewGrid->setShortcut(Qt::CTRL + Qt::Key_G);
@@ -110,15 +110,15 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     }
     else if (event->key() == Qt::Key_X)
     {
-        m_glModelWidget->setCurrentAxis( 0 );
+        m_glModelWidget->setCurrentAxis(GLModelWidget::X_AXIS);
     }
     else if (event->key() == Qt::Key_Y)
     {
-        m_glModelWidget->setCurrentAxis( 1 );
+        m_glModelWidget->setCurrentAxis(GLModelWidget::Y_AXIS);
     }
     else if (event->key() == Qt::Key_Z)
     {
-        m_glModelWidget->setCurrentAxis( 2 );
+        m_glModelWidget->setCurrentAxis(GLModelWidget::Z_AXIS);
     }
     else if (ctrlDown && event->key() == Qt::Key_C)
     {
@@ -163,7 +163,7 @@ void MainWindow::newGrid()
     dlg.setModal(true);
     if (dlg.exec())
     {
-        m_glModelWidget->resizeVoxelGrid( dlg.getVoxelSize() );
+        m_glModelWidget->resizeVoxelGrid(dlg.getVoxelSize());
     }
 }
 

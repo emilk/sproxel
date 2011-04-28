@@ -20,7 +20,7 @@ Imath::Box3d fakeBounds(Imath::V3d(-50, -50, -50), Imath::V3d(50, 50, 50));
 GLModelWidget::GLModelWidget(QWidget *parent)
     : QGLWidget(parent),
       m_cam(),
-      m_gvg(Imath::V3i( DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ)),
+      m_gvg(Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ)),
       m_intersects(),
       m_activeVoxel(-1,-1,-1),
       m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
@@ -28,7 +28,7 @@ GLModelWidget::GLModelWidget(QWidget *parent)
       m_drawGrid(true),
       m_drawVoxelGrid(true),
       m_drawBoundingBox(false),
-      m_currAxis( 1 )
+      m_currAxis(Y_AXIS)
 {
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
 
@@ -46,9 +46,9 @@ GLModelWidget::~GLModelWidget()
     //glDeleteLists(object, 1);
 }
 
-void GLModelWidget::resizeVoxelGrid( Imath::V3i size )
+void GLModelWidget::resizeVoxelGrid(Imath::V3i size)
 {
-    m_gvg = GameVoxelGrid<Imath::Color4f>( size );
+    m_gvg = GameVoxelGrid<Imath::Color4f>(size);
 
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
 
@@ -130,7 +130,7 @@ void GLModelWidget::paintGL()
     lightDir[2] = camPos.z;
     lightDir[3] = 0.0; // w=0.0 means directional
      
-    glLightfv(GL_LIGHT0, GL_POSITION, lightDir );
+    glLightfv(GL_LIGHT0, GL_POSITION, lightDir);
 
     GLfloat diffuse[] = {0.8, 0.8, 0.8, 1.0};
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
@@ -203,15 +203,15 @@ void GLModelWidget::paintGL()
     // draw text stuff
     QFont font;
     font.setPointSize(10);
-    glColor3f( 1.0, 1.0f, 1.0f );
+    glColor3f(1.0f, 1.0f, 1.0f);
     //const char *sliceName[3] = { "Axis X, Slice YZ",
     //                             "Axis Y, Slice XZ",
     //                             "Axis Z, Slice XY" };
-    //renderText( 10, 20, QString( sliceName[ m_currAxis]),font);
-    //renderText( 10, 32, QString("%1, %2, %3")
-    //                .arg( m_activeVoxel.x )
-    //                .arg( m_activeVoxel.y )
-    //                .arg( m_activeVoxel.z ));
+    //renderText(10, 20, QString(sliceName[ m_currAxis]),font);
+    //renderText(10, 32, QString("%1, %2, %3")
+    //                .arg(m_activeVoxel.x)
+    //                .arg(m_activeVoxel.y)
+    //                .arg(m_activeVoxel.z));
 
     // DRAW BOUNDING BOX
     if (m_drawBoundingBox)
@@ -254,6 +254,7 @@ void GLModelWidget::paintGL()
 }
 
 
+// Transform an Imath::M44d into a matrix usable by OpenGL.
 double* GLModelWidget::glMatrix(const Imath::M44d& m)
 {
     return (double*)(&m);
@@ -803,19 +804,24 @@ void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput
         }
     }
 
-    if (m_currAxis==1)
+    // TODO: Other axes
+    switch (m_currAxis)
     {
-        for (int x=0; x < m_gvg.cellDimensions().x; x++ )
-        {
-            for (int z=0; z < m_gvg.cellDimensions().z; z++)
+        case X_AXIS:
+            break;
+        case Y_AXIS:
+            for (int x=0; x < m_gvg.cellDimensions().x; x++)
             {
-                Imath::V3i p = startPos;
-                p.x = x; p.z = z;
-                m_gvg.set( p, color);
+                for (int z=0; z < m_gvg.cellDimensions().z; z++)
+                {
+                    const Imath::V3i pos(x, startPos.y, z);
+                    m_gvg.set(pos, color);
+                }
             }
-        }
+            break;
+        case Z_AXIS: 
+            break;
     }
-    // TODO: other axis
 }
 
 
@@ -1115,8 +1121,7 @@ bool GLModelWidget::saveGridCSV(const std::string& filename)
                         (int)(col.r*0xff),
                         (int)(col.g*0xff),
                         (int)(col.b*0xff),
-                        (int)(col.a*0xff) )
-                ;
+                        (int)(col.a*0xff));
                 if (x != cellDim.x-1)
                     fprintf(fp, ",");
             }

@@ -18,6 +18,9 @@ class GLModelWidget : public QGLWidget
     Q_OBJECT
 
 public:
+    enum Axis { X_AXIS, Y_AXIS, Z_AXIS };
+
+public:
     GLModelWidget(QWidget *parent = 0);
     ~GLModelWidget();
 
@@ -43,14 +46,14 @@ public:
     bool drawGrid() const { return m_drawGrid; }
     bool drawVoxelGrid() const { return m_drawVoxelGrid; }
     bool drawBoundingBox() const { return m_drawBoundingBox; }
-    int currentAxis() const { return m_currAxis; }
+    Axis currentAxis() const { return m_currAxis; }
 
 
 public slots:
     void setDrawGrid(const bool value) { m_drawGrid = value; updateGL(); }
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
     void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
-    void setCurrentAxis(int val) { m_currAxis = val; updateGL(); }
+    void setCurrentAxis(const Axis val) { m_currAxis = val; updateGL(); }
     
 protected:
     void initializeGL();
@@ -77,7 +80,7 @@ private:
     bool m_drawVoxelGrid;
     bool m_drawBoundingBox;
 
-    int m_currAxis;
+    Axis m_currAxis;
 
     double* glMatrix(const Imath::M44d& m);
 
