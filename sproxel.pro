@@ -28,7 +28,8 @@ SOURCES += \
     GLModelWidget.cpp \
     MainWindow.cpp \
     main.cpp \
-    NewGridDialog.cpp
+    NewGridDialog.cpp \
+    PaletteWidget.cpp
 
 HEADERS  += \
     Foundation.h \
@@ -36,7 +37,8 @@ HEADERS  += \
     GLModelWidget.h \
     GameVoxelGrid.h \
     MainWindow.h \
-    NewGridDialog.h
+    NewGridDialog.h \
+    PaletteWidget.h
 
 FORMS += \
     NewGridDialog.ui

@@ -5,18 +5,38 @@
 #include "GLCamera.h"
 #include "MainWindow.h"
 #include "GLModelWidget.h"
+#include "PaletteWidget.h"
 
 #include <QFileDialog>
 #include <QColorDialog>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
+    // Windows
     m_glModelWidget = new GLModelWidget;
+    setCentralWidget(m_glModelWidget);
+
+    // The docking palette
+    m_paletteDocker = new QDockWidget(tr("Palette"), this);
+    m_paletteDocker->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    PaletteWidget* paletteWidget = new PaletteWidget(this);
+    m_paletteDocker->setWidget(paletteWidget);
+    addDockWidget(Qt::RightDockWidgetArea, m_paletteDocker);
+
+    // Connect some window signals together
+    QObject::connect(paletteWidget, SIGNAL(valueChanged(Imath::Color4f)),
+                     m_glModelWidget, SLOT(setActiveColor(Imath::Color4f)));
+
+
+    // Toolbar
+    m_toolbar = new QToolBar("Tools", this);
+    m_toolbar->setOrientation(Qt::Vertical);
+    addToolBar(Qt::LeftToolBarArea, m_toolbar);
+
 
     // Actions & Menus
     menuBar()->show();
     m_menuFile = menuBar()->addMenu("&File");
-    m_toolbarFile = addToolBar("&File");
 
     m_actFileNew = new QAction("&New", this);
     m_actFileNew->setShortcut(Qt::CTRL + Qt::Key_N);
@@ -41,7 +61,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     m_menuFile->addSeparator();
     m_actQuit = new QAction("&Quit", this);
     m_menuFile->addAction(m_actQuit);
-    m_toolbarFile->addAction(m_actQuit);
     connect(m_actQuit, SIGNAL(triggered()), 
             qApp, SLOT(quit()));
 
@@ -89,15 +108,22 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     connect(m_actViewBBox, SIGNAL(toggled(bool)),
             m_glModelWidget, SLOT(setDrawBoundingBox(bool)));
 
-    // add the voxel widget
-    //QVBoxLayout *mainLayout = new QVBoxLayout;
-    //mainLayout->addWidget(m_glModelWidget);
-    //setLayout(mainLayout);
-    setCentralWidget(m_glModelWidget);
 
+    // ------ window menu
+    m_menuWindow = menuBar()->addMenu("&Window");
+    m_menuWindow->addAction(m_toolbar->toggleViewAction());
+    m_menuWindow->addAction(m_paletteDocker->toggleViewAction());
+
+
+    // Hookups for the toolbar
+    m_toolbar->addAction(m_actQuit);
+
+
+    // Remaining verbosity
     setWindowTitle(tr("Sproxel"));
     statusBar()->showMessage(tr("Ready"));
 }
+
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
@@ -140,7 +166,7 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     }
     else if (ctrlDown && event->key() == Qt::Key_C)
     {
-        // TODO: Why can i not add the additional two parameters to this?
+        // TODO: Why can i not add the additional two parameters (to get alpha) to this?
         QColor color = QColorDialog::getColor(Qt::white, this);
         m_glModelWidget->setActiveColor(Imath::Color4f((float)color.red()/255.0f,
                                                        (float)color.green()/255.0f, 
@@ -149,6 +175,7 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     }
 
 }
+
 
 void MainWindow::saveFile()
 {
@@ -162,6 +189,7 @@ void MainWindow::saveFile()
     }
 }
 
+
 void MainWindow::openFile()
 {
     QString filename = QFileDialog::getOpenFileName(this,
@@ -174,6 +202,7 @@ void MainWindow::openFile()
     }
 }
 
+
 void MainWindow::newGrid()
 {
     NewGridDialog dlg(this);
@@ -184,10 +213,6 @@ void MainWindow::newGrid()
         m_glModelWidget->resizeVoxelGrid(dlg.getVoxelSize());
     }
 }
-
-// void MainWindow::keyReleaseEvent(QKeyEvent *event)
-// {
-// }
 
 // // Steal keypresses from your children!
 // bool MainWindow::eventFilter(QObject* qo, QEvent* ev)

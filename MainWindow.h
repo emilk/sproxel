@@ -21,30 +21,33 @@ public:
 
 protected:
     void keyPressEvent(QKeyEvent* event);
-    //void keyReleaseEvent(QKeyEvent *event);
     
 private:
     GLModelWidget* m_glModelWidget;
 
-    // Menus & Toolbars
-    QMenu *m_menuFile;
-    QMenu *m_menuView;
-    QMenu *m_menuEdit;
-    QToolBar *m_toolbarFile;
+    // Menus
+    QMenu* m_menuFile;
+    QMenu* m_menuEdit;
+    QMenu* m_menuView;
+    QMenu* m_menuWindow;
+    
+    // Docking windows and toolbars
+    QToolBar* m_toolbar;
+    QDockWidget* m_paletteDocker;
     
     // Actions
-    QAction *m_actQuit;
+    QAction* m_actQuit;
 
-    QAction *m_actUndo;
-    QAction *m_actRedo;
+    QAction* m_actUndo;
+    QAction* m_actRedo;
 
-    QAction *m_actViewGrid;
-    QAction *m_actViewVoxgrid;
-    QAction *m_actViewBBox;
+    QAction* m_actViewGrid;
+    QAction* m_actViewVoxgrid;
+    QAction* m_actViewBBox;
 
-    QAction *m_actFileNew;
-    QAction *m_actFileOpen;
-    QAction *m_actFileSave;
+    QAction* m_actFileNew;
+    QAction* m_actFileOpen;
+    QAction* m_actFileSave;
 
 public slots:
     void newGrid();

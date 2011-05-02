@@ -40,7 +40,6 @@ public:
     void resizeVoxelGrid(Imath::V3i size);
 
     void setVoxelColor(const Imath::V3i& index, const Imath::Color4f color);
-    void setActiveColor(const Imath::Color4f& c) { m_activeColor = c; }
 
     // Accessors
     const Imath::V3i& activeVoxel() const { return m_activeVoxel; }
@@ -56,6 +55,7 @@ public slots:
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
     void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
     void setCurrentAxis(const Axis val) { m_currAxis = val; updateGL(); }
+    void setActiveColor(const Imath::Color4f& c) { m_activeColor = c; }
     
     void undo() { m_undoStack.undo(); updateGL(); }
     void redo() { m_undoStack.redo(); updateGL(); }
