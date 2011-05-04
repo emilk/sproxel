@@ -5,7 +5,6 @@
 #include "GLCamera.h"
 #include "MainWindow.h"
 #include "GLModelWidget.h"
-#include "PaletteWidget.h"
 
 #include <QFileDialog>
 #include <QColorDialog>
@@ -19,13 +18,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // The docking palette
     m_paletteDocker = new QDockWidget(tr("Palette"), this);
     m_paletteDocker->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    PaletteWidget* paletteWidget = new PaletteWidget(this);
-    m_paletteDocker->setWidget(paletteWidget);
+    m_paletteWidget = new PaletteWidget(this);
+    m_paletteDocker->setWidget(m_paletteWidget);
     addDockWidget(Qt::RightDockWidgetArea, m_paletteDocker);
 
     // Connect some window signals together
-    QObject::connect(paletteWidget, SIGNAL(valueChanged(Imath::Color4f)),
+    QObject::connect(m_paletteWidget, SIGNAL(activeColorChanged(Imath::Color4f)),
                      m_glModelWidget, SLOT(setActiveColor(Imath::Color4f)));
+    QObject::connect(m_glModelWidget, SIGNAL(colorSampled(Imath::Color4f)),
+                     m_paletteWidget, SLOT(setActiveColor(Imath::Color4f)));
 
 
     // Toolbar
@@ -166,12 +167,15 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     }
     else if (ctrlDown && event->key() == Qt::Key_C)
     {
-        // TODO: Why can i not add the additional two parameters (to get alpha) to this?
         QColor color = QColorDialog::getColor(Qt::white, this);
-        m_glModelWidget->setActiveColor(Imath::Color4f((float)color.red()/255.0f,
+        m_paletteWidget->setActiveColor(Imath::Color4f((float)color.red()/255.0f,
                                                        (float)color.green()/255.0f, 
                                                        (float)color.blue()/255.0f, 
                                                        (float)color.alpha()/255.0f));
+    }
+    else if (ctrlDown && event->key() == Qt::Key_W)
+    {
+        m_paletteWidget->swapColors();
     }
 
 }

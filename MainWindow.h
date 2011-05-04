@@ -8,6 +8,7 @@
 #include <QToolBar>
 
 #include "NewGridDialog.h"
+#include "PaletteWidget.h"
 
 class QSlider;
 class GLModelWidget;
@@ -34,6 +35,7 @@ private:
     // Docking windows and toolbars
     QToolBar* m_toolbar;
     QDockWidget* m_paletteDocker;
+    PaletteWidget* m_paletteWidget;
     
     // Actions
     QAction* m_actQuit;

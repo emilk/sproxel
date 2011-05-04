@@ -50,6 +50,9 @@ public:
     Axis currentAxis() const { return m_currAxis; }
 
 
+signals:
+    void colorSampled(const Imath::Color4f& color);
+        
 public slots:
     void setDrawGrid(const bool value) { m_drawGrid = value; updateGL(); }
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }

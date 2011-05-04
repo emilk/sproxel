@@ -618,7 +618,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
             m_intersects = m_gvg.rayIntersection(fakeLine, true);
             Imath::Color4f result = colorPick(m_intersects);
             if (result.a != 0.0f)
-                m_activeColor = result;
+                emit colorSampled(result);
         }
     }
     else if (shiftDown)
