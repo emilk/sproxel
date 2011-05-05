@@ -128,12 +128,37 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 void MainWindow::keyPressEvent(QKeyEvent* event)
 {
-    //const bool altDown = event->modifiers() & Qt::AltModifier;
+    const bool altDown = event->modifiers() & Qt::AltModifier;
     const bool ctrlDown = event->modifiers() & Qt::ControlModifier;
+    //const bool shiftDown = event->modifiers() & Qt::ShiftModifier;
 
-    if (event->key() == Qt::Key_F)
+    if (altDown && event->key() == Qt::Key_X)
+    {
+        m_glModelWidget->setCurrentAxis(GLModelWidget::X_AXIS);
+    }
+    else if (altDown && event->key() == Qt::Key_Y)
+    {
+        m_glModelWidget->setCurrentAxis(GLModelWidget::Y_AXIS);
+    }
+    else if (altDown && event->key() == Qt::Key_Z)
+    {
+        m_glModelWidget->setCurrentAxis(GLModelWidget::Z_AXIS);
+    }
+    else if (ctrlDown && event->key() == Qt::Key_C)
+    {
+        QColor color = QColorDialog::getColor(Qt::white, this);
+        m_paletteWidget->setActiveColor(Imath::Color4f((float)color.red()/255.0f,
+                                                       (float)color.green()/255.0f, 
+                                                       (float)color.blue()/255.0f, 
+                                                       (float)color.alpha()/255.0f));
+    }
+    else if (event->key() == Qt::Key_F)
     {
         m_glModelWidget->frame();
+    }
+    else if (event->key() == Qt::Key_X)
+    {
+        m_paletteWidget->swapColors();
     }
     else if (event->key() >= Qt::Key_Left && event->key() <= Qt::Key_PageDown)
     {
@@ -153,31 +178,6 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
                                        Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
         m_glModelWidget->updateGL();
     }
-    else if (event->key() == Qt::Key_X)
-    {
-        m_glModelWidget->setCurrentAxis(GLModelWidget::X_AXIS);
-    }
-    else if (event->key() == Qt::Key_Y)
-    {
-        m_glModelWidget->setCurrentAxis(GLModelWidget::Y_AXIS);
-    }
-    else if (event->key() == Qt::Key_Z)
-    {
-        m_glModelWidget->setCurrentAxis(GLModelWidget::Z_AXIS);
-    }
-    else if (ctrlDown && event->key() == Qt::Key_C)
-    {
-        QColor color = QColorDialog::getColor(Qt::white, this);
-        m_paletteWidget->setActiveColor(Imath::Color4f((float)color.red()/255.0f,
-                                                       (float)color.green()/255.0f, 
-                                                       (float)color.blue()/255.0f, 
-                                                       (float)color.alpha()/255.0f));
-    }
-    else if (ctrlDown && event->key() == Qt::Key_W)
-    {
-        m_paletteWidget->swapColors();
-    }
-
 }
 
 
