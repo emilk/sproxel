@@ -28,6 +28,7 @@ GLModelWidget::GLModelWidget(QWidget *parent)
       m_drawGrid(true),
       m_drawVoxelGrid(true),
       m_drawBoundingBox(false),
+      m_shiftWrap(true),
       m_currAxis(Y_AXIS)
 {
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
@@ -200,18 +201,18 @@ void GLModelWidget::paintGL()
 
     glDisable(GL_BLEND); 
 
-    // draw text stuff
-    QFont font;
-    font.setPointSize(10);
-    glColor3f(1.0f, 1.0f, 1.0f);
+    // Draw text stuff
+    //QFont font;
+    //font.setPointSize(10);
+    //glColor3f(1.0f, 1.0f, 1.0f);
     //const char *sliceName[3] = { "Axis X, Slice YZ",
     //                             "Axis Y, Slice XZ",
     //                             "Axis Z, Slice XY" };
-    //renderText(10, 20, QString(sliceName[ m_currAxis]),font);
+    //renderText(10, 20, QString(sliceName[m_currAxis]), font);
     //renderText(10, 32, QString("%1, %2, %3")
-    //                .arg(m_activeVoxel.x)
-    //                .arg(m_activeVoxel.y)
-    //                .arg(m_activeVoxel.z));
+    //                   .arg(m_activeVoxel.x)
+    //                   .arg(m_activeVoxel.y)
+    //                   .arg(m_activeVoxel.z));
 
     // DRAW BOUNDING BOX
     if (m_drawBoundingBox)
@@ -1160,6 +1161,121 @@ bool GLModelWidget::saveGridCSV(const std::string& filename)
     
     fclose(fp);
     return true;
+}
+
+
+void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
+{
+    // Simplifiers for which way to shift
+    size_t tan0AxisDim = 0;
+    size_t tan1AxisDim = 0;
+    size_t primaryAxisDim = 0;
+    switch (axis)
+    {
+        case X_AXIS: primaryAxisDim = m_gvg.cellDimensions().x;
+                        tan0AxisDim = m_gvg.cellDimensions().y;
+                        tan1AxisDim = m_gvg.cellDimensions().z; break;
+        case Y_AXIS: primaryAxisDim = m_gvg.cellDimensions().y;
+                        tan0AxisDim = m_gvg.cellDimensions().x;
+                        tan1AxisDim = m_gvg.cellDimensions().z; break;
+        case Z_AXIS: primaryAxisDim = m_gvg.cellDimensions().z;
+                        tan0AxisDim = m_gvg.cellDimensions().x;
+                        tan1AxisDim = m_gvg.cellDimensions().y; break;
+    }
+
+    // Simplifiers for wrapping
+    size_t backupIndex = 0;
+    size_t clearIndex = primaryAxisDim - 1;
+    if (up) std::swap(backupIndex, clearIndex);
+
+
+    m_undoStack.beginMacro("Shift");
+
+    // Backup the necessary slice
+    Imath::Color4f* sliceBackup = NULL;
+    if (wrap)
+    {
+        sliceBackup = new Imath::Color4f[tan0AxisDim * tan1AxisDim];
+        for (size_t a = 0; a < tan0AxisDim; a++)
+        {
+            for (size_t b = 0; b < tan1AxisDim; b++)
+            {
+                Imath::V3i index(-1, -1, -1);
+                switch (axis)
+                {
+                    case X_AXIS: index = Imath::V3i(backupIndex, a, b); break;
+                    case Y_AXIS: index = Imath::V3i(a, backupIndex, b); break;
+                    case Z_AXIS: index = Imath::V3i(a, b, backupIndex); break;
+                }
+                sliceBackup[a + (b * tan0AxisDim)] = m_gvg.get(index);
+            }
+        }
+    }
+
+    // Shift everyone over
+    if (up)
+    {
+        for (size_t a = backupIndex; a > clearIndex; a--)
+        {
+            for (size_t b = 0; b < tan0AxisDim; b++)
+            {
+                for (size_t c = 0; c < tan1AxisDim; c++)
+                {
+                    Imath::V3i nextIndex(-1, -1, -1);
+                    switch (axis)
+                    {
+                        case X_AXIS: setVoxelColor(Imath::V3i(a, b, c), m_gvg.get(Imath::V3i(a-1, b, c))); break;
+                        case Y_AXIS: setVoxelColor(Imath::V3i(b, a, c), m_gvg.get(Imath::V3i(b, a-1, c))); break;
+                        case Z_AXIS: setVoxelColor(Imath::V3i(b, c, a), m_gvg.get(Imath::V3i(b, c, a-1))); break;
+                    }
+                    
+                }
+            }
+        }
+    }
+    else
+    {
+        for (size_t a = backupIndex; a < clearIndex; a++)
+        {
+            for (size_t b = 0; b < tan0AxisDim; b++)
+            {
+                for (size_t c = 0; c < tan1AxisDim; c++)
+                {
+                    Imath::V3i nextIndex(-1, -1, -1);
+                    switch (axis)
+                    {
+                        case X_AXIS: setVoxelColor(Imath::V3i(a, b, c), m_gvg.get(Imath::V3i(a+1, b, c))); break;
+                        case Y_AXIS: setVoxelColor(Imath::V3i(b, a, c), m_gvg.get(Imath::V3i(b, a+1, c))); break;
+                        case Z_AXIS: setVoxelColor(Imath::V3i(b, c, a), m_gvg.get(Imath::V3i(b, c, a+1))); break;
+                    }
+                }
+            }
+        }
+    }
+
+    // Either clear or set the wrap-to slice
+    for (size_t a = 0; a < tan0AxisDim; a++)
+    {
+        for (size_t b = 0; b < tan1AxisDim; b++)
+        {
+            Imath::V3i workIndex(-1, -1, -1);
+            switch (axis)
+            {
+                case X_AXIS: workIndex = Imath::V3i(clearIndex, a, b); break;
+                case Y_AXIS: workIndex = Imath::V3i(a, clearIndex, b); break;
+                case Z_AXIS: workIndex = Imath::V3i(a, b, clearIndex); break;
+            }
+            
+            if (wrap) 
+                setVoxelColor(workIndex, sliceBackup[a + (b * tan0AxisDim)]);
+            else
+                setVoxelColor(workIndex, Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
+        }
+    }
+    delete[] sliceBackup;
+
+    m_undoStack.endMacro();
+    updateGL();
 }
 
 

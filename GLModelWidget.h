@@ -29,7 +29,6 @@ public:
     QSize minimumSizeHint() const;
     QSize sizeHint() const;
 
-
 public:
     void frame();
     void handleArrows(QKeyEvent *event);
@@ -39,6 +38,7 @@ public:
 
     void resizeVoxelGrid(Imath::V3i size);
 
+    void shiftVoxels(const Axis axis, const bool up, const bool wrap);
     void setVoxelColor(const Imath::V3i& index, const Imath::Color4f color);
 
     // Accessors
@@ -47,8 +47,8 @@ public:
     bool drawGrid() const { return m_drawGrid; }
     bool drawVoxelGrid() const { return m_drawVoxelGrid; }
     bool drawBoundingBox() const { return m_drawBoundingBox; }
+    bool shiftWrap() const { return m_shiftWrap; }
     Axis currentAxis() const { return m_currAxis; }
-
 
 signals:
     void colorSampled(const Imath::Color4f& color);
@@ -57,6 +57,7 @@ public slots:
     void setDrawGrid(const bool value) { m_drawGrid = value; updateGL(); }
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
     void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
+    void setShiftWrap(const bool value) { m_shiftWrap = value; }
     void setCurrentAxis(const Axis val) { m_currAxis = val; updateGL(); }
     void setActiveColor(const Imath::Color4f& c) { m_activeColor = c; }
     
@@ -70,7 +71,6 @@ protected:
     
     virtual void mousePressEvent(QMouseEvent* event);
     virtual void mouseMoveEvent(QMouseEvent* event);
-
 
 private:
     GLCamera m_cam;
@@ -87,6 +87,7 @@ private:
     bool m_drawGrid;
     bool m_drawVoxelGrid;
     bool m_drawBoundingBox;
+    bool m_shiftWrap;
 
     Axis m_currAxis;
 

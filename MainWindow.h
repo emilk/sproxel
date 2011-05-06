@@ -42,6 +42,9 @@ private:
 
     QAction* m_actUndo;
     QAction* m_actRedo;
+    QAction* m_actShiftWrap;
+    QAction* m_actShiftUp;
+    QAction* m_actShiftDown;
 
     QAction* m_actViewGrid;
     QAction* m_actViewVoxgrid;
@@ -56,6 +59,9 @@ public slots:
 
     void saveFile();
     void openFile();
+
+    void shiftUp();
+    void shiftDown();
 
     //bool eventFilter(QObject* qo, QEvent* ev);
 };

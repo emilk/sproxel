@@ -81,6 +81,28 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     connect(m_actRedo, SIGNAL(triggered()),
             m_glModelWidget, SLOT(redo()));
 
+    m_menuEdit->addSeparator();
+
+    m_actShiftUp = new QAction("Shift up", this);
+    m_actShiftUp->setShortcut(Qt::CTRL + Qt::Key_BracketRight);
+    m_menuEdit->addAction(m_actShiftUp);
+    connect(m_actShiftUp, SIGNAL(triggered()),
+            this, SLOT(shiftUp()));
+
+    m_actShiftDown = new QAction("Shift down", this);
+    m_actShiftDown->setShortcut(Qt::CTRL + Qt::Key_BracketLeft);
+    m_menuEdit->addAction(m_actShiftDown);
+    connect(m_actShiftDown, SIGNAL(triggered()),
+            this, SLOT(shiftDown()));
+
+    m_actShiftWrap = new QAction("Wrap shift ops", this);
+    m_actShiftWrap->setCheckable(true);
+    m_actShiftWrap->setChecked(m_glModelWidget->shiftWrap());
+    m_menuEdit->addAction(m_actShiftWrap);
+    connect(m_actShiftWrap, SIGNAL(toggled(bool)),
+            m_glModelWidget, SLOT(setShiftWrap(bool)));
+
+
 
     // ------ view menu
     m_menuView = menuBar()->addMenu("&View");
@@ -181,6 +203,18 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 }
 
 
+void MainWindow::newGrid()
+{
+    NewGridDialog dlg(this);
+
+    dlg.setModal(true);
+    if (dlg.exec())
+    {
+        m_glModelWidget->resizeVoxelGrid(dlg.getVoxelSize());
+    }
+}
+
+
 void MainWindow::saveFile()
 {
     QString filename = QFileDialog::getSaveFileName(this,
@@ -207,16 +241,17 @@ void MainWindow::openFile()
 }
 
 
-void MainWindow::newGrid()
+void MainWindow::shiftUp()
 {
-    NewGridDialog dlg(this);
-
-    dlg.setModal(true);
-    if (dlg.exec())
-    {
-        m_glModelWidget->resizeVoxelGrid(dlg.getVoxelSize());
-    }
+    m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(), true, m_glModelWidget->shiftWrap());
 }
+
+
+void MainWindow::shiftDown()
+{
+    m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(), false, m_glModelWidget->shiftWrap());
+}
+
 
 // // Steal keypresses from your children!
 // bool MainWindow::eventFilter(QObject* qo, QEvent* ev)
