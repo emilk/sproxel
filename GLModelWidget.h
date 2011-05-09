@@ -37,6 +37,7 @@ public:
     bool saveGridCSV(const std::string& filename);
 
     void resizeVoxelGrid(Imath::V3i size);
+    void reresVoxelGrid(const float scale);
 
     void shiftVoxels(const Axis axis, const bool up, const bool wrap);
     void setVoxelColor(const Imath::V3i& index, const Imath::Color4f color);

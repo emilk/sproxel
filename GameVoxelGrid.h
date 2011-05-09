@@ -121,6 +121,27 @@ public:
         return orderedCells;
     }
 
+    GameVoxelGrid& operator=(const GameVoxelGrid& other)
+    {
+        if (this != &other)
+        {
+            m_cellDimensions = other.cellDimensions();
+            resizeData();
+
+            for (int x = 0; x < m_cellDimensions.x; x++)
+            {
+                for (int y = 0; y < m_cellDimensions.y; y++)
+                {
+                    for (int z = 0; z < m_cellDimensions.z; z++)
+                    {
+                        m_data[x][y][z] = other.m_data[x][y][z];
+                    }
+                }
+            }
+        }
+        return *this;
+    }
+
 
 private:
     Imath::M44d m_transform;

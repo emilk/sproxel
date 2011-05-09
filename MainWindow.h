@@ -42,9 +42,11 @@ private:
 
     QAction* m_actUndo;
     QAction* m_actRedo;
-    QAction* m_actShiftWrap;
     QAction* m_actShiftUp;
     QAction* m_actShiftDown;
+    QAction* m_actShiftWrap;
+    QAction* m_actUpRes;
+    QAction* m_actDownRes;
 
     QAction* m_actViewGrid;
     QAction* m_actViewVoxgrid;
@@ -62,6 +64,9 @@ public slots:
 
     void shiftUp();
     void shiftDown();
+
+    void upRes();
+    void downRes();
 
     //bool eventFilter(QObject* qo, QEvent* ev);
 };

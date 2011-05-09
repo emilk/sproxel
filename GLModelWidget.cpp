@@ -47,6 +47,7 @@ GLModelWidget::~GLModelWidget()
     //glDeleteLists(object, 1);
 }
 
+
 void GLModelWidget::resizeVoxelGrid(Imath::V3i size)
 {
     m_gvg = GameVoxelGrid<Imath::Color4f>(size);
@@ -56,11 +57,72 @@ void GLModelWidget::resizeVoxelGrid(Imath::V3i size)
     Imath::M44d transform;
     Imath::V3d dDims = m_gvg.cellDimensions();
     transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
-
     m_gvg.setTransform(transform);
 
     updateGL();
 }
+
+
+void GLModelWidget::reresVoxelGrid(const float scale)
+{
+    GameVoxelGrid<Imath::Color4f> tempGVG = m_gvg;
+
+    Imath::V3i newDimensions;
+    newDimensions.x = (int)((float)m_gvg.cellDimensions().x * scale);
+    newDimensions.y = (int)((float)m_gvg.cellDimensions().y * scale);
+    newDimensions.z = (int)((float)m_gvg.cellDimensions().z * scale);
+    if (newDimensions.x <= 0 && newDimensions.y <= 0 && newDimensions.z <= 0)
+        return;
+    m_gvg.setCellDimensions(newDimensions);
+
+    Imath::V3d oldTranslation = m_gvg.transform().translation();
+
+    Imath::M44d transform;
+    // TODO: Scaling the GVG is bad.  Maybe scaling the world around the new res would be better.
+    //transform.setScale(Imath::V3d(1.0f/scale, 1.0f/scale, 1.0f/scale));
+    //transform = m_gvg.transform() * transform;
+    transform[3][0] = oldTranslation.x * scale;
+    transform[3][1] = oldTranslation.y * scale;
+    transform[3][2] = oldTranslation.z * scale;
+    m_gvg.setTransform(transform);
+    
+    // Clear out the active voxel grid
+    m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
+    
+    // Move the stuff over, "changing resolution"
+    // TODO: Make this less naieve.  Right now, when down-res'ing, you get a filled
+    //       voxel if there is *anything* in its up-res'ed version.
+    //       Could also take neighbors into account (round corners) when up-res'ing, etc.
+    for (int x = 0; x < tempGVG.cellDimensions().x; x++)
+    {
+        for (int y = 0; y < tempGVG.cellDimensions().y; y++)
+        {
+            for (int z = 0; z < tempGVG.cellDimensions().z; z++)
+            {
+                const Imath::Color4f curCol = tempGVG.get(Imath::V3i(x,y,z));
+                if (curCol.a != 0.0f)
+                {
+                    for (int xx = 0; xx < scale; xx++)
+                    {
+                        for (int yy = 0; yy < scale; yy++)
+                        {
+                            for (int zz = 0; zz < scale; zz++)
+                            {
+                                const Imath::V3i lowIndex((int)((float)x*scale)+xx,
+                                                          (int)((float)y*scale)+yy,
+                                                          (int)((float)z*scale)+zz);
+                                m_gvg.set(lowIndex, curCol);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    updateGL();
+}
+
 
 QSize GLModelWidget::minimumSizeHint() const
 {
@@ -130,7 +192,7 @@ void GLModelWidget::paintGL()
     lightDir[1] = camPos.y;
     lightDir[2] = camPos.z;
     lightDir[3] = 0.0; // w=0.0 means directional
-     
+
     glLightfv(GL_LIGHT0, GL_POSITION, lightDir);
 
     GLfloat diffuse[] = {0.8, 0.8, 0.8, 1.0};

@@ -102,6 +102,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     connect(m_actShiftWrap, SIGNAL(toggled(bool)),
             m_glModelWidget, SLOT(setShiftWrap(bool)));
 
+    m_menuEdit->addSeparator();
+
+    m_actUpRes = new QAction("Double grid resolution", this);
+    m_actUpRes->setShortcut(Qt::CTRL + Qt::Key_Plus);
+    m_menuEdit->addAction(m_actUpRes);
+    connect(m_actUpRes, SIGNAL(triggered()),
+            this, SLOT(upRes()));
+
+    m_actDownRes = new QAction("Half grid resolution", this);
+    m_actDownRes->setShortcut(Qt::CTRL + Qt::Key_Minus);
+    m_menuEdit->addAction(m_actDownRes);
+    connect(m_actDownRes, SIGNAL(triggered()),
+            this, SLOT(downRes()));
 
 
     // ------ view menu
@@ -250,6 +263,18 @@ void MainWindow::shiftUp()
 void MainWindow::shiftDown()
 {
     m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(), false, m_glModelWidget->shiftWrap());
+}
+
+
+void MainWindow::upRes()
+{
+    m_glModelWidget->reresVoxelGrid(2.0f);
+}
+
+
+void MainWindow::downRes()
+{
+    m_glModelWidget->reresVoxelGrid(0.5f);
 }
 
 
