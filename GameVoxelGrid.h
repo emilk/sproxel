@@ -2,6 +2,7 @@
 #define __GAME_VOXEL_GRID_H__
 
 #include <vector>
+#include <algorithm>
 
 #include <ImathBox.h>
 #include <ImathBoxAlgo.h>

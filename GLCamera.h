@@ -86,10 +86,10 @@ public:
     int height() const { return m_size.y; }
     
     void autoSetClippingPlanes( const Imath::Box3d &bounds );
-    void setClippingPlanes( double near, double far )
+    void setClippingPlanes( double clipNear, double clipFar )
     {
-        m_clip.x = near;
-        m_clip.y = far;
+        m_clip.x = clipNear;
+        m_clip.y = clipFar;
     }
 
 
