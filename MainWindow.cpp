@@ -37,7 +37,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     // Actions & Menus
     menuBar()->show();
-    m_menuFile = menuBar()->addMenu("&File");
+    m_menuFile = menuBar()->addMenu("Fi&le");
 
     m_actFileNew = new QAction("&New", this);
     m_actFileNew->setShortcut(Qt::CTRL + Qt::Key_N);
@@ -156,7 +156,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 
     // Remaining verbosity
-    setWindowTitle(tr("Sproxel"));
+    setWindowTitle(tr("Sproxel " SPROXEL_VERSION));
     statusBar()->showMessage(tr("Ready"));
 }
 
