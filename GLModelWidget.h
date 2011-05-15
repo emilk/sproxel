@@ -21,6 +21,8 @@ class GLModelWidget : public QGLWidget
 
 public:
     enum Axis { X_AXIS, Y_AXIS, Z_AXIS };
+	enum Tool { TOOL_SPLAT, TOOL_FLOOD, TOOL_RAY, 
+                TOOL_DROPPER, TOOL_ERASER, TOOL_REPLACE, TOOL_SLAB };
 
 public:
     GLModelWidget(QWidget *parent = 0);
@@ -30,7 +32,7 @@ public:
     QSize sizeHint() const;
 
 public:
-    void frame();
+    void frame(bool fullExtents);
     void handleArrows(QKeyEvent *event);
 
     bool loadGridCSV(const std::string& filename);
@@ -50,6 +52,7 @@ public:
     bool drawBoundingBox() const { return m_drawBoundingBox; }
     bool shiftWrap() const { return m_shiftWrap; }
     Axis currentAxis() const { return m_currAxis; }
+	Tool activeTool() const { return m_activeTool; }
 
 signals:
     void colorSampled(const Imath::Color4f& color);
@@ -61,6 +64,7 @@ public slots:
     void setShiftWrap(const bool value) { m_shiftWrap = value; }
     void setCurrentAxis(const Axis val) { m_currAxis = val; updateGL(); }
     void setActiveColor(const Imath::Color4f& c) { m_activeColor = c; }
+    void setActiveTool(const Tool tool) { m_activeTool = tool; }
     
     void undo() { m_undoStack.undo(); updateGL(); }
     void redo() { m_undoStack.redo(); updateGL(); }
@@ -82,8 +86,6 @@ private:
     Imath::V3i m_activeVoxel;
     Imath::Color4f m_activeColor;
 
-    bool m_altDown;
-    bool m_ctrlDown;
     QPoint m_lastMouse;
     bool m_drawGrid;
     bool m_drawVoxelGrid;
@@ -91,6 +93,7 @@ private:
     bool m_shiftWrap;
 
     Axis m_currAxis;
+	Tool m_activeTool;
 
     double* glMatrix(const Imath::M44d& m);
 

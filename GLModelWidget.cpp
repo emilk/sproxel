@@ -29,7 +29,8 @@ GLModelWidget::GLModelWidget(QWidget *parent)
       m_drawVoxelGrid(true),
       m_drawBoundingBox(false),
       m_shiftWrap(true),
-      m_currAxis(Y_AXIS)
+      m_currAxis(Y_AXIS),
+      m_activeTool(TOOL_SPLAT)
 {
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
 
@@ -264,13 +265,13 @@ void GLModelWidget::paintGL()
     glDisable(GL_BLEND); 
 
     // Draw text stuff
-    //QFont font;
-    //font.setPointSize(10);
-    //glColor3f(1.0f, 1.0f, 1.0f);
-    //const char *sliceName[3] = { "Axis X, Slice YZ",
-    //                             "Axis Y, Slice XZ",
-    //                             "Axis Z, Slice XY" };
-    //renderText(10, 20, QString(sliceName[m_currAxis]), font);
+    QFont font;
+    font.setPointSize(10);
+    glColor3f(1.0f, 1.0f, 1.0f);
+    const char *sliceName[3] = { "Axis X, Slice YZ",
+                                 "Axis Y, Slice XZ",
+                                 "Axis Z, Slice XY" };
+    renderText(10, 20, QString(sliceName[m_currAxis]), font);
     //renderText(10, 32, QString("%1, %2, %3")
     //                   .arg(m_activeVoxel.x)
     //                   .arg(m_activeVoxel.y)
@@ -658,7 +659,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
     }
     else if (ctrlDown)
     {
-        // CTRL+Right click means replace intersected voxel color
+        // CTRL+Left click means replace intersected voxel color
         if (event->buttons() & Qt::LeftButton)
         {
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
@@ -1001,11 +1002,11 @@ void GLModelWidget::paintGunDelete(const std::vector<Imath::V3i>& sortedInput)
 }
 
 
-void GLModelWidget::frame()
+void GLModelWidget::frame(bool fullExtents)
 {
     // Frame on data extents if they're present.  Otherwise grid world bounds
     Imath::Box3d ext = dataBounds();
-    if (ext.isEmpty())
+    if (ext.isEmpty() || fullExtents)
         ext = m_gvg.worldBounds();
 
     m_cam.frame(ext);
@@ -1152,12 +1153,13 @@ void GLModelWidget::handleArrows(QKeyEvent *event)
 
 bool GLModelWidget::loadGridCSV(const std::string& filename)
 {
+    int fscanfStatus = 0;
     FILE* fp = fopen(filename.c_str(), "rb");
     if (!fp) return false;
 
     // Read the dimensions
     Imath::V3i size;
-    fscanf(fp, "%d,%d,%d\n", &size.x, &size.y, &size.z);
+    fscanfStatus = fscanf(fp, "%d,%d,%d\n", &size.x, &size.y, &size.z);
     m_gvg.setCellDimensions(size);
     
     // Read the data
@@ -1170,7 +1172,7 @@ bool GLModelWidget::loadGridCSV(const std::string& filename)
             for (int x = 0; x < cellDim.x; x++)
             {
                 int r, g, b, a;
-                fscanf(fp, "#%02X%02X%02X%02X,", &r, &g, &b, &a);
+                fscanfStatus = fscanf(fp, "#%02X%02X%02X%02X,", &r, &g, &b, &a);
 
                 color.r = r / (float)0xff;
                 color.g = g / (float)0xff;
@@ -1179,11 +1181,11 @@ bool GLModelWidget::loadGridCSV(const std::string& filename)
                 m_gvg.set(Imath::V3i(x,y,z), color);
 
                 if (x != cellDim.x-1)
-                    fscanf(fp, ",");
+                    fscanfStatus = fscanf(fp, ",");
             }
-            fscanf(fp, "\n");
+            fscanfStatus = fscanf(fp, "\n");
         }
-        fscanf(fp, "\n");
+        fscanfStatus = fscanf(fp, "\n");
     }
 
     fclose(fp);

@@ -1,11 +1,11 @@
 #ifndef __MAIN_WINDOW_H__
 #define __MAIN_WINDOW_H__
 
-#include <QWidget>
-#include <QMainWindow>
-#include <QAction>
 #include <QMenu>
+#include <QWidget>
+#include <QAction>
 #include <QToolBar>
+#include <QMainWindow>
 
 #include "NewGridDialog.h"
 #include "PaletteWidget.h"
@@ -58,6 +58,15 @@ private:
     QAction* m_actFileOpen;
     QAction* m_actFileSave;
 
+    QActionGroup* m_toolbarActionGroup;
+    QAction* m_actToolSplat;
+    QAction* m_actToolFlood;
+    QAction* m_actToolRay;
+    QAction* m_actToolDropper;
+    QAction* m_actToolEraser;
+    QAction* m_actToolReplace;
+    QAction* m_actToolSlab;
+
 public slots:
     void newGrid();
 
@@ -69,6 +78,14 @@ public slots:
 
     void upRes();
     void downRes();
+
+    void setToolSplat(bool stat);
+    void setToolFlood(bool stat);
+    void setToolRay(bool stat);
+    void setToolDropper(bool stat);
+    void setToolEraser(bool stat);
+    void setToolReplace(bool stat);
+    void setToolSlab(bool stat);
 
     //bool eventFilter(QObject* qo, QEvent* ev);
 };

@@ -31,7 +31,7 @@ void PaletteWidget::paintEvent(QPaintEvent*)
     QPainter painter(this);
 
     // Some useful colors|tools
-    Imath::Color4f brighterBackground = m_backgroundColor * 1.15; 
+    Imath::Color4f brighterBackground = m_backgroundColor * 1.05; 
     brighterBackground.a = 1.0f;
     QPen brighterBackgroundPen = QPen(toQColor(brighterBackground));
 

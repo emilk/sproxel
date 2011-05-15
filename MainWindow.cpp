@@ -151,8 +151,43 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     m_menuWindow->addAction(m_paletteDocker->toggleViewAction());
 
 
-    // Hookups for the toolbar
-    m_toolbar->addAction(m_actQuit);
+    // ------ toolbar hookups
+    m_toolbarActionGroup = new QActionGroup(this);
+
+    m_actToolSplat = new QAction("Splat", m_toolbarActionGroup);
+    m_actToolSplat->setIcon(QIcon(QPixmap("./icons/splat.png")));
+    m_actToolSplat->setCheckable(true);
+    connect(m_actToolSplat, SIGNAL(toggled(bool)), this, SLOT(setToolSplat(bool)));
+    
+    m_actToolFlood = new QAction("Flood", m_toolbarActionGroup);
+    m_actToolFlood->setIcon(QIcon(QPixmap("./icons/paintBucket.png")));
+    m_actToolFlood->setCheckable(true);
+    connect(m_actToolFlood, SIGNAL(toggled(bool)), this, SLOT(setToolFlood(bool)));
+    
+    //m_actToolRay = new QAction("Ray", this);
+    
+    m_actToolDropper = new QAction("Dropper", m_toolbarActionGroup);
+    m_actToolDropper->setIcon(QIcon(QPixmap("./icons/eyeDropper.png")));
+    m_actToolDropper->setCheckable(true);
+    connect(m_actToolDropper, SIGNAL(toggled(bool)), this, SLOT(setToolDropper(bool)));
+    
+    m_actToolEraser = new QAction("Eraser", m_toolbarActionGroup);
+    m_actToolEraser->setIcon(QIcon(QPixmap("./icons/eraser.png")));
+    m_actToolEraser->setCheckable(true);
+    connect(m_actToolEraser, SIGNAL(toggled(bool)), this, SLOT(setToolEraser(bool)));
+    
+    m_actToolReplace = new QAction("Replace", m_toolbarActionGroup);
+    m_actToolReplace->setIcon(QIcon(QPixmap("./icons/pencil.png")));
+    m_actToolReplace->setCheckable(true);
+    connect(m_actToolReplace, SIGNAL(toggled(bool)), this, SLOT(setToolReplace(bool)));
+    
+    m_actToolSlab = new QAction("Slab", m_toolbarActionGroup);
+    m_actToolSlab->setIcon(QIcon(QPixmap("./icons/slab.png")));
+    m_actToolSlab->setCheckable(true);
+    connect(m_actToolSlab, SIGNAL(toggled(bool)), this, SLOT(setToolSlab(bool)));
+
+    m_actToolSplat->setChecked(true);
+    m_toolbar->addActions(m_toolbarActionGroup->actions());
 
 
     // Remaining verbosity
@@ -166,6 +201,9 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     const bool altDown = event->modifiers() & Qt::AltModifier;
     const bool ctrlDown = event->modifiers() & Qt::ControlModifier;
     //const bool shiftDown = event->modifiers() & Qt::ShiftModifier;
+
+    // TODO: For tools
+    // m_actToolXXX->setChecked(true);
 
     if (altDown && event->key() == Qt::Key_X)
     {
@@ -187,9 +225,15 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
                                                        (float)color.blue()/255.0f, 
                                                        (float)color.alpha()/255.0f));
     }
+    else if (ctrlDown && event->key() == Qt::Key_F)
+    {
+        // Frame the full extents no matter what
+        m_glModelWidget->frame(true);
+    }
     else if (event->key() == Qt::Key_F)
     {
-        m_glModelWidget->frame();
+        // Frame the data if it exists
+        m_glModelWidget->frame(false);
     }
     else if (event->key() == Qt::Key_X)
     {
@@ -254,28 +298,27 @@ void MainWindow::openFile()
 }
 
 
+// Trampoline functions because QSignalMapper can't do complex args 
+// Search for QBoundMethod for a custom approach, but I'm too lazy to include it for now.
 void MainWindow::shiftUp()
 {
     m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(), true, m_glModelWidget->shiftWrap());
 }
-
-
 void MainWindow::shiftDown()
 {
     m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(), false, m_glModelWidget->shiftWrap());
 }
 
+void MainWindow::upRes()   { m_glModelWidget->reresVoxelGrid(2.0f); }
+void MainWindow::downRes() { m_glModelWidget->reresVoxelGrid(0.5f); }
 
-void MainWindow::upRes()
-{
-    m_glModelWidget->reresVoxelGrid(2.0f);
-}
-
-
-void MainWindow::downRes()
-{
-    m_glModelWidget->reresVoxelGrid(0.5f);
-}
+void MainWindow::setToolSplat(bool stat)   { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_SPLAT); }
+void MainWindow::setToolFlood(bool stat)   { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_FLOOD); }
+void MainWindow::setToolRay(bool stat)     { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_RAY); }
+void MainWindow::setToolDropper(bool stat) { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_DROPPER); }
+void MainWindow::setToolEraser(bool stat)  { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_ERASER); }
+void MainWindow::setToolReplace(bool stat) { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_REPLACE); }
+void MainWindow::setToolSlab(bool stat)    { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_SLAB); }
 
 
 // // Steal keypresses from your children!
