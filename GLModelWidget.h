@@ -21,7 +21,7 @@ class GLModelWidget : public QGLWidget
 
 public:
     enum Axis { X_AXIS, Y_AXIS, Z_AXIS };
-	enum Tool { TOOL_SPLAT, TOOL_FLOOD, TOOL_RAY, 
+    enum Tool { TOOL_SPLAT, TOOL_FLOOD, TOOL_RAY,
                 TOOL_DROPPER, TOOL_ERASER, TOOL_REPLACE, TOOL_SLAB };
 
 public:
@@ -52,11 +52,11 @@ public:
     bool drawBoundingBox() const { return m_drawBoundingBox; }
     bool shiftWrap() const { return m_shiftWrap; }
     Axis currentAxis() const { return m_currAxis; }
-	Tool activeTool() const { return m_activeTool; }
+    Tool activeTool() const { return m_activeTool; }
 
 signals:
     void colorSampled(const Imath::Color4f& color);
-        
+
 public slots:
     void setDrawGrid(const bool value) { m_drawGrid = value; updateGL(); }
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
@@ -65,15 +65,15 @@ public slots:
     void setCurrentAxis(const Axis val) { m_currAxis = val; updateGL(); }
     void setActiveColor(const Imath::Color4f& c) { m_activeColor = c; }
     void setActiveTool(const Tool tool) { m_activeTool = tool; }
-    
+
     void undo() { m_undoStack.undo(); updateGL(); }
     void redo() { m_undoStack.redo(); updateGL(); }
-    
+
 protected:
     void initializeGL();
     void paintGL();
     void resizeGL(int width, int height);
-    
+
     virtual void mousePressEvent(QMouseEvent* event);
     virtual void mouseMoveEvent(QMouseEvent* event);
 
@@ -93,7 +93,7 @@ private:
     bool m_shiftWrap;
 
     Axis m_currAxis;
-	Tool m_activeTool;
+    Tool m_activeTool;
 
     double* glMatrix(const Imath::M44d& m);
 
@@ -106,8 +106,8 @@ private:
     void paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color);
 
     // Paint Gun Flood helper
-    void setNeighborsRecurse(const Imath::V3i& alreadySet, 
-                             const Imath::Color4f& repColor, 
+    void setNeighborsRecurse(const Imath::V3i& alreadySet,
+                             const Imath::Color4f& repColor,
                              const Imath::Color4f& newColor);
 
     Imath::Box3d dataBounds();
@@ -122,7 +122,7 @@ private:
     void glDrawActiveVoxel();
     void glDrawSelectedVoxels();
     void glDrawVoxelCenter(const size_t sx, const size_t sy, const size_t sz);
-    
+
     QUndoStack m_undoStack;
 };
 
@@ -131,7 +131,7 @@ private:
 class CmdSetVoxelColor : public QUndoCommand
 {
 public:
-    CmdSetVoxelColor(GameVoxelGrid<Imath::Color4f>* gvg, const Imath::V3i& index, const Imath::Color4f color) : 
+    CmdSetVoxelColor(GameVoxelGrid<Imath::Color4f>* gvg, const Imath::V3i& index, const Imath::Color4f color) :
         m_pGvg(gvg),
         m_index(),
         m_newColor(),
@@ -142,25 +142,25 @@ public:
         m_oldColor.push_back(gvg->get(index));
         setText("Set voxel");
     }
-    
+
     virtual void redo()
     {
         for (size_t i = 0; i < m_index.size(); i++)
             m_pGvg->set(m_index[i], m_newColor[i]);
     }
-    
+
     virtual void undo()
     {
         for (size_t i = 0; i < m_index.size(); i++)
             m_pGvg->set(m_index[i], m_oldColor[i]);
     }
-    
+
 protected:
     virtual bool mergeMeWith(QUndoCommand* other)
     {
         if (other->id() != id())
             return false;
-        
+
         const CmdSetVoxelColor* otherSet = static_cast<const CmdSetVoxelColor*>(other);
         m_index.push_back(otherSet->m_index[0]);
         m_newColor.push_back(otherSet->m_newColor[0]);

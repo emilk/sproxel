@@ -60,12 +60,12 @@ private:
 
     QActionGroup* m_toolbarActionGroup;
     QAction* m_actToolSplat;
-    QAction* m_actToolFlood;
-    QAction* m_actToolRay;
-    QAction* m_actToolDropper;
-    QAction* m_actToolEraser;
     QAction* m_actToolReplace;
+    QAction* m_actToolDropper;
+    QAction* m_actToolFlood;
+    QAction* m_actToolEraser;
     QAction* m_actToolSlab;
+    QAction* m_actToolRay;
 
 public slots:
     void newGrid();

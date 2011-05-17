@@ -646,11 +646,9 @@ void GLModelWidget::glDrawVoxelCenter(const size_t x, const size_t y, const size
 
 void GLModelWidget::mousePressEvent(QMouseEvent *event)
 {
-    // TODO: move to a "tool" style interaction before we
-    // run out of modifiers :)
     const bool altDown = event->modifiers() & Qt::AltModifier;
     const bool ctrlDown = event->modifiers() & Qt::ControlModifier;
-    const bool shiftDown = event->modifiers() & Qt::ShiftModifier;
+    //const bool shiftDown = event->modifiers() & Qt::ShiftModifier;
     
     if (altDown)
     {
@@ -659,61 +657,55 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
     }
     else if (ctrlDown)
     {
-        // CTRL+Left click means replace intersected voxel color
         if (event->buttons() & Qt::LeftButton)
         {
+            // CTRL+LMB is always replace
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
             m_intersects = m_gvg.rayIntersection(fakeLine, true);
             paintGunReplace(m_intersects, m_activeColor);
             updateGL();
         }
-        // CTRL+Middle click means flood fill
-        else if (event->buttons() & Qt::MidButton)
+    }
+    else
+    {
+        if (event->buttons() & Qt::LeftButton)
         {
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
             m_intersects = m_gvg.rayIntersection(fakeLine, true);
-            paintGunFlood(m_intersects, m_activeColor);
-            updateGL();
+
+            switch (m_activeTool)
+            {
+                case TOOL_SPLAT: paintGunBlast(m_intersects, m_activeColor); updateGL(); break;
+                case TOOL_FLOOD: paintGunFlood(m_intersects, m_activeColor); updateGL(); break;
+                case TOOL_RAY: break;
+                case TOOL_ERASER: paintGunDelete(m_intersects); updateGL(); break;
+                case TOOL_REPLACE: paintGunReplace(m_intersects, m_activeColor); updateGL(); break;
+                case TOOL_SLAB: paintGunFillSlice(m_intersects, m_activeColor); updateGL(); break;
+                case TOOL_DROPPER:
+                    Imath::Color4f result = colorPick(m_intersects);
+                    if (result.a != 0.0f)
+                        emit colorSampled(result);
+                    break;
+            }
         }
-        // CTRL+Right click means color sample
-        else if (event->buttons() & Qt::RightButton)
+        else if (event->buttons() & Qt::MidButton)
         {
+            // Middle button is always the color picker
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
             m_intersects = m_gvg.rayIntersection(fakeLine, true);
             Imath::Color4f result = colorPick(m_intersects);
             if (result.a != 0.0f)
                 emit colorSampled(result);
         }
-    }
-    else if (shiftDown)
-    {
-        // SHIFT+Left click means fill slice
-        if (event->buttons() & Qt::LeftButton)
-        {
-            fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
-            m_intersects = m_gvg.rayIntersection(fakeLine, true);
-            paintGunFillSlice(m_intersects, m_activeColor);
-            updateGL();
-        }
-    }
-    else
-    {
-        // Left click means shoot a ray
-        if (event->buttons() & Qt::LeftButton)
-        {
-            fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
-            m_intersects = m_gvg.rayIntersection(fakeLine, true);
-            paintGunBlast(m_intersects, m_activeColor);
-            updateGL();
-        }
-        // Right click means delete a voxel
         else if (event->buttons() & Qt::RightButton)
         {
+            // Right button is always delete
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
             m_intersects = m_gvg.rayIntersection(fakeLine, true);
-            paintGunDelete(m_intersects);
+            paintGunDelete(m_intersects); 
             updateGL();
         }
+        return;
     }
 }
 

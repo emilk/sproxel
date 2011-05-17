@@ -60,7 +60,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
             this, SLOT(saveFile()));
 
     m_menuFile->addSeparator();
+
     m_actQuit = new QAction("&Quit", this);
+    m_actQuit->setShortcut(Qt::CTRL + Qt::Key_Q);
     m_menuFile->addAction(m_actQuit);
     connect(m_actQuit, SIGNAL(triggered()), 
             qApp, SLOT(quit()));
@@ -159,12 +161,15 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     m_actToolSplat->setCheckable(true);
     connect(m_actToolSplat, SIGNAL(toggled(bool)), this, SLOT(setToolSplat(bool)));
     
+    m_actToolReplace = new QAction("Replace", m_toolbarActionGroup);
+    m_actToolReplace->setIcon(QIcon(QPixmap("./icons/pencil.png")));
+    m_actToolReplace->setCheckable(true);
+    connect(m_actToolReplace, SIGNAL(toggled(bool)), this, SLOT(setToolReplace(bool)));
+    
     m_actToolFlood = new QAction("Flood", m_toolbarActionGroup);
     m_actToolFlood->setIcon(QIcon(QPixmap("./icons/paintBucket.png")));
     m_actToolFlood->setCheckable(true);
     connect(m_actToolFlood, SIGNAL(toggled(bool)), this, SLOT(setToolFlood(bool)));
-    
-    //m_actToolRay = new QAction("Ray", this);
     
     m_actToolDropper = new QAction("Dropper", m_toolbarActionGroup);
     m_actToolDropper->setIcon(QIcon(QPixmap("./icons/eyeDropper.png")));
@@ -176,16 +181,13 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     m_actToolEraser->setCheckable(true);
     connect(m_actToolEraser, SIGNAL(toggled(bool)), this, SLOT(setToolEraser(bool)));
     
-    m_actToolReplace = new QAction("Replace", m_toolbarActionGroup);
-    m_actToolReplace->setIcon(QIcon(QPixmap("./icons/pencil.png")));
-    m_actToolReplace->setCheckable(true);
-    connect(m_actToolReplace, SIGNAL(toggled(bool)), this, SLOT(setToolReplace(bool)));
-    
     m_actToolSlab = new QAction("Slab", m_toolbarActionGroup);
     m_actToolSlab->setIcon(QIcon(QPixmap("./icons/slab.png")));
     m_actToolSlab->setCheckable(true);
     connect(m_actToolSlab, SIGNAL(toggled(bool)), this, SLOT(setToolSlab(bool)));
 
+    //m_actToolRay = new QAction("Ray", this);
+    
     m_actToolSplat->setChecked(true);
     m_toolbar->addActions(m_toolbarActionGroup->actions());
 
@@ -201,9 +203,6 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     const bool altDown = event->modifiers() & Qt::AltModifier;
     const bool ctrlDown = event->modifiers() & Qt::ControlModifier;
     //const bool shiftDown = event->modifiers() & Qt::ShiftModifier;
-
-    // TODO: For tools
-    // m_actToolXXX->setChecked(true);
 
     if (altDown && event->key() == Qt::Key_X)
     {
@@ -239,6 +238,18 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     {
         m_paletteWidget->swapColors();
     }
+    //else if (event->key() == Qt::Key_D)
+    //{
+    //    m_paletteWidget->setDefaultColors();
+    //}
+
+    else if (event->key() == Qt::Key_Q) m_actToolSplat->setChecked(true);
+    else if (event->key() == Qt::Key_W) m_actToolReplace->setChecked(true);
+    else if (event->key() == Qt::Key_E) m_actToolFlood->setChecked(true);
+    else if (event->key() == Qt::Key_R) m_actToolDropper->setChecked(true);
+    else if (event->key() == Qt::Key_T) m_actToolEraser->setChecked(true);
+    else if (event->key() == Qt::Key_Y) m_actToolSlab->setChecked(true);
+
     else if (event->key() >= Qt::Key_Left && event->key() <= Qt::Key_PageDown)
     {
         m_glModelWidget->handleArrows(event);
