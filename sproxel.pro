@@ -42,3 +42,6 @@ HEADERS  += \
 
 FORMS += \
     NewGridDialog.ui
+
+RESOURCES += \
+    sproxel.qrc
