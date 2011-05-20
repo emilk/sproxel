@@ -154,6 +154,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 
     // ------ toolbar hookups
+	// Icons from the brilliant icon pack located at : http://pen-art.ru/
     m_toolbarActionGroup = new QActionGroup(this);
 
     m_actToolSplat = new QAction("Splat", m_toolbarActionGroup);
