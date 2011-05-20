@@ -10,7 +10,7 @@
 #include "NewGridDialog.h"
 #include "PaletteWidget.h"
 
-#define SPROXEL_VERSION "0.1"
+#define SPROXEL_VERSION "0.2"
 
 class QSlider;
 class GLModelWidget;
