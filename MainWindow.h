@@ -11,6 +11,7 @@
 #include "PaletteWidget.h"
 
 #define SPROXEL_VERSION "0.2"
+#define BASE_WINDOW_TITLE (tr("Sproxel " SPROXEL_VERSION))
 
 class QSlider;
 class GLModelWidget;
@@ -57,6 +58,7 @@ private:
     QAction* m_actFileNew;
     QAction* m_actFileOpen;
     QAction* m_actFileSave;
+    QAction* m_actFileSaveAs;
 
     QActionGroup* m_toolbarActionGroup;
     QAction* m_actToolSplat;
@@ -67,10 +69,14 @@ private:
     QAction* m_actToolSlab;
     QAction* m_actToolRay;
 
+    // Locals
+    std::string m_activeFilename;
+
 public slots:
     void newGrid();
 
     void saveFile();
+    void saveFileAs();
     void openFile();
 
     void shiftUp();
@@ -87,7 +93,7 @@ public slots:
     void setToolReplace(bool stat);
     void setToolSlab(bool stat);
 
-    //bool eventFilter(QObject* qo, QEvent* ev);
+    void reactToModified(bool value);
 };
 
 #endif

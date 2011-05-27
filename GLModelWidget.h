@@ -44,9 +44,12 @@ public:
     void shiftVoxels(const Axis axis, const bool up, const bool wrap);
     void setVoxelColor(const Imath::V3i& index, const Imath::Color4f color);
 
+    void clearUndoStack() { m_undoStack.clear(); }
+
     // Accessors
     const Imath::V3i& activeVoxel() const { return m_activeVoxel; }
     const Imath::Color4f& activeColor() const { return m_activeColor; }
+    bool modified() const { return (bool)m_modCount; }
     bool drawGrid() const { return m_drawGrid; }
     bool drawVoxelGrid() const { return m_drawVoxelGrid; }
     bool drawBoundingBox() const { return m_drawBoundingBox; }
@@ -56,8 +59,13 @@ public:
 
 signals:
     void colorSampled(const Imath::Color4f& color);
+    void modifiedChanged(const bool value);
 
 public slots:
+    void clearModified() { m_modCount = 0; emit modifiedChanged(m_modCount); }
+    void incModCount() { m_modCount += 1; emit modifiedChanged(m_modCount); }
+    void decModCount() { m_modCount -= 1; emit modifiedChanged(m_modCount); }
+
     void setDrawGrid(const bool value) { m_drawGrid = value; updateGL(); }
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
     void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
@@ -66,8 +74,8 @@ public slots:
     void setActiveColor(const Imath::Color4f& c) { m_activeColor = c; }
     void setActiveTool(const Tool tool) { m_activeTool = tool; }
 
-    void undo() { m_undoStack.undo(); updateGL(); }
-    void redo() { m_undoStack.redo(); updateGL(); }
+    void undo() { if (m_undoStack.canUndo()) { decModCount(); m_undoStack.undo(); } updateGL(); }
+    void redo() { if (m_undoStack.canRedo()) { incModCount(); m_undoStack.redo(); } updateGL(); }
 
 protected:
     void initializeGL();
@@ -87,6 +95,7 @@ private:
     Imath::Color4f m_activeColor;
 
     QPoint m_lastMouse;
+    int m_modCount;
     bool m_drawGrid;
     bool m_drawVoxelGrid;
     bool m_drawBoundingBox;

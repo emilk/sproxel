@@ -9,7 +9,9 @@
 #include <QFileDialog>
 #include <QColorDialog>
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
+MainWindow::MainWindow(QWidget *parent) : 
+    QMainWindow(parent), 
+    m_activeFilename("")
 {
     // Windows
     m_glModelWidget = new GLModelWidget;
@@ -27,6 +29,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
                      m_glModelWidget, SLOT(setActiveColor(Imath::Color4f)));
     QObject::connect(m_glModelWidget, SIGNAL(colorSampled(Imath::Color4f)),
                      m_paletteWidget, SLOT(setActiveColor(Imath::Color4f)));
+
+    QObject::connect(m_glModelWidget, SIGNAL(modifiedChanged(bool)),
+                     this, SLOT(reactToModified(bool)));
 
 
     // Toolbar
@@ -58,6 +63,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     m_menuFile->addAction(m_actFileSave);
     connect(m_actFileSave, SIGNAL(triggered()), 
             this, SLOT(saveFile()));
+
+    m_actFileSaveAs = new QAction("Save &As", this);
+    m_menuFile->addAction(m_actFileSaveAs);
+    connect(m_actFileSaveAs, SIGNAL(triggered()), 
+            this, SLOT(saveFileAs()));
 
     m_menuFile->addSeparator();
 
@@ -194,7 +204,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
 
     // Remaining verbosity
-    setWindowTitle(tr("Sproxel " SPROXEL_VERSION));
+    setWindowTitle(BASE_WINDOW_TITLE);
     statusBar()->showMessage(tr("Ready"));
 }
 
@@ -286,13 +296,31 @@ void MainWindow::newGrid()
 
 void MainWindow::saveFile()
 {
+    if (m_glModelWidget->modified() == false)
+        return;
+    
+    if (m_activeFilename == "")
+        return saveFileAs();
+    
+    if (m_glModelWidget->saveGridCSV(m_activeFilename))
+        m_glModelWidget->clearModified();
+}
+
+
+void MainWindow::saveFileAs()
+{
     QString filename = QFileDialog::getSaveFileName(this,
         tr("Save voxels (CSV format) file as..."),
         QString(""),
         tr("CSV Files (*.csv)"));
     if (!filename.isEmpty())
     {
-        m_glModelWidget->saveGridCSV(filename.toStdString());
+        if (m_glModelWidget->saveGridCSV(filename.toStdString()))
+        {
+            m_glModelWidget->clearModified();
+            m_activeFilename = filename.toStdString();
+            setWindowTitle(BASE_WINDOW_TITLE + " - " + QString(m_activeFilename.c_str()));  // TODO: Functionize (resetWindowTitle)
+        }
     }
 }
 
@@ -305,7 +333,13 @@ void MainWindow::openFile()
         tr("CSV Files (*.csv)"));
     if (!filename.isEmpty())
     {
-        m_glModelWidget->loadGridCSV(filename.toStdString());
+        if (m_glModelWidget->loadGridCSV(filename.toStdString()))
+        {
+            m_glModelWidget->clearModified();
+            m_glModelWidget->clearUndoStack();
+            m_activeFilename = filename.toStdString();
+            setWindowTitle(BASE_WINDOW_TITLE + " - " + QString(m_activeFilename.c_str()));  // TODO: Functionize (resetWindowTitle)
+        }
     }
 }
 
@@ -332,12 +366,19 @@ void MainWindow::setToolEraser(bool stat)  { if (stat) m_glModelWidget->setActiv
 void MainWindow::setToolReplace(bool stat) { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_REPLACE); }
 void MainWindow::setToolSlab(bool stat)    { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_SLAB); }
 
+void MainWindow::reactToModified(bool value)
+{
+    QString current = windowTitle();
 
-// // Steal keypresses from your children!
-// bool MainWindow::eventFilter(QObject* qo, QEvent* ev)
-// {
-//     if (ev->type() != QEvent::KeyPress) return false;
-//     keyPressEvent(dynamic_cast<QKeyEvent*>(ev));
-//     return true;
-// }
-
+    if (value)
+    {
+        if (current.endsWith("*"))
+            return;
+        setWindowTitle(current + "*");
+    }
+    else
+    {
+        current.chop(1);
+        setWindowTitle(current);
+    }
+}

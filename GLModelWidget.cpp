@@ -25,6 +25,7 @@ GLModelWidget::GLModelWidget(QWidget *parent)
       m_activeVoxel(-1,-1,-1),
       m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_lastMouse(),
+      m_modCount(0),
       m_drawGrid(true),
       m_drawVoxelGrid(true),
       m_drawBoundingBox(false),
@@ -784,6 +785,7 @@ void GLModelWidget::rayGunBlast(const std::vector<Imath::V3i>& sortedInput, cons
         setVoxelColor(sortedInput[i], color);
     }
     m_undoStack.endMacro();
+    incModCount();
 }
 
 
@@ -798,16 +800,17 @@ void GLModelWidget::paintGunBlast(const std::vector<Imath::V3i>& sortedInput, co
             
             // Hit a voxel in the middle?  Set the previous voxel and return.
             setVoxelColor(sortedInput[i-1], color); 
-            return;
+            break;
         }
         
         // Didn't hit anything?  Just fill in the last voxel.
         if (i == sortedInput.size()-1)
         {
             setVoxelColor(sortedInput[i], color);
-            return;
+            break;
         }
     }
+    incModCount();
 }
 
 
@@ -829,6 +832,7 @@ void GLModelWidget::paintGunReplace(const std::vector<Imath::V3i>& sortedInput, 
         return;
     
     setVoxelColor(hit, color);
+    incModCount();
 }
 
 
@@ -904,6 +908,7 @@ void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput
             m_undoStack.endMacro();
             break;
     }
+    incModCount();
 }
 
 
@@ -966,6 +971,7 @@ void GLModelWidget::paintGunFlood(const std::vector<Imath::V3i>& sortedInput, co
     setVoxelColor(hit, color);
     setNeighborsRecurse(hit, repColor, color);
     m_undoStack.endMacro();
+    incModCount();
 }
 
 
@@ -988,9 +994,10 @@ void GLModelWidget::paintGunDelete(const std::vector<Imath::V3i>& sortedInput)
         if (m_gvg.get(sortedInput[i]).a != 0.0f)
         {
             setVoxelColor(sortedInput[i], Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
-            return;
+            break;
         }
     }
+    incModCount();
 }
 
 
@@ -1331,6 +1338,7 @@ void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
     delete[] sliceBackup;
 
     m_undoStack.endMacro();
+    incModCount();
     updateGL();
 }
 
