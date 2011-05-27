@@ -14,7 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_activeFilename("")
 {
     // Windows
-    m_glModelWidget = new GLModelWidget;
+    m_glModelWidget = new GLModelWidget(this);
     setCentralWidget(m_glModelWidget);
 
     // The docking palette
@@ -29,9 +29,6 @@ MainWindow::MainWindow(QWidget *parent) :
                      m_glModelWidget, SLOT(setActiveColor(Imath::Color4f)));
     QObject::connect(m_glModelWidget, SIGNAL(colorSampled(Imath::Color4f)),
                      m_paletteWidget, SLOT(setActiveColor(Imath::Color4f)));
-
-    QObject::connect(m_glModelWidget, SIGNAL(modifiedChanged(bool)),
-                     this, SLOT(reactToModified(bool)));
 
 
     // Toolbar
@@ -303,7 +300,7 @@ void MainWindow::saveFile()
         return saveFileAs();
     
     if (m_glModelWidget->saveGridCSV(m_activeFilename))
-        m_glModelWidget->clearModified();
+        m_glModelWidget->cleanUndoStack();
 }
 
 
@@ -317,7 +314,7 @@ void MainWindow::saveFileAs()
     {
         if (m_glModelWidget->saveGridCSV(filename.toStdString()))
         {
-            m_glModelWidget->clearModified();
+            m_glModelWidget->cleanUndoStack();
             m_activeFilename = filename.toStdString();
             setWindowTitle(BASE_WINDOW_TITLE + " - " + QString(m_activeFilename.c_str()));  // TODO: Functionize (resetWindowTitle)
         }
@@ -335,7 +332,7 @@ void MainWindow::openFile()
     {
         if (m_glModelWidget->loadGridCSV(filename.toStdString()))
         {
-            m_glModelWidget->clearModified();
+            m_glModelWidget->cleanUndoStack();
             m_glModelWidget->clearUndoStack();
             m_activeFilename = filename.toStdString();
             setWindowTitle(BASE_WINDOW_TITLE + " - " + QString(m_activeFilename.c_str()));  // TODO: Functionize (resetWindowTitle)
@@ -366,11 +363,11 @@ void MainWindow::setToolEraser(bool stat)  { if (stat) m_glModelWidget->setActiv
 void MainWindow::setToolReplace(bool stat) { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_REPLACE); }
 void MainWindow::setToolSlab(bool stat)    { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_SLAB); }
 
-void MainWindow::reactToModified(bool value)
+void MainWindow::reactToModified(bool clean)
 {
     QString current = windowTitle();
 
-    if (value)
+    if (!clean)
     {
         if (current.endsWith("*"))
             return;

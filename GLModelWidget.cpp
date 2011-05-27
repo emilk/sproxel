@@ -25,7 +25,6 @@ GLModelWidget::GLModelWidget(QWidget *parent)
       m_activeVoxel(-1,-1,-1),
       m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_lastMouse(),
-      m_modCount(0),
       m_drawGrid(true),
       m_drawVoxelGrid(true),
       m_drawBoundingBox(false),
@@ -40,6 +39,10 @@ GLModelWidget::GLModelWidget(QWidget *parent)
     transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
     //transform.rotate(Imath::V3d(0.0, 0.0, radians(45.0)));
     m_gvg.setTransform(transform);
+
+    // Be sure to tell the parent window every time we muck with the scene
+    QObject::connect(&m_undoStack, SIGNAL(cleanChanged(bool)),
+                     parent, SLOT(reactToModified(bool)));
 }
 
 
@@ -785,7 +788,6 @@ void GLModelWidget::rayGunBlast(const std::vector<Imath::V3i>& sortedInput, cons
         setVoxelColor(sortedInput[i], color);
     }
     m_undoStack.endMacro();
-    incModCount();
 }
 
 
@@ -810,7 +812,6 @@ void GLModelWidget::paintGunBlast(const std::vector<Imath::V3i>& sortedInput, co
             break;
         }
     }
-    incModCount();
 }
 
 
@@ -832,7 +833,6 @@ void GLModelWidget::paintGunReplace(const std::vector<Imath::V3i>& sortedInput, 
         return;
     
     setVoxelColor(hit, color);
-    incModCount();
 }
 
 
@@ -908,7 +908,6 @@ void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput
             m_undoStack.endMacro();
             break;
     }
-    incModCount();
 }
 
 
@@ -971,7 +970,6 @@ void GLModelWidget::paintGunFlood(const std::vector<Imath::V3i>& sortedInput, co
     setVoxelColor(hit, color);
     setNeighborsRecurse(hit, repColor, color);
     m_undoStack.endMacro();
-    incModCount();
 }
 
 
@@ -997,7 +995,6 @@ void GLModelWidget::paintGunDelete(const std::vector<Imath::V3i>& sortedInput)
             break;
         }
     }
-    incModCount();
 }
 
 
@@ -1338,7 +1335,6 @@ void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
     delete[] sliceBackup;
 
     m_undoStack.endMacro();
-    incModCount();
     updateGL();
 }
 
