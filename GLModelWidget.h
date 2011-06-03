@@ -90,6 +90,9 @@ private:
     Imath::V3i m_activeVoxel;
     Imath::Color4f m_activeColor;
 
+    Imath::Color4f m_gridColor;
+    Imath::Color4f m_backgroundColor;
+
     QPoint m_lastMouse;
     bool m_drawGrid;
     bool m_drawVoxelGrid;
@@ -117,7 +120,9 @@ private:
     Imath::Box3d dataBounds();
 
     void glDrawAxes();
-    void glDrawGrid(const int size);
+    void glDrawGrid(const int size, 
+                    const Imath::Color4f gridColor,
+                    const Imath::Color4f bgColor);
 
     void glDrawCubeWire();
     void glDrawCubePoly();
