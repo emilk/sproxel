@@ -335,26 +335,25 @@ void GLModelWidget::glDrawGrid(const int size,
                                const Imath::Color4f gridColor,
                                const Imath::Color4f bgColor)
 {
-    const Imath::Color4f lightColor = ((bgColor - gridColor) * 0.80) + gridColor;
-
     // TODO: Query and restore depth test
     glDisable(GL_DEPTH_TEST);
 
     // Lighter grid lines
+    const Imath::Color4f lightColor = ((bgColor - gridColor) * 0.80) + gridColor;
+
     glBegin(GL_LINES);
     glColor4f(lightColor.r, lightColor.g, lightColor.b, 1.0f);
     for (int i = -size; i <= size; i++)
     {
         if (i == 0) continue;
-
         glVertex3f(i, 0,  size);
         glVertex3f(i, 0, -size);
-
         glVertex3f( size, 0, i);
         glVertex3f(-size, 0, i);
     }
     glEnd();
 
+    // Darker main lines
     // TODO: Query and restore line width
     glLineWidth(2);
     glBegin(GL_LINES);

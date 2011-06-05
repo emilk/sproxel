@@ -336,6 +336,7 @@ void MainWindow::openFile()
             m_glModelWidget->clearUndoStack();
             m_activeFilename = filename.toStdString();
             setWindowTitle(BASE_WINDOW_TITLE + " - " + QString(m_activeFilename.c_str()));  // TODO: Functionize (resetWindowTitle)
+            m_glModelWidget->updateGL();
         }
     }
 }

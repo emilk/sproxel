@@ -38,6 +38,9 @@ public:
     bool loadGridCSV(const std::string& filename);
     bool saveGridCSV(const std::string& filename);
 
+    bool loadGridPNG(const std::string& filename);
+    bool saveGridPNG(const std::string& filename);
+
     void resizeVoxelGrid(Imath::V3i size);
     void reresVoxelGrid(const float scale);
 
