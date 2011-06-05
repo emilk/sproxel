@@ -298,26 +298,50 @@ void MainWindow::saveFile()
     
     if (m_activeFilename == "")
         return saveFileAs();
+
+    bool success = false;
+    if (m_activeFilename.endsWith(".PNG", Qt::CaseInsensitive))
+        success = m_glModelWidget->saveGridPNG(m_activeFilename.toStdString());
+    else if (m_activeFilename.endsWith(".CSV", Qt::CaseInsensitive))
+        success = m_glModelWidget->saveGridCSV(m_activeFilename.toStdString());
     
-    if (m_glModelWidget->saveGridCSV(m_activeFilename))
+    if (success)
         m_glModelWidget->cleanUndoStack();
 }
 
 
 void MainWindow::saveFileAs()
 {
-    QString filename = QFileDialog::getSaveFileName(this,
-        tr("Save voxels (CSV format) file as..."),
-        QString(""),
-        tr("CSV Files (*.csv)"));
-    if (!filename.isEmpty())
+    QFileDialog fd(this, "Save voxel file as...");
+    fd.setFilter(tr("PNG Files (*.png);;CSV Files (*.csv)"));
+    fd.setAcceptMode(QFileDialog::AcceptSave);
+    fd.exec();
+    QStringList qsl = fd.selectedFiles();
+    if (qsl.isEmpty())
+        return;
+    
+    QString filename = qsl[0];
+    QString activeFilter = fd.selectedNameFilter();
+
+    bool success = false;
+    if (activeFilter.startsWith("PNG"))
     {
-        if (m_glModelWidget->saveGridCSV(filename.toStdString()))
-        {
-            m_glModelWidget->cleanUndoStack();
-            m_activeFilename = filename.toStdString();
-            setWindowTitle(BASE_WINDOW_TITLE + " - " + QString(m_activeFilename.c_str()));  // TODO: Functionize (resetWindowTitle)
-        }
+        if (!filename.endsWith(".PNG", Qt::CaseInsensitive)) 
+            filename.append(".png");
+        success = m_glModelWidget->saveGridPNG(filename.toStdString());
+    }
+    else if (activeFilter.startsWith("CSV"))
+    {
+        if (!filename.endsWith(".CSV", Qt::CaseInsensitive)) 
+            filename.append(".csv");
+        success = m_glModelWidget->saveGridCSV(filename.toStdString());
+    }
+    
+    if (success)
+    {
+        m_glModelWidget->cleanUndoStack();
+        m_activeFilename = filename;
+        setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
     }
 }
 
@@ -325,19 +349,24 @@ void MainWindow::saveFileAs()
 void MainWindow::openFile()
 {
     QString filename = QFileDialog::getOpenFileName(this,
-        tr("Select CSV file to Open..."),
+        tr("Select file to Open..."),
         QString(),
-        tr("CSV Files (*.csv)"));
-    if (!filename.isEmpty())
+        tr("PNG Files (*.png);;CSV Files (*.csv)"));
+    if (filename.isEmpty())
+        return;
+
+    bool success = false;
+    if (filename.endsWith(".PNG", Qt::CaseInsensitive))
+        success = m_glModelWidget->loadGridPNG(filename.toStdString());
+    else if (filename.endsWith(".CSV", Qt::CaseInsensitive))
+        success = m_glModelWidget->loadGridCSV(filename.toStdString());
+
+    if (success)        
     {
-        if (m_glModelWidget->loadGridCSV(filename.toStdString()))
-        {
-            m_glModelWidget->cleanUndoStack();
-            m_glModelWidget->clearUndoStack();
-            m_activeFilename = filename.toStdString();
-            setWindowTitle(BASE_WINDOW_TITLE + " - " + QString(m_activeFilename.c_str()));  // TODO: Functionize (resetWindowTitle)
-            m_glModelWidget->updateGL();
-        }
+        m_glModelWidget->cleanUndoStack();
+        m_glModelWidget->clearUndoStack();
+        m_activeFilename = filename;
+        setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
     }
 }
 

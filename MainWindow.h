@@ -70,7 +70,7 @@ private:
     QAction* m_actToolRay;
 
     // Locals
-    std::string m_activeFilename;
+    QString m_activeFilename;
 
 public slots:
     void newGrid();

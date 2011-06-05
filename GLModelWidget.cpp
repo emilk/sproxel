@@ -39,7 +39,6 @@ GLModelWidget::GLModelWidget(QWidget *parent)
     Imath::M44d transform;
     Imath::V3d dDims = m_gvg.cellDimensions();
     transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
-    //transform.rotate(Imath::V3d(0.0, 0.0, radians(45.0)));
     m_gvg.setTransform(transform);
 
     // Be sure to tell the parent window every time we muck with the scene
@@ -1188,8 +1187,14 @@ bool GLModelWidget::loadGridCSV(const std::string& filename)
         }
         fscanfStatus = fscanf(fp, "\n");
     }
-
     fclose(fp);
+
+    // Transform and update - todo: functionize
+    Imath::M44d transform;
+    Imath::V3d dDims = m_gvg.cellDimensions();
+    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
+    m_gvg.setTransform(transform);
+    updateGL();
     return true;
 }
 
@@ -1226,6 +1231,88 @@ bool GLModelWidget::saveGridCSV(const std::string& filename)
     
     fclose(fp);
     return true;
+}
+
+
+bool GLModelWidget::loadGridPNG(const std::string& filename)
+{
+    QImage readMe;
+    if (!readMe.load(QString(filename.c_str()), "PNG"))
+        return false;
+    
+    QString tempStr;
+    tempStr = readMe.text("VoxelGridDimX");
+    int sizeX = tempStr.toInt();
+    tempStr = readMe.text("VoxelGridDimY");
+    int sizeY = tempStr.toInt();
+    tempStr = readMe.text("VoxelGridDimZ");
+    int sizeZ = tempStr.toInt();
+    if (sizeX == 0 || sizeY == 0 || sizeZ == 0)
+        return false;
+
+    readMe = readMe.mirrored();
+
+    // Clear and load
+    m_gvg.setCellDimensions(Imath::V3i(sizeX, sizeY, sizeZ));
+    m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
+
+    for (int slice = 0; slice < m_gvg.cellDimensions().z; slice++)
+    {
+        const int sliceOffset = slice * m_gvg.cellDimensions().x;
+        for (int y = 0; y < m_gvg.cellDimensions().y; y++)
+        {
+            for (int x = 0; x < m_gvg.cellDimensions().x; x++)
+            {
+                QRgb pixelValue = readMe.pixel(x+sliceOffset, y);
+                Imath::Color4f color((float)qRed(pixelValue) / 255.0f, 
+                                     (float)qGreen(pixelValue) / 255.0f, 
+                                     (float)qBlue(pixelValue) / 255.0f, 
+                                     (float)qAlpha(pixelValue) / 255.0f);
+                m_gvg.set(Imath::V3i(x, y, slice), color);
+            }
+        }
+    }
+
+    // Transform and update - todo: functionize
+    Imath::M44d transform;
+    Imath::V3d dDims = m_gvg.cellDimensions();
+    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
+    m_gvg.setTransform(transform);
+    updateGL();
+    return true;
+}
+
+
+bool GLModelWidget::saveGridPNG(const std::string& filename)
+{
+    // TODO: Offer other options besides XY slices?  Directionality?  Ordering?
+    const int height = m_gvg.cellDimensions().y;
+    const int width = m_gvg.cellDimensions().x * m_gvg.cellDimensions().z;
+    QImage writeMe(QSize(width, height), QImage::QImage::Format_ARGB32);
+
+    for (int slice = 0; slice < m_gvg.cellDimensions().z; slice++)
+    {
+        const int sliceOffset = slice * m_gvg.cellDimensions().x;
+        for (int y = 0; y < m_gvg.cellDimensions().y; y++)
+        {
+            for (int x = 0; x < m_gvg.cellDimensions().x; x++)
+            {
+                const Imath::Color4f& colorScaled = m_gvg.get(Imath::V3i(x, y, slice)) * 255.0f;
+                writeMe.setPixel(x+sliceOffset, y, qRgba((int)colorScaled.r,
+                                                         (int)colorScaled.g,
+                                                         (int)colorScaled.b,
+                                                         (int)colorScaled.a));
+            }
+        }
+    }
+    writeMe = writeMe.mirrored();   // QT Bug: mirrored() doesn't preserve text.
+
+    QString tempStr;
+    writeMe.setText("VoxelGridDimX", tempStr.setNum(m_gvg.cellDimensions().x));
+    writeMe.setText("VoxelGridDimY", tempStr.setNum(m_gvg.cellDimensions().y));
+    writeMe.setText("VoxelGridDimZ", tempStr.setNum(m_gvg.cellDimensions().z));
+
+    return writeMe.save(QString(filename.c_str()));
 }
 
 
