@@ -1042,7 +1042,8 @@ void GLModelWidget::handleArrows(QKeyEvent *event)
     // Which way does camera up go?
     int udInc = 0;
     int* camUD = NULL;
-    Imath::V3d camYVec; m_cam.transform().multDirMatrix(Imath::V3d(0.0, 1.0, 0.0), camYVec);
+    Imath::V3d camYVec; 
+    m_cam.transform().multDirMatrix(Imath::V3d(0.0, 1.0, 0.0), camYVec);
 
     // TODO: Optimize since these are all obvious dot product results
     Imath::V3d objectXVec; m_gvg.transform().multDirMatrix(Imath::V3d(1.0, 0.0, 0.0), objectXVec);
@@ -1315,6 +1316,69 @@ bool GLModelWidget::saveGridPNG(const std::string& filename)
     return writeMe.save(QString(filename.c_str()));
 }
 
+
+bool GLModelWidget::exportGridOBJ(const std::string& filename)
+{
+    // Exports an OBJ file with the world matrix baked in.
+    FILE* fp = fopen(filename.c_str(), "wb");
+    if (!fp) return false;
+
+    int vIndex = 1;
+    std::vector<Imath::V3i> faceVec;
+    Imath::V3i cellDim = m_gvg.cellDimensions();
+
+    // Vertices
+    for (int y = cellDim.y-1; y >= 0; y--)
+    {
+        for (int z = 0; z < cellDim.z; z++)
+        {
+            for (int x = 0; x < cellDim.x; x++)
+            {
+                const Imath::Color4f& color = m_gvg.get(Imath::V3i(x, y, z));
+                if (color.a != 0.0f)
+                {
+                    const Imath::M44d mat = m_gvg.voxelTransform(Imath::V3i(x,y,z));
+                    Imath::V3d v0; mat.multVecMatrix(Imath::V3d(-0.5f, -0.5f, -0.5f), v0);
+                    Imath::V3d v1; mat.multVecMatrix(Imath::V3d(-0.5f, -0.5f,  0.5f), v1);
+                    Imath::V3d v2; mat.multVecMatrix(Imath::V3d(-0.5f,  0.5f, -0.5f), v2);
+                    Imath::V3d v3; mat.multVecMatrix(Imath::V3d( 0.5f, -0.5f, -0.5f), v3);
+                    Imath::V3d v4; mat.multVecMatrix(Imath::V3d(-0.5f,  0.5f,  0.5f), v4);
+                    Imath::V3d v5; mat.multVecMatrix(Imath::V3d( 0.5f, -0.5f,  0.5f), v5);
+                    Imath::V3d v6; mat.multVecMatrix(Imath::V3d( 0.5f,  0.5f, -0.5f), v6);
+                    Imath::V3d v7; mat.multVecMatrix(Imath::V3d( 0.5f,  0.5f,  0.5f), v7);
+                    fprintf(fp, "v %f %f %f\n", v0.x, v0.y, v0.z);
+                    fprintf(fp, "v %f %f %f\n", v1.x, v1.y, v1.z);
+                    fprintf(fp, "v %f %f %f\n", v2.x, v2.y, v2.z);
+                    fprintf(fp, "v %f %f %f\n", v3.x, v3.y, v3.z);
+                    fprintf(fp, "v %f %f %f\n", v4.x, v4.y, v4.z);
+                    fprintf(fp, "v %f %f %f\n", v5.x, v5.y, v5.z);
+                    fprintf(fp, "v %f %f %f\n", v6.x, v6.y, v6.z);
+                    fprintf(fp, "v %f %f %f\n", v7.x, v7.y, v7.z);
+                    faceVec.push_back(Imath::V3i(vIndex+6, vIndex+2, vIndex+4));
+                    faceVec.push_back(Imath::V3i(vIndex+4, vIndex+7, vIndex+6));
+                    faceVec.push_back(Imath::V3i(vIndex+5, vIndex+1, vIndex+0));
+                    faceVec.push_back(Imath::V3i(vIndex+0, vIndex+3, vIndex+5));
+                    faceVec.push_back(Imath::V3i(vIndex+7, vIndex+4, vIndex+1));
+                    faceVec.push_back(Imath::V3i(vIndex+1, vIndex+5, vIndex+7));
+                    faceVec.push_back(Imath::V3i(vIndex+3, vIndex+0, vIndex+2));
+                    faceVec.push_back(Imath::V3i(vIndex+2, vIndex+6, vIndex+3));
+                    faceVec.push_back(Imath::V3i(vIndex+4, vIndex+2, vIndex+0));
+                    faceVec.push_back(Imath::V3i(vIndex+0, vIndex+1, vIndex+4));
+                    faceVec.push_back(Imath::V3i(vIndex+6, vIndex+7, vIndex+5));
+                    faceVec.push_back(Imath::V3i(vIndex+5, vIndex+3, vIndex+6));
+                    vIndex += 8;
+                }
+            }
+        }
+    }
+    
+    // Faces
+    for (int f = 0; f < faceVec.size(); f++)
+        fprintf(fp, "f %d %d %d\n", faceVec[f].x, faceVec[f].y, faceVec[f].z);
+    
+    fclose(fp);
+    return true;
+}
 
 void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
 {

@@ -60,6 +60,8 @@ private:
     QAction* m_actFileSave;
     QAction* m_actFileSaveAs;
 
+    QAction* m_actFileExportGrid;
+
     QActionGroup* m_toolbarActionGroup;
     QAction* m_actToolSplat;
     QAction* m_actToolReplace;
@@ -78,6 +80,8 @@ public slots:
     void saveFile();
     void saveFileAs();
     void openFile();
+
+    void exportGrid();
 
     void shiftUp();
     void shiftDown();

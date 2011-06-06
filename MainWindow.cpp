@@ -68,6 +68,13 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_menuFile->addSeparator();
 
+    m_actFileExportGrid = new QAction("&Export...", this);
+    m_menuFile->addAction(m_actFileExportGrid);
+    connect(m_actFileExportGrid, SIGNAL(triggered()), 
+            this, SLOT(exportGrid()));
+
+    m_menuFile->addSeparator();
+
     m_actQuit = new QAction("&Quit", this);
     m_actQuit->setShortcut(Qt::CTRL + Qt::Key_Q);
     m_menuFile->addAction(m_actQuit);
@@ -367,6 +374,28 @@ void MainWindow::openFile()
         m_glModelWidget->clearUndoStack();
         m_activeFilename = filename;
         setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
+    }
+}
+
+
+void MainWindow::exportGrid()
+{
+    QFileDialog fd(this, "Export file...");
+    fd.setFilter(tr("OBJ Files (*.obj)"));
+    fd.setAcceptMode(QFileDialog::AcceptSave);
+    fd.exec();
+    QStringList qsl = fd.selectedFiles();
+    if (qsl.isEmpty())
+        return;
+    
+    QString filename = qsl[0];
+    QString activeFilter = fd.selectedNameFilter();
+
+    if (activeFilter.startsWith("OBJ"))
+    {
+        if (!filename.endsWith(".OBJ", Qt::CaseInsensitive)) 
+            filename.append(".obj");
+        m_glModelWidget->exportGridOBJ(filename.toStdString());
     }
 }
 
