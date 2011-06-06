@@ -1373,7 +1373,7 @@ bool GLModelWidget::exportGridOBJ(const std::string& filename)
     }
     
     // Faces
-    for (int f = 0; f < faceVec.size(); f++)
+    for (size_t f = 0; f < faceVec.size(); f++)
         fprintf(fp, "f %d %d %d\n", faceVec[f].x, faceVec[f].y, faceVec[f].z);
     
     fclose(fp);
