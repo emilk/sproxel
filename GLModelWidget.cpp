@@ -1310,6 +1310,7 @@ bool GLModelWidget::saveGridPNG(const std::string& filename)
     writeMe = writeMe.mirrored();   // QT Bug: mirrored() doesn't preserve text.
 
     QString tempStr;
+    writeMe.setText("SproxelFileVersion", "1");
     writeMe.setText("VoxelGridDimX", tempStr.setNum(m_gvg.cellDimensions().x));
     writeMe.setText("VoxelGridDimY", tempStr.setNum(m_gvg.cellDimensions().y));
     writeMe.setText("VoxelGridDimZ", tempStr.setNum(m_gvg.cellDimensions().z));
