@@ -1387,13 +1387,11 @@ bool GLModelWidget::exportGridOBJ(const std::string& filename)
 
                     char mtlName[64];
                     sprintf(mtlName, "mtl%d", (int)mtlMap.size());
-                    //std::cout << mtlName << std::endl;
 
                     char colorString[64];
                     sprintf(colorString, "Kd %.4f %.4f %.4f", color.r, color.g, color.b);
                     colorVec.push_back(std::string(colorString));
 
-                    //mtlMap[std::string(colorString)] = std::string(mtlName);
                     mtlMap.insert(std::pair<std::string, std::string>(std::string(colorString), std::string(mtlName)));
                 }
             }

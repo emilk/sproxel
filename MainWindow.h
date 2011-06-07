@@ -86,6 +86,8 @@ public slots:
 
     void exportGrid();
 
+    void quit();
+	
     void shiftUp();
     void shiftDown();
 

@@ -79,7 +79,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_actQuit->setShortcut(Qt::CTRL + Qt::Key_Q);
     m_menuFile->addAction(m_actQuit);
     connect(m_actQuit, SIGNAL(triggered()), 
-            qApp, SLOT(quit()));
+            this, SLOT(quit()));
 
 
     // ------ edit menu
@@ -436,6 +436,22 @@ void MainWindow::exportGrid()
     }
 }
 
+
+void MainWindow::quit()
+{
+    // Confirmation dialog
+    if (m_glModelWidget->modified() == true)
+    {
+        switch (fileModifiedDialog())
+        {
+            case QMessageBox::Save: saveFile(); break;
+            case QMessageBox::Discard: break;
+            case QMessageBox::Cancel: return; break;
+        }
+    }
+
+	qApp->quit();
+}
 
 // Trampoline functions because QSignalMapper can't do complex args 
 // Search for QBoundMethod for a custom approach, but I'm too lazy to include it for now.
