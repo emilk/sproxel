@@ -74,6 +74,9 @@ private:
     // Locals
     QString m_activeFilename;
 
+    // Functions
+    int fileModifiedDialog();
+
 public slots:
     void newGrid();
 

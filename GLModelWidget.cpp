@@ -1,6 +1,7 @@
 #include <QtGui>
 #include <QtOpenGL>
 
+#include <map>
 #include <cmath>
 #include <iostream>
 #include <algorithm>
@@ -1319,13 +1320,26 @@ bool GLModelWidget::saveGridPNG(const std::string& filename)
 
 bool GLModelWidget::exportGridOBJ(const std::string& filename)
 {
+    // Get file basename and extension
+    QFileInfo fi(QString(filename.c_str()));
+    QString basename = fi.completeBaseName();
+    QString basedir = fi.absolutePath();
+
     // Exports an OBJ file with the world matrix baked in.
     FILE* fp = fopen(filename.c_str(), "wb");
     if (!fp) return false;
 
     int vIndex = 1;
     std::vector<Imath::V3i> faceVec;
+    std::vector<std::string> colorVec;
+    std::map<std::string, std::string> mtlMap;
     Imath::V3i cellDim = m_gvg.cellDimensions();
+
+    // Material library
+    fprintf(fp, "mtllib %s.mtl\n", basename.toAscii().constData());
+
+    // The object's name
+    fprintf(fp, "g %s\n", basename.toAscii().constData());
 
     // Vertices
     for (int y = cellDim.y-1; y >= 0; y--)
@@ -1367,15 +1381,55 @@ bool GLModelWidget::exportGridOBJ(const std::string& filename)
                     faceVec.push_back(Imath::V3i(vIndex+6, vIndex+7, vIndex+5));
                     faceVec.push_back(Imath::V3i(vIndex+5, vIndex+3, vIndex+6));
                     vIndex += 8;
+
+                    Imath::Color4f color = m_gvg.get(Imath::V3i(x,y,z));
+
+                    char mtlName[64];
+                    sprintf(mtlName, "mtl%d", (int)mtlMap.size());
+                    //std::cout << mtlName << std::endl;
+
+                    char colorString[64];
+                    sprintf(colorString, "Kd %.4f %.4f %.4f", color.r, color.g, color.b);
+                    colorVec.push_back(std::string(colorString));
+
+                    //mtlMap[std::string(colorString)] = std::string(mtlName);
+                    mtlMap.insert(std::pair<std::string, std::string>(std::string(colorString), std::string(mtlName)));
                 }
             }
         }
     }
-    
+
     // Faces
     for (size_t f = 0; f < faceVec.size(); f++)
+    {
+        // Print the material for every cube
+        if (!(f % 12))
+        {
+            const std::string x = mtlMap.find(colorVec[f/12])->second;
+            fprintf(fp, "usemtl %s\n", x.c_str());
+        }
         fprintf(fp, "f %d %d %d\n", faceVec[f].x, faceVec[f].y, faceVec[f].z);
+    }
+    fclose(fp);
     
+    // Write .mtl file
+    QString mtlFilename = basedir + "/" + basename + ".mtl";
+    fp = fopen(mtlFilename.toAscii().constData(), "wb");
+    if (!fp) return false;
+
+    for(std::map<std::string, std::string>::iterator p = mtlMap.begin();
+        p != mtlMap.end();
+        ++p)
+    {
+        fprintf(fp, "newmtl %s\n", p->second.c_str());
+        fprintf(fp, "illum 4\n");
+        fprintf(fp, "%s\n", p->first.c_str());
+        fprintf(fp, "Ka 0.00 0.00 0.00\n");
+        fprintf(fp, "Tf 1.00 1.00 1.00\n");
+        fprintf(fp, "Ni 1.00\n");
+        fprintf(fp, "\n");
+    }
+
     fclose(fp);
     return true;
 }

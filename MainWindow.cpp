@@ -286,13 +286,38 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 }
 
 
+int MainWindow::fileModifiedDialog()
+{
+    QMessageBox msgBox;
+    msgBox.setText("The document has been modified.");
+    msgBox.setInformativeText("Do you want to save your changes?");
+    msgBox.setStandardButtons(QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+    msgBox.setDefaultButton(QMessageBox::Save);
+    return msgBox.exec();
+}
+
+
 void MainWindow::newGrid()
 {
-    NewGridDialog dlg(this);
+    // Confirmation dialog
+    if (m_glModelWidget->modified() == true)
+    {
+        switch (fileModifiedDialog())
+        {
+            case QMessageBox::Save: saveFile(); break;
+            case QMessageBox::Discard: break;
+            case QMessageBox::Cancel: return; break;
+        }
+    }
 
+    NewGridDialog dlg(this);
     dlg.setModal(true);
     if (dlg.exec())
     {
+        m_activeFilename = "";
+        m_glModelWidget->cleanUndoStack();
+        m_glModelWidget->clearUndoStack();
+        setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
         m_glModelWidget->resizeVoxelGrid(dlg.getVoxelSize());
     }
 }
@@ -324,12 +349,13 @@ void MainWindow::saveFileAs()
     fd.setAcceptMode(QFileDialog::AcceptSave);
     fd.exec();
     QStringList qsl = fd.selectedFiles();
-    if (qsl.isEmpty())
-        return;
+    if (qsl.isEmpty()) return;
+    if (QFileInfo(qsl[0]).isDir()) return;  // It returns the directory if you press Cancel
     
     QString filename = qsl[0];
     QString activeFilter = fd.selectedNameFilter();
 
+    // Switch on save type
     bool success = false;
     if (activeFilter.startsWith("PNG"))
     {
@@ -343,7 +369,7 @@ void MainWindow::saveFileAs()
             filename.append(".csv");
         success = m_glModelWidget->saveGridCSV(filename.toStdString());
     }
-    
+
     if (success)
     {
         m_glModelWidget->cleanUndoStack();
@@ -358,9 +384,20 @@ void MainWindow::openFile()
     QString filename = QFileDialog::getOpenFileName(this,
         tr("Select file to Open..."),
         QString(),
-        tr("PNG Files (*.png);;CSV Files (*.csv)"));
+        tr("Sproxel Save Files (*.png *.csv)"));
     if (filename.isEmpty())
         return;
+
+    // Confirmation dialog
+    if (m_glModelWidget->modified() == true)
+    {
+        switch (fileModifiedDialog())
+        {
+            case QMessageBox::Save: saveFile(); break;
+            case QMessageBox::Discard: break;
+            case QMessageBox::Cancel: return; break;
+        }
+    }
 
     bool success = false;
     if (filename.endsWith(".PNG", Qt::CaseInsensitive))
@@ -385,8 +422,8 @@ void MainWindow::exportGrid()
     fd.setAcceptMode(QFileDialog::AcceptSave);
     fd.exec();
     QStringList qsl = fd.selectedFiles();
-    if (qsl.isEmpty())
-        return;
+    if (qsl.isEmpty()) return;
+    if (QFileInfo(qsl[0]).isDir()) return;  // It returns the directory if you press Cancel
     
     QString filename = qsl[0];
     QString activeFilter = fd.selectedNameFilter();
@@ -404,11 +441,13 @@ void MainWindow::exportGrid()
 // Search for QBoundMethod for a custom approach, but I'm too lazy to include it for now.
 void MainWindow::shiftUp()
 {
-    m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(), true, m_glModelWidget->shiftWrap());
+    m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(), 
+                                 true, m_glModelWidget->shiftWrap());
 }
 void MainWindow::shiftDown()
 {
-    m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(), false, m_glModelWidget->shiftWrap());
+    m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(), 
+                                 false, m_glModelWidget->shiftWrap());
 }
 
 void MainWindow::upRes()   { m_glModelWidget->reresVoxelGrid(2.0f); }
