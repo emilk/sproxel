@@ -9,7 +9,7 @@
 #include <QFileDialog>
 #include <QColorDialog>
 
-MainWindow::MainWindow(QWidget *parent) : 
+MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) : 
     QMainWindow(parent), 
     m_activeFilename("")
 {
@@ -210,6 +210,22 @@ MainWindow::MainWindow(QWidget *parent) :
     // Remaining verbosity
     setWindowTitle(BASE_WINDOW_TITLE);
     statusBar()->showMessage(tr("Ready"));
+
+    // Load the commandline supplied filename    
+    if (initialFilename != "")
+    {
+        bool success = false;
+        if (initialFilename.endsWith(".PNG", Qt::CaseInsensitive))
+            success = m_glModelWidget->loadGridPNG(initialFilename.toStdString());
+        else if (initialFilename.endsWith(".CSV", Qt::CaseInsensitive))
+            success = m_glModelWidget->loadGridCSV(initialFilename.toStdString());
+
+        if (success)        
+        {
+            m_activeFilename = initialFilename;
+            setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
+        }
+    }
 }
 
 

@@ -21,7 +21,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    MainWindow( QWidget *parent=NULL );
+    MainWindow(const QString& initialFilename, QWidget* parent=NULL);
 
 protected:
     void keyPressEvent(QKeyEvent* event);
