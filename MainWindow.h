@@ -25,7 +25,7 @@ public:
 
 protected:
     void keyPressEvent(QKeyEvent* event);
-    
+
 private:
     GLModelWidget* m_glModelWidget;
 
@@ -34,12 +34,12 @@ private:
     QMenu* m_menuEdit;
     QMenu* m_menuView;
     QMenu* m_menuWindow;
-    
+
     // Docking windows and toolbars
     QToolBar* m_toolbar;
     QDockWidget* m_paletteDocker;
     PaletteWidget* m_paletteWidget;
-    
+
     // Actions
     QAction* m_actQuit;
 
@@ -60,6 +60,7 @@ private:
     QAction* m_actFileSave;
     QAction* m_actFileSaveAs;
 
+    QAction* m_actFileImport;
     QAction* m_actFileExportGrid;
 
     QActionGroup* m_toolbarActionGroup;
@@ -84,10 +85,11 @@ public slots:
     void saveFileAs();
     void openFile();
 
+    void import();
     void exportGrid();
 
     void quit();
-	
+
     void shiftUp();
     void shiftDown();
 

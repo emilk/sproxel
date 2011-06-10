@@ -37,6 +37,7 @@ GLModelWidget::GLModelWidget(QWidget *parent)
 {
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
 
+    // Transform and update - todo: functionize
     Imath::M44d transform;
     Imath::V3d dDims = m_gvg.cellDimensions();
     transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
@@ -61,6 +62,7 @@ void GLModelWidget::resizeVoxelGrid(Imath::V3i size)
 
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
 
+    // Transform and update - todo: functionize
     Imath::M44d transform;
     Imath::V3d dDims = m_gvg.cellDimensions();
     transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
@@ -1316,6 +1318,65 @@ bool GLModelWidget::saveGridPNG(const std::string& filename)
     writeMe.setText("VoxelGridDimZ", tempStr.setNum(m_gvg.cellDimensions().z));
 
     return writeMe.save(QString(filename.c_str()));
+}
+
+
+bool GLModelWidget::importImageIntoGrid(const std::string& filename)
+{
+    QImage imported;
+    if (!imported.load(filename.c_str()))
+        return false;
+    imported = imported.mirrored();
+    
+    // For now we always import into the Z axis and resize if we need to
+    const int imageSizeX = imported.width();
+    const int imageSizeY = imported.height();
+    
+    const Imath::V3i oldDims = m_gvg.cellDimensions();
+    Imath::V3i newDims = m_gvg.cellDimensions();
+
+    if (imageSizeX > oldDims.x) newDims.x = imageSizeX;
+    if (imageSizeY > oldDims.y) newDims.y = imageSizeY;
+    m_gvg.setCellDimensions(newDims);
+    
+    // Clear out the uninitialized new region : TODO: FUnctionize
+    for (int x = 0; x < newDims.x; x++)
+    {
+        for (int y = 0; y < newDims.y; y++)
+        {
+            for (int z = 0; z < newDims.z; z++)
+            {
+                if (x < oldDims.x && y < oldDims.y && z < oldDims.z)
+                    continue;
+                m_gvg.set(Imath::V3i(x, y, z), 
+                          Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
+            }
+        }
+    }
+    
+    // Splat the data in
+    for (int x = 0; x < imageSizeX; x++)
+    {
+        for (int y = 0; y < imageSizeY; y++)
+        {
+            const Imath::V3i locale(x, y, 0);
+            const QColor qcolor = imported.pixel(x, y);
+            const Imath::Color4f color(qcolor.redF(),
+                                       qcolor.greenF(),
+                                       qcolor.blueF(),
+                                       qcolor.alphaF());
+            m_gvg.set(locale, color);
+        }
+    }
+    
+    // Transform and update - todo: functionize
+    Imath::M44d transform;
+    Imath::V3d dDims = m_gvg.cellDimensions();
+    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
+    m_gvg.setTransform(transform);
+
+    updateGL();
+    return true;
 }
 
 

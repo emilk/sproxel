@@ -9,8 +9,8 @@
 #include <QFileDialog>
 #include <QColorDialog>
 
-MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) : 
-    QMainWindow(parent), 
+MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
+    QMainWindow(parent),
     m_activeFilename("")
 {
     // Windows
@@ -52,25 +52,30 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_actFileOpen = new QAction("&Open", this);
     m_actFileOpen->setShortcut(Qt::CTRL + Qt::Key_O);
     m_menuFile->addAction(m_actFileOpen);
-    connect(m_actFileOpen, SIGNAL(triggered()), 
+    connect(m_actFileOpen, SIGNAL(triggered()),
             this, SLOT(openFile()));
 
     m_actFileSave = new QAction("&Save", this);
     m_actFileSave->setShortcut(Qt::CTRL + Qt::Key_S);
     m_menuFile->addAction(m_actFileSave);
-    connect(m_actFileSave, SIGNAL(triggered()), 
+    connect(m_actFileSave, SIGNAL(triggered()),
             this, SLOT(saveFile()));
 
     m_actFileSaveAs = new QAction("Save &As", this);
     m_menuFile->addAction(m_actFileSaveAs);
-    connect(m_actFileSaveAs, SIGNAL(triggered()), 
+    connect(m_actFileSaveAs, SIGNAL(triggered()),
             this, SLOT(saveFileAs()));
 
     m_menuFile->addSeparator();
 
+    m_actFileImport = new QAction("&Import...", this);
+    m_menuFile->addAction(m_actFileImport);
+    connect(m_actFileImport, SIGNAL(triggered()),
+            this, SLOT(import()));
+
     m_actFileExportGrid = new QAction("&Export...", this);
     m_menuFile->addAction(m_actFileExportGrid);
-    connect(m_actFileExportGrid, SIGNAL(triggered()), 
+    connect(m_actFileExportGrid, SIGNAL(triggered()),
             this, SLOT(exportGrid()));
 
     m_menuFile->addSeparator();
@@ -78,7 +83,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_actQuit = new QAction("&Quit", this);
     m_actQuit->setShortcut(Qt::CTRL + Qt::Key_Q);
     m_menuFile->addAction(m_actQuit);
-    connect(m_actQuit, SIGNAL(triggered()), 
+    connect(m_actQuit, SIGNAL(triggered()),
             this, SLOT(quit()));
 
 
@@ -168,41 +173,41 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
 
 
     // ------ toolbar hookups
-	// Icons from the brilliant icon pack located at : http://pen-art.ru/
+    // Icons from the brilliant icon pack located at : http://pen-art.ru/
     m_toolbarActionGroup = new QActionGroup(this);
 
     m_actToolSplat = new QAction("Splat", m_toolbarActionGroup);
     m_actToolSplat->setIcon(QIcon(QPixmap(":/icons/splat.png")));
     m_actToolSplat->setCheckable(true);
     connect(m_actToolSplat, SIGNAL(toggled(bool)), this, SLOT(setToolSplat(bool)));
-    
+
     m_actToolReplace = new QAction("Replace", m_toolbarActionGroup);
     m_actToolReplace->setIcon(QIcon(QPixmap(":/icons/pencil.png")));
     m_actToolReplace->setCheckable(true);
     connect(m_actToolReplace, SIGNAL(toggled(bool)), this, SLOT(setToolReplace(bool)));
-    
+
     m_actToolFlood = new QAction("Flood", m_toolbarActionGroup);
     m_actToolFlood->setIcon(QIcon(QPixmap(":/icons/paintBucket.png")));
     m_actToolFlood->setCheckable(true);
     connect(m_actToolFlood, SIGNAL(toggled(bool)), this, SLOT(setToolFlood(bool)));
-    
+
     m_actToolDropper = new QAction("Dropper", m_toolbarActionGroup);
     m_actToolDropper->setIcon(QIcon(QPixmap(":/icons/eyeDropper.png")));
     m_actToolDropper->setCheckable(true);
     connect(m_actToolDropper, SIGNAL(toggled(bool)), this, SLOT(setToolDropper(bool)));
-    
+
     m_actToolEraser = new QAction("Eraser", m_toolbarActionGroup);
     m_actToolEraser->setIcon(QIcon(QPixmap(":/icons/eraser.png")));
     m_actToolEraser->setCheckable(true);
     connect(m_actToolEraser, SIGNAL(toggled(bool)), this, SLOT(setToolEraser(bool)));
-    
+
     m_actToolSlab = new QAction("Slab", m_toolbarActionGroup);
     m_actToolSlab->setIcon(QIcon(QPixmap(":/icons/slab.png")));
     m_actToolSlab->setCheckable(true);
     connect(m_actToolSlab, SIGNAL(toggled(bool)), this, SLOT(setToolSlab(bool)));
 
     //m_actToolRay = new QAction("Ray", this);
-    
+
     m_actToolSplat->setChecked(true);
     m_toolbar->addActions(m_toolbarActionGroup->actions());
 
@@ -211,7 +216,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     setWindowTitle(BASE_WINDOW_TITLE);
     statusBar()->showMessage(tr("Ready"));
 
-    // Load the commandline supplied filename    
+    // Load the commandline supplied filename
     if (initialFilename != "")
     {
         bool success = false;
@@ -220,7 +225,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
         else if (initialFilename.endsWith(".CSV", Qt::CaseInsensitive))
             success = m_glModelWidget->loadGridCSV(initialFilename.toStdString());
 
-        if (success)        
+        if (success)
         {
             m_activeFilename = initialFilename;
             setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
@@ -251,8 +256,8 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     {
         QColor color = QColorDialog::getColor(Qt::white, this);
         m_paletteWidget->setActiveColor(Imath::Color4f((float)color.red()/255.0f,
-                                                       (float)color.green()/255.0f, 
-                                                       (float)color.blue()/255.0f, 
+                                                       (float)color.green()/255.0f,
+                                                       (float)color.blue()/255.0f,
                                                        (float)color.alpha()/255.0f));
     }
     else if (ctrlDown && event->key() == Qt::Key_F)
@@ -288,14 +293,14 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     else if (event->key() == Qt::Key_Space)
     {
         // It's okay to call setVoxelColor once on the model widget, but any more requires an internal wrapper
-        m_glModelWidget->setVoxelColor(m_glModelWidget->activeVoxel(), 
+        m_glModelWidget->setVoxelColor(m_glModelWidget->activeVoxel(),
                                        m_glModelWidget->activeColor());
         m_glModelWidget->updateGL();
     }
     else if (event->key() == Qt::Key_Delete)
     {
         // It's okay to call setVoxelColor once on the model widget, but any more requires an internal wrapper
-        m_glModelWidget->setVoxelColor(m_glModelWidget->activeVoxel(), 
+        m_glModelWidget->setVoxelColor(m_glModelWidget->activeVoxel(),
                                        Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
         m_glModelWidget->updateGL();
     }
@@ -343,7 +348,7 @@ void MainWindow::saveFile()
 {
     if (m_glModelWidget->modified() == false)
         return;
-    
+
     if (m_activeFilename == "")
         return saveFileAs();
 
@@ -352,7 +357,7 @@ void MainWindow::saveFile()
         success = m_glModelWidget->saveGridPNG(m_activeFilename.toStdString());
     else if (m_activeFilename.endsWith(".CSV", Qt::CaseInsensitive))
         success = m_glModelWidget->saveGridCSV(m_activeFilename.toStdString());
-    
+
     if (success)
         m_glModelWidget->cleanUndoStack();
 }
@@ -367,7 +372,7 @@ void MainWindow::saveFileAs()
     QStringList qsl = fd.selectedFiles();
     if (qsl.isEmpty()) return;
     if (QFileInfo(qsl[0]).isDir()) return;  // It returns the directory if you press Cancel
-    
+
     QString filename = qsl[0];
     QString activeFilter = fd.selectedNameFilter();
 
@@ -375,13 +380,13 @@ void MainWindow::saveFileAs()
     bool success = false;
     if (activeFilter.startsWith("PNG"))
     {
-        if (!filename.endsWith(".PNG", Qt::CaseInsensitive)) 
+        if (!filename.endsWith(".PNG", Qt::CaseInsensitive))
             filename.append(".png");
         success = m_glModelWidget->saveGridPNG(filename.toStdString());
     }
     else if (activeFilter.startsWith("CSV"))
     {
-        if (!filename.endsWith(".CSV", Qt::CaseInsensitive)) 
+        if (!filename.endsWith(".CSV", Qt::CaseInsensitive))
             filename.append(".csv");
         success = m_glModelWidget->saveGridCSV(filename.toStdString());
     }
@@ -421,7 +426,7 @@ void MainWindow::openFile()
     else if (filename.endsWith(".CSV", Qt::CaseInsensitive))
         success = m_glModelWidget->loadGridCSV(filename.toStdString());
 
-    if (success)        
+    if (success)
     {
         m_glModelWidget->cleanUndoStack();
         m_glModelWidget->clearUndoStack();
@@ -430,29 +435,50 @@ void MainWindow::openFile()
     }
 }
 
+void MainWindow::import()
+{
+    QFileDialog fd(this, "Import file...");
+    fd.setFilter(tr("Image files (*.bmp *.gif *.jpg *.jpeg *.png *.tiff *.tif)"));
+    fd.setAcceptMode(QFileDialog::AcceptOpen);
+    fd.setFileMode(QFileDialog::ExistingFile);
+    fd.exec();
+    QStringList qsl = fd.selectedFiles();
+    if (qsl.isEmpty()) return;
+    if (QFileInfo(qsl[0]).isDir()) return;  // It returns the directory if you press Cancel
+
+    QString filename = qsl[0];
+    QString activeFilter = fd.selectedNameFilter();
+
+    if (activeFilter.startsWith("Image files"))
+    {
+        m_glModelWidget->importImageIntoGrid(filename.toStdString());
+    }
+}
+
 
 void MainWindow::exportGrid()
 {
     QFileDialog fd(this, "Export file...");
-    fd.setFilter(tr("OBJ Files (*.obj)"));
+    fd.setFilter(tr("OBJ files (*.obj)"));
     fd.setAcceptMode(QFileDialog::AcceptSave);
     fd.exec();
     QStringList qsl = fd.selectedFiles();
     if (qsl.isEmpty()) return;
     if (QFileInfo(qsl[0]).isDir()) return;  // It returns the directory if you press Cancel
-    
+
     QString filename = qsl[0];
     QString activeFilter = fd.selectedNameFilter();
 
     if (activeFilter.startsWith("OBJ"))
     {
-        if (!filename.endsWith(".OBJ", Qt::CaseInsensitive)) 
+        if (!filename.endsWith(".OBJ", Qt::CaseInsensitive))
             filename.append(".obj");
         m_glModelWidget->exportGridOBJ(filename.toStdString());
     }
 }
 
 
+// TODO: This doesn't catch hitting the X on the window.  Fix.
 void MainWindow::quit()
 {
     // Confirmation dialog
@@ -466,19 +492,19 @@ void MainWindow::quit()
         }
     }
 
-	qApp->quit();
+    qApp->quit();
 }
 
-// Trampoline functions because QSignalMapper can't do complex args 
+// Trampoline functions because QSignalMapper can't do complex args
 // Search for QBoundMethod for a custom approach, but I'm too lazy to include it for now.
 void MainWindow::shiftUp()
 {
-    m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(), 
+    m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(),
                                  true, m_glModelWidget->shiftWrap());
 }
 void MainWindow::shiftDown()
 {
-    m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(), 
+    m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(),
                                  false, m_glModelWidget->shiftWrap());
 }
 

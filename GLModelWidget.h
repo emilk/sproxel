@@ -41,6 +41,7 @@ public:
     bool loadGridPNG(const std::string& filename);
     bool saveGridPNG(const std::string& filename);
 
+    bool importImageIntoGrid(const std::string& filename);
     bool exportGridOBJ(const std::string& filename);
 
     void resizeVoxelGrid(Imath::V3i size);
