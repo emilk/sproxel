@@ -57,14 +57,20 @@ void PaletteWidget::mousePressEvent(QMouseEvent* event)
     {
         // TODO: Why can i not add the additional two parameters (to get alpha) to the color dialog?
         case HIT_ACTIVE_COLOR_BOX:
-            color = QColorDialog::getColor(Qt::white, this);
+            color = QColorDialog::getColor(QColor((int)(m_activeColor.r * 255.0f),
+                                                  (int)(m_activeColor.g * 255.0f),
+                                                  (int)(m_activeColor.b * 255.0f),
+                                                  (int)(m_activeColor.a * 255.0f)), this);
             setActiveColor(Imath::Color4f((float)color.red()/255.0f,
                                           (float)color.green()/255.0f,
                                           (float)color.blue()/255.0f,
                                           (float)color.alpha()/255.0f));
             break;
         case HIT_PASSIVE_COLOR_BOX:
-            color = QColorDialog::getColor(Qt::white, this);
+            color = QColorDialog::getColor(QColor((int)(m_passiveColor.r * 255.0f),
+                                                  (int)(m_passiveColor.g * 255.0f),
+                                                  (int)(m_passiveColor.b * 255.0f),
+                                                  (int)(m_passiveColor.a * 255.0f)), this);
             setPassiveColor(Imath::Color4f((float)color.red()/255.0f,
                                            (float)color.green()/255.0f,
                                            (float)color.blue()/255.0f,
