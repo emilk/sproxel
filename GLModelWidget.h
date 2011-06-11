@@ -48,6 +48,7 @@ public:
     void reresVoxelGrid(const float scale);
 
     void shiftVoxels(const Axis axis, const bool up, const bool wrap);
+    void mirrorVoxels(const Axis axis);
     void setVoxelColor(const Imath::V3i& index, const Imath::Color4f color);
 
     void clearUndoStack() { m_undoStack.clear(); }

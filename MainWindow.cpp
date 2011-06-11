@@ -123,6 +123,12 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     connect(m_actShiftWrap, SIGNAL(toggled(bool)),
             m_glModelWidget, SLOT(setShiftWrap(bool)));
 
+    m_actMirror = new QAction("Mirror", this);
+    m_actMirror->setShortcut(Qt::CTRL + Qt::Key_M);
+    m_menuEdit->addAction(m_actMirror);
+    connect(m_actMirror, SIGNAL(triggered()),
+            this, SLOT(mirror()));
+
     m_menuEdit->addSeparator();
 
     m_actUpRes = new QAction("Double grid resolution", this);
@@ -506,6 +512,10 @@ void MainWindow::shiftDown()
 {
     m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(),
                                  false, m_glModelWidget->shiftWrap());
+}
+void MainWindow::mirror()
+{
+    m_glModelWidget->mirrorVoxels(m_glModelWidget->currentAxis());
 }
 
 void MainWindow::upRes()   { m_glModelWidget->reresVoxelGrid(2.0f); }

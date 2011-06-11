@@ -1609,6 +1609,35 @@ void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
 }
 
 
+void GLModelWidget::mirrorVoxels(const Axis axis)
+{
+    GameVoxelGrid<Imath::Color4f> backup = m_gvg;
+
+    m_undoStack.beginMacro("Shift");    
+    
+    for (int x = 0; x < m_gvg.cellDimensions().x; x++)
+    {
+        for (int y = 0; y < m_gvg.cellDimensions().y; y++)
+        {
+            for (int z = 0; z < m_gvg.cellDimensions().z; z++)
+            {
+                Imath::V3i oldLocation(-1, -1, -1);
+                switch (axis)
+                {
+                    case X_AXIS: oldLocation = Imath::V3i(backup.cellDimensions().x-x-1, y, z); break;
+                    case Y_AXIS: oldLocation = Imath::V3i(x, backup.cellDimensions().y-y-1, z); break;
+                    case Z_AXIS: oldLocation = Imath::V3i(x, y, backup.cellDimensions().z-z-1); break;
+                }
+                setVoxelColor(Imath::V3i(x,y,z), backup.get(oldLocation));
+            }
+        }
+    }
+    
+    m_undoStack.endMacro();
+    updateGL();
+}
+
+
 void GLModelWidget::setVoxelColor(const Imath::V3i& index, const Imath::Color4f color)
 {
     // Validity check
