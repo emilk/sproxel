@@ -84,7 +84,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_actQuit->setShortcut(Qt::CTRL + Qt::Key_Q);
     m_menuFile->addAction(m_actQuit);
     connect(m_actQuit, SIGNAL(triggered()),
-            this, SLOT(quit()));
+            this, SLOT(close()));
 
 
     // ------ edit menu
@@ -236,6 +236,26 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
             m_activeFilename = initialFilename;
             setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
         }
+    }
+}
+
+
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    // Confirmation dialog
+    if (m_glModelWidget->modified() == true)
+    {
+        switch (fileModifiedDialog())
+        {
+            case QMessageBox::Save: saveFile(); event->accept(); break;
+            case QMessageBox::Discard:          event->accept(); break;
+            case QMessageBox::Cancel:           event->ignore(); break;
+            default: event->ignore(); break;
+        }
+    }
+    else
+    {
+        event->accept();
     }
 }
 
@@ -483,23 +503,6 @@ void MainWindow::exportGrid()
     }
 }
 
-
-// TODO: This doesn't catch hitting the X on the window.  Fix.
-void MainWindow::quit()
-{
-    // Confirmation dialog
-    if (m_glModelWidget->modified() == true)
-    {
-        switch (fileModifiedDialog())
-        {
-            case QMessageBox::Save: saveFile(); break;
-            case QMessageBox::Discard: break;
-            case QMessageBox::Cancel: return; break;
-        }
-    }
-
-    qApp->quit();
-}
 
 // Trampoline functions because QSignalMapper can't do complex args
 // Search for QBoundMethod for a custom approach, but I'm too lazy to include it for now.

@@ -24,6 +24,7 @@ public:
     MainWindow(const QString& initialFilename, QWidget* parent=NULL);
 
 protected:
+    void closeEvent(QCloseEvent* event);
     void keyPressEvent(QKeyEvent* event);
 
 private:
@@ -88,8 +89,6 @@ public slots:
 
     void import();
     void exportGrid();
-
-    void quit();
 
     void shiftUp();
     void shiftDown();
