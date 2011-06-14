@@ -35,7 +35,7 @@
 #ifndef _SPROXEL_FOUNDATION_H_
 #define _SPROXEL_FOUNDATION_H_
 
-#include <cmath>
+#include <qmath.h>
 
 //-*****************************************************************************
 template <class T>

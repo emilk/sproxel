@@ -20,7 +20,15 @@ macx {
 }
 
 win32 {
-   # TODO find ilmbase libs on win32
+  INCLUDEPATH += ../IlmBase/include
+  CONFIG(release) {
+    LIBS += -L../IlmBase/lib/Release
+  } else {
+    LIBS += -L../IlmBase/lib/Debug
+  }
+  LIBS += -lImath -lIex
+  DEFINES += NOMINMAX
+  QMAKE_CXXFLAGS += -wd4996 -wd4305
 }
 
 SOURCES += \
