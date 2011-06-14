@@ -1292,7 +1292,7 @@ bool GLModelWidget::saveGridPNG(const std::string& filename)
     // TODO: Offer other options besides XY slices?  Directionality?  Ordering?
     const int height = m_gvg.cellDimensions().y;
     const int width = m_gvg.cellDimensions().x * m_gvg.cellDimensions().z;
-    QImage writeMe(QSize(width, height), QImage::QImage::Format_ARGB32);
+    QImage writeMe(QSize(width, height), QImage::Format_ARGB32);
 
     for (int slice = 0; slice < m_gvg.cellDimensions().z; slice++)
     {
