@@ -356,7 +356,7 @@ void GLCamera::dolly( const V2d &point,
     // Magic dolly function
     double dollyBy = 1.0 - expf( -dollySpeed * t );
 
-    assert( fabsf( dollyBy ) < 1.0 );
+    //assert( fabsf( dollyBy ) < 1.0 );
     dollyBy *= m_centerOfInterest;
     const V3d newEye = eye + ( dollyBy * v );
 

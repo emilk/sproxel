@@ -1387,94 +1387,38 @@ bool GLModelWidget::exportGridOBJ(const std::string& filename)
     QString basename = fi.completeBaseName();
     QString basedir = fi.absolutePath();
 
-    // Exports an OBJ file with the world matrix baked in.
-    FILE* fp = fopen(filename.c_str(), "wb");
-    if (!fp) return false;
+    // Shorthand
+    const int sx = m_gvg.cellDimensions().x;
+    const int sy = m_gvg.cellDimensions().y;
+    const int sz = m_gvg.cellDimensions().z;
 
-    int vIndex = 1;
-    std::vector<Imath::V3i> faceVec;
-    std::vector<std::string> colorVec;
+    // Create and write the material file
     std::map<std::string, std::string> mtlMap;
-    Imath::V3i cellDim = m_gvg.cellDimensions();
 
-    // Material library
-    fprintf(fp, "mtllib %s.mtl\n", basename.toAscii().constData());
-
-    // The object's name
-    fprintf(fp, "g %s\n", basename.toAscii().constData());
-
-    // Vertices
-    for (int y = cellDim.y-1; y >= 0; y--)
+    // Build up the material lists
+    for (int y = 0; y < sy; y++)
     {
-        for (int z = 0; z < cellDim.z; z++)
+        for (int z = 0; z < sz; z++)
         {
-            for (int x = 0; x < cellDim.x; x++)
+            for (int x = 0; x < sx; x++)
             {
                 const Imath::Color4f& color = m_gvg.get(Imath::V3i(x, y, z));
-                if (color.a != 0.0f)
-                {
-                    const Imath::M44d mat = m_gvg.voxelTransform(Imath::V3i(x,y,z));
-                    Imath::V3d v0; mat.multVecMatrix(Imath::V3d(-0.5f, -0.5f, -0.5f), v0);
-                    Imath::V3d v1; mat.multVecMatrix(Imath::V3d(-0.5f, -0.5f,  0.5f), v1);
-                    Imath::V3d v2; mat.multVecMatrix(Imath::V3d(-0.5f,  0.5f, -0.5f), v2);
-                    Imath::V3d v3; mat.multVecMatrix(Imath::V3d( 0.5f, -0.5f, -0.5f), v3);
-                    Imath::V3d v4; mat.multVecMatrix(Imath::V3d(-0.5f,  0.5f,  0.5f), v4);
-                    Imath::V3d v5; mat.multVecMatrix(Imath::V3d( 0.5f, -0.5f,  0.5f), v5);
-                    Imath::V3d v6; mat.multVecMatrix(Imath::V3d( 0.5f,  0.5f, -0.5f), v6);
-                    Imath::V3d v7; mat.multVecMatrix(Imath::V3d( 0.5f,  0.5f,  0.5f), v7);
-                    fprintf(fp, "v %f %f %f\n", v0.x, v0.y, v0.z);
-                    fprintf(fp, "v %f %f %f\n", v1.x, v1.y, v1.z);
-                    fprintf(fp, "v %f %f %f\n", v2.x, v2.y, v2.z);
-                    fprintf(fp, "v %f %f %f\n", v3.x, v3.y, v3.z);
-                    fprintf(fp, "v %f %f %f\n", v4.x, v4.y, v4.z);
-                    fprintf(fp, "v %f %f %f\n", v5.x, v5.y, v5.z);
-                    fprintf(fp, "v %f %f %f\n", v6.x, v6.y, v6.z);
-                    fprintf(fp, "v %f %f %f\n", v7.x, v7.y, v7.z);
-                    faceVec.push_back(Imath::V3i(vIndex+6, vIndex+2, vIndex+4));
-                    faceVec.push_back(Imath::V3i(vIndex+4, vIndex+7, vIndex+6));
-                    faceVec.push_back(Imath::V3i(vIndex+5, vIndex+1, vIndex+0));
-                    faceVec.push_back(Imath::V3i(vIndex+0, vIndex+3, vIndex+5));
-                    faceVec.push_back(Imath::V3i(vIndex+7, vIndex+4, vIndex+1));
-                    faceVec.push_back(Imath::V3i(vIndex+1, vIndex+5, vIndex+7));
-                    faceVec.push_back(Imath::V3i(vIndex+3, vIndex+0, vIndex+2));
-                    faceVec.push_back(Imath::V3i(vIndex+2, vIndex+6, vIndex+3));
-                    faceVec.push_back(Imath::V3i(vIndex+4, vIndex+2, vIndex+0));
-                    faceVec.push_back(Imath::V3i(vIndex+0, vIndex+1, vIndex+4));
-                    faceVec.push_back(Imath::V3i(vIndex+6, vIndex+7, vIndex+5));
-                    faceVec.push_back(Imath::V3i(vIndex+5, vIndex+3, vIndex+6));
-                    vIndex += 8;
+                
+                if (color.a == 0.0f) continue;
+                
+                char mtlName[64];
+                sprintf(mtlName, "mtl%d", (int)mtlMap.size());
 
-                    Imath::Color4f color = m_gvg.get(Imath::V3i(x,y,z));
-
-                    char mtlName[64];
-                    sprintf(mtlName, "mtl%d", (int)mtlMap.size());
-
-                    char colorString[64];
-                    sprintf(colorString, "Kd %.4f %.4f %.4f", color.r, color.g, color.b);
-                    colorVec.push_back(std::string(colorString));
-
-                    mtlMap.insert(std::pair<std::string, std::string>(std::string(colorString), std::string(mtlName)));
-                }
+                char colorString[64];
+                sprintf(colorString, "Kd %.4f %.4f %.4f", color.r, color.g, color.b);
+                mtlMap.insert(std::pair<std::string, std::string>(std::string(colorString), std::string(mtlName)));
             }
         }
     }
 
-    // Faces
-    for (size_t f = 0; f < faceVec.size(); f++)
-    {
-        // Print the material for every cube
-        if (!(f % 12))
-        {
-            const std::string x = mtlMap.find(colorVec[f/12])->second;
-            fprintf(fp, "usemtl %s\n", x.c_str());
-        }
-        fprintf(fp, "f %d %d %d\n", faceVec[f].x, faceVec[f].y, faceVec[f].z);
-    }
-    fclose(fp);
-    
     // Write .mtl file
     QString mtlFilename = basedir + "/" + basename + ".mtl";
-    fp = fopen(mtlFilename.toAscii().constData(), "wb");
+    FILE* fp = fopen(mtlFilename.toAscii().constData(), "wb");
     if (!fp) return false;
 
     for(std::map<std::string, std::string>::iterator p = mtlMap.begin();
@@ -1489,10 +1433,167 @@ bool GLModelWidget::exportGridOBJ(const std::string& filename)
         fprintf(fp, "Ni 1.00\n");
         fprintf(fp, "\n");
     }
+    fclose(fp);
 
+
+    // Create and write the obj file
+    fp = fopen(filename.c_str(), "wb");
+    if (!fp) return false;
+
+    // Geometry
+    const int vertListLength = (sx+1) * (sy+1) * (sz+1);
+    int* vertList = new int[vertListLength];
+    memset(vertList, 0, sizeof(int)*vertListLength);
+
+    // Material library
+    fprintf(fp, "mtllib %s.mtl\n", basename.toAscii().constData());
+
+    // The object's name
+    fprintf(fp, "g %s\n", basename.toAscii().constData());
+
+    // Populate the vert list
+    int vertIndex = 1;
+    for (int y = 0; y < (sy+1); y++)
+    {
+        for (int z = 0; z < (sz+1); z++)
+        {
+            for (int x = 0; x < (sx+1); x++)
+            {
+                int neighbors = 0;                
+                if ((x!=0)  && (y!=0)  && (z!=0)  && (m_gvg.get(Imath::V3i(x-1, y-1, z-1)).a != 0.0f)) neighbors++;
+                if ((x!=0)  && (y!=0)  && (z!=sz) && (m_gvg.get(Imath::V3i(x-1, y-1, z)).a   != 0.0f)) neighbors++;
+                if ((x!=0)  && (y!=sy) && (z!=0)  && (m_gvg.get(Imath::V3i(x-1, y,   z-1)).a != 0.0f)) neighbors++;
+                if ((x!=0)  && (y!=sy) && (z!=sz) && (m_gvg.get(Imath::V3i(x-1, y,   z)).a   != 0.0f)) neighbors++;
+                if ((x!=sx) && (y!=0)  && (z!=0)  && (m_gvg.get(Imath::V3i(x,   y-1, z-1)).a != 0.0f)) neighbors++;
+                if ((x!=sx) && (y!=0)  && (z!=sz) && (m_gvg.get(Imath::V3i(x,   y-1, z)).a   != 0.0f)) neighbors++;
+                if ((x!=sx) && (y!=sy) && (z!=0)  && (m_gvg.get(Imath::V3i(x,   y,   z-1)).a != 0.0f)) neighbors++;
+                if ((x!=sx) && (y!=sy) && (z!=sz) && (m_gvg.get(Imath::V3i(x,   y,   z)).a   != 0.0f)) neighbors++;
+
+                if (neighbors == 0 || neighbors == 8)
+                    continue;
+                
+                const int vlIndex = (y*(sz+1)*(sx+1)) + (z*(sx+1)) + (x);
+                vertList[vlIndex] = vertIndex;
+                vertIndex++;
+            }
+        }
+    }
+
+    // Write the verts to the OBJ
+    for (int y = 0; y < (sy+1); y++)
+    {
+        for (int z = 0; z < (sz+1); z++)
+        {
+            for (int x = 0; x < (sx+1); x++)
+            {
+                Imath::V3i voxelToCheck = Imath::V3i(x,y,z);
+                if (x == sx) voxelToCheck.x--;
+                if (y == sy) voxelToCheck.y--;
+                if (z == sz) voxelToCheck.z--;
+
+                const Imath::M44d mat = m_gvg.voxelTransform(voxelToCheck);
+                
+                Imath::V3d vert;
+                mat.multVecMatrix(Imath::V3d((x == sx) ? 0.5f : -0.5f, 
+                                             (y == sy) ? 0.5f : -0.5f, 
+                                             (z == sz) ? 0.5f : -0.5f), vert);
+
+                const int vlIndex = (y*(sz+1)*(sx+1)) + (z*(sx+1)) + (x);
+                if (vertList[vlIndex] != 0)
+                {
+                    fprintf(fp, "v %f %f %f\n", vert.x, vert.y, vert.z);
+                }
+            }
+        }
+    }
+
+    // Create all faces
+    for (int y = 0; y < sy; y++)
+    {
+        for (int z = 0; z < sz; z++)
+        {
+            for (int x = 0; x < sx; x++)
+            {
+                const Imath::Color4f& color = m_gvg.get(Imath::V3i(x, y, z));
+                if (color.a == 0.0f) 
+                    continue;
+                
+                // Check for crossings
+                bool crossNegX = false;
+                bool crossPosX = false;
+                if (x == 0)
+                    crossNegX = true;
+                else if (color.a != m_gvg.get(Imath::V3i(x-1,y,z)).a)
+                    crossNegX = true;
+                
+                if (x == sx-1)
+                    crossPosX = true;
+                else if (color.a != m_gvg.get(Imath::V3i(x+1,y,z)).a)
+                    crossPosX = true;
+                
+                bool crossNegY = false;
+                bool crossPosY = false;
+                if (y == 0)
+                    crossNegY = true;
+                else if (color.a != m_gvg.get(Imath::V3i(x,y-1,z)).a)
+                    crossNegY = true;
+                
+                if (y == sy-1)
+                    crossPosY = true;
+                else if (color.a != m_gvg.get(Imath::V3i(x,y+1,z)).a)
+                    crossPosY = true;
+                
+                bool crossNegZ = false;
+                bool crossPosZ = false;
+                if (z == 0)
+                    crossNegZ = true;
+                else if (color.a != m_gvg.get(Imath::V3i(x,y,z-1)).a)
+                    crossNegZ = true;
+                
+                if (z == sz-1)
+                    crossPosZ = true;
+                else if (color.a != m_gvg.get(Imath::V3i(x,y,z+1)).a)
+                    crossPosZ = true;
+                
+                // If there are any crossings, you will need a material
+                if (crossNegX || crossPosX || crossNegY || crossPosY || crossNegZ || crossPosZ)
+                {
+                    char colorString[64];
+                    sprintf(colorString, "Kd %.4f %.4f %.4f", color.r, color.g, color.b);
+                    const std::string mtl = mtlMap.find(colorString)->second;
+                    fprintf(fp, "usemtl %s\n", mtl.c_str());
+                }
+                
+                // Fill in the voxels
+                const int* vl = vertList;
+                const int  vi       = ((y)  *(sz+1)*(sx+1)) + ((z)  *(sx+1)) + (x);
+                const int  viNextZ  = ((y)  *(sz+1)*(sx+1)) + ((z+1)*(sx+1)) + (x);
+                const int  viNextY  = ((y+1)*(sz+1)*(sx+1)) + ((z)  *(sx+1)) + (x);
+                const int  viNextZY = ((y+1)*(sz+1)*(sx+1)) + ((z+1)*(sx+1)) + (x);
+
+                if (crossNegX)
+                    fprintf(fp, "f %d %d %d %d\n", vl[vi],   vl[viNextZ],   vl[viNextZY],   vl[viNextY]);
+                if (crossPosX)
+                    fprintf(fp, "f %d %d %d %d\n", vl[vi+1], vl[viNextY+1], vl[viNextZY+1], vl[viNextZ+1]);
+
+                if (crossNegY)
+                    fprintf(fp, "f %d %d %d %d\n", vl[vi],      vl[vi+1],     vl[viNextZ+1],  vl[viNextZ]);
+                if (crossPosY)
+                    fprintf(fp, "f %d %d %d %d\n", vl[viNextY], vl[viNextZY], vl[viNextZY+1], vl[viNextY+1]);
+
+                if (crossNegZ)
+                    fprintf(fp, "f %d %d %d %d\n", vl[vi],      vl[viNextY],  vl[viNextY+1],  vl[vi+1]);
+                if (crossPosZ)
+                    fprintf(fp, "f %d %d %d %d\n", vl[viNextZ], vl[viNextZY], vl[viNextZY+1], vl[viNextZ+1]);
+            }
+        }
+    }
+
+    delete[] vertList;    
     fclose(fp);
     return true;
 }
+
 
 void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
 {
