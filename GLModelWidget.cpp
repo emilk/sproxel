@@ -1584,7 +1584,7 @@ bool GLModelWidget::exportGridOBJ(const std::string& filename)
                 if (crossNegZ)
                     fprintf(fp, "f %d %d %d %d\n", vl[vi],      vl[viNextY],  vl[viNextY+1],  vl[vi+1]);
                 if (crossPosZ)
-                    fprintf(fp, "f %d %d %d %d\n", vl[viNextZ], vl[viNextZY], vl[viNextZY+1], vl[viNextZ+1]);
+                    fprintf(fp, "f %d %d %d %d\n", vl[viNextZ], vl[viNextZ+1], vl[viNextZY+1], vl[viNextZY]);
             }
         }
     }
