@@ -1380,7 +1380,21 @@ bool GLModelWidget::importImageIntoGrid(const std::string& filename)
 }
 
 
-bool GLModelWidget::exportGridOBJ(const std::string& filename)
+void GLModelWidget::objWritePoly(FILE* fp, bool asTriangles, 
+                                 const int& v0, const int& v1, const int& v2, const int& v3)
+{
+    if (!asTriangles)
+    {
+        fprintf(fp, "f %d %d %d %d\n", v0, v1, v2, v3);
+    }
+    else
+    {
+        fprintf(fp, "f %d %d %d\n", v0, v1, v2);
+        fprintf(fp, "f %d %d %d\n", v2, v3, v0);
+    }
+}
+
+bool GLModelWidget::exportGridOBJ(const std::string& filename, bool asTriangles)
 {
     // Get file basename and extension
     QFileInfo fi(QString(filename.c_str()));
@@ -1571,20 +1585,20 @@ bool GLModelWidget::exportGridOBJ(const std::string& filename)
                 const int  viNextY  = ((y+1)*(sz+1)*(sx+1)) + ((z)  *(sx+1)) + (x);
                 const int  viNextZY = ((y+1)*(sz+1)*(sx+1)) + ((z+1)*(sx+1)) + (x);
 
-                if (crossNegX)
-                    fprintf(fp, "f %d %d %d %d\n", vl[vi],   vl[viNextZ],   vl[viNextZY],   vl[viNextY]);
-                if (crossPosX)
-                    fprintf(fp, "f %d %d %d %d\n", vl[vi+1], vl[viNextY+1], vl[viNextZY+1], vl[viNextZ+1]);
+                if (crossNegX) 
+                    objWritePoly(fp, asTriangles, vl[vi],   vl[viNextZ],   vl[viNextZY],   vl[viNextY]);
+                if (crossPosX) 
+                    objWritePoly(fp, asTriangles, vl[vi+1], vl[viNextY+1], vl[viNextZY+1], vl[viNextZ+1]);
 
                 if (crossNegY)
-                    fprintf(fp, "f %d %d %d %d\n", vl[vi],      vl[vi+1],     vl[viNextZ+1],  vl[viNextZ]);
+                    objWritePoly(fp, asTriangles, vl[vi],      vl[vi+1],     vl[viNextZ+1],  vl[viNextZ]);
                 if (crossPosY)
-                    fprintf(fp, "f %d %d %d %d\n", vl[viNextY], vl[viNextZY], vl[viNextZY+1], vl[viNextY+1]);
+                    objWritePoly(fp, asTriangles, vl[viNextY], vl[viNextZY], vl[viNextZY+1], vl[viNextY+1]);
 
                 if (crossNegZ)
-                    fprintf(fp, "f %d %d %d %d\n", vl[vi],      vl[viNextY],  vl[viNextY+1],  vl[vi+1]);
+                    objWritePoly(fp, asTriangles, vl[vi],      vl[viNextY],  vl[viNextY+1],  vl[vi+1]);
                 if (crossPosZ)
-                    fprintf(fp, "f %d %d %d %d\n", vl[viNextZ], vl[viNextZ+1], vl[viNextZY+1], vl[viNextZY]);
+                    objWritePoly(fp, asTriangles, vl[viNextZ], vl[viNextZ+1], vl[viNextZY+1], vl[viNextZY]);
             }
         }
     }

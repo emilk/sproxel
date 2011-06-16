@@ -485,7 +485,7 @@ void MainWindow::import()
 void MainWindow::exportGrid()
 {
     QFileDialog fd(this, "Export file...");
-    fd.setFilter(tr("OBJ files (*.obj)"));
+    fd.setFilter(tr("OBJ files (*.obj);;OBJ triangle files (*.obj)"));
     fd.setAcceptMode(QFileDialog::AcceptSave);
     fd.exec();
     QStringList qsl = fd.selectedFiles();
@@ -499,7 +499,10 @@ void MainWindow::exportGrid()
     {
         if (!filename.endsWith(".OBJ", Qt::CaseInsensitive))
             filename.append(".obj");
-        m_glModelWidget->exportGridOBJ(filename.toStdString());
+        if (activeFilter.startsWith("OBJ triangle files"))
+            m_glModelWidget->exportGridOBJ(filename.toStdString(), true);
+        else
+            m_glModelWidget->exportGridOBJ(filename.toStdString(), false);
     }
 }
 

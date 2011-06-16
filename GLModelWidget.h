@@ -42,7 +42,7 @@ public:
     bool saveGridPNG(const std::string& filename);
 
     bool importImageIntoGrid(const std::string& filename);
-    bool exportGridOBJ(const std::string& filename);
+    bool exportGridOBJ(const std::string& filename, bool asTriangles);
 
     void resizeVoxelGrid(Imath::V3i size);
     void reresVoxelGrid(const float scale);
@@ -110,6 +110,8 @@ private:
     Tool m_activeTool;
 
     double* glMatrix(const Imath::M44d& m);
+    void objWritePoly(FILE* fp, bool asTriangles,
+                      const int& v0, const int& v1, const int& v2, const int& v3);
 
     void rayGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color);
     void paintGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color);
