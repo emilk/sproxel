@@ -143,6 +143,13 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     connect(m_actDownRes, SIGNAL(triggered()),
             this, SLOT(downRes()));
 
+    m_menuEdit->addSeparator();
+
+	m_actPreferences = new QAction("Preferences...", this);
+    m_menuEdit->addAction(m_actPreferences);
+    connect(m_actPreferences, SIGNAL(triggered()),
+            this, SLOT(editPreferences()));
+
 
     // ------ view menu
     m_menuView = menuBar()->addMenu("&View");
@@ -504,6 +511,17 @@ void MainWindow::exportGrid()
         else
             m_glModelWidget->exportGridOBJ(filename.toStdString(), false);
     }
+}
+
+void MainWindow::editPreferences()
+{
+    PreferencesDialog dlg(this);
+    dlg.setModal(true);
+    if (dlg.exec())
+    {
+		std::cout << "DONE" << std::endl;
+    }
+		std::cout << "FINE" << std::endl;
 }
 
 

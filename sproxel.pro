@@ -37,6 +37,7 @@ SOURCES += \
     MainWindow.cpp \
     main.cpp \
     NewGridDialog.cpp \
+	PreferencesDialog.cpp \
     PaletteWidget.cpp
 
 HEADERS  += \
@@ -46,6 +47,7 @@ HEADERS  += \
     GameVoxelGrid.h \
     MainWindow.h \
     NewGridDialog.h \
+	PreferencesDialog.h \
     PaletteWidget.h
 
 FORMS += \

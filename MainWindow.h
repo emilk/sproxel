@@ -9,11 +9,11 @@
 
 #include "NewGridDialog.h"
 #include "PaletteWidget.h"
+#include "PreferencesDialog.h"
 
 #define SPROXEL_VERSION "0.3"
 #define BASE_WINDOW_TITLE (tr("Sproxel " SPROXEL_VERSION))
 
-class QSlider;
 class GLModelWidget;
 
 class MainWindow : public QMainWindow
@@ -52,7 +52,8 @@ private:
     QAction* m_actMirror;
     QAction* m_actUpRes;
     QAction* m_actDownRes;
-
+	QAction* m_actPreferences;
+	
     QAction* m_actViewGrid;
     QAction* m_actViewVoxgrid;
     QAction* m_actViewBBox;
@@ -97,6 +98,8 @@ public slots:
     void upRes();
     void downRes();
 
+	void editPreferences();
+	
     void setToolSplat(bool stat);
     void setToolFlood(bool stat);
     void setToolRay(bool stat);
