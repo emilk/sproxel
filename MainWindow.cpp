@@ -11,6 +11,7 @@
 
 MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     QMainWindow(parent),
+    m_appSettings("OpenSource", "Sproxel"),
     m_activeFilename("")
 {
     // Windows
@@ -145,7 +146,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
 
     m_menuEdit->addSeparator();
 
-	m_actPreferences = new QAction("Preferences...", this);
+    m_actPreferences = new QAction("Preferences...", this);
     m_menuEdit->addAction(m_actPreferences);
     connect(m_actPreferences, SIGNAL(triggered()),
             this, SLOT(editPreferences()));
@@ -229,6 +230,15 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     setWindowTitle(BASE_WINDOW_TITLE);
     statusBar()->showMessage(tr("Ready"));
 
+    // Load up some settings
+    if (m_appSettings.value("saveUILayout", true).toBool())
+    {
+        resize(m_appSettings.value("MainWindow/size", QSize(546, 427)).toSize());
+        move(m_appSettings.value("MainWindow/position", QPoint(200, 200)).toPoint());
+        m_toolbar->setVisible(m_appSettings.value("toolbar/visibility", true).toBool());
+        m_paletteDocker->setVisible(m_appSettings.value("paletteWindow/visibility", true).toBool());
+    }
+
     // Load the commandline supplied filename
     if (initialFilename != "")
     {
@@ -263,6 +273,15 @@ void MainWindow::closeEvent(QCloseEvent* event)
     else
     {
         event->accept();
+    }
+
+    // Save some window settings on exit (if requested)
+    if (m_appSettings.value("saveUILayout", true).toBool())
+    {
+        m_appSettings.setValue("MainWindow/size", size());
+        m_appSettings.setValue("MainWindow/position", pos());
+        m_appSettings.setValue("toolbar/visibility", m_toolbar->isVisible());
+        m_appSettings.setValue("paletteWindow/visibility", m_paletteDocker->isVisible());
     }
 }
 
@@ -519,9 +538,9 @@ void MainWindow::editPreferences()
     dlg.setModal(true);
     if (dlg.exec())
     {
-		std::cout << "DONE" << std::endl;
+        std::cout << "DONE" << std::endl;
     }
-		std::cout << "FINE" << std::endl;
+    std::cout << "FINE" << std::endl;
 }
 
 

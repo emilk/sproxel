@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QAction>
 #include <QToolBar>
+#include <QSettings>
 #include <QMainWindow>
 
 #include "NewGridDialog.h"
@@ -22,12 +23,15 @@ class MainWindow : public QMainWindow
 
 public:
     MainWindow(const QString& initialFilename, QWidget* parent=NULL);
+    QSettings& appSettings() { return m_appSettings; }
 
 protected:
     void closeEvent(QCloseEvent* event);
     void keyPressEvent(QKeyEvent* event);
 
 private:
+    QSettings m_appSettings;
+
     GLModelWidget* m_glModelWidget;
 
     // Menus
@@ -52,8 +56,8 @@ private:
     QAction* m_actMirror;
     QAction* m_actUpRes;
     QAction* m_actDownRes;
-	QAction* m_actPreferences;
-	
+    QAction* m_actPreferences;
+
     QAction* m_actViewGrid;
     QAction* m_actViewVoxgrid;
     QAction* m_actViewBBox;
@@ -98,8 +102,8 @@ public slots:
     void upRes();
     void downRes();
 
-	void editPreferences();
-	
+    void editPreferences();
+
     void setToolSplat(bool stat);
     void setToolFlood(bool stat);
     void setToolRay(bool stat);
