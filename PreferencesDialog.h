@@ -28,10 +28,16 @@ public:
     GeneralPage(QWidget* parent = 0);
 };
 
+class ModelViewPage : public QWidget
+{
+public:
+    ModelViewPage(QWidget* parent = 0);
+};
+
 class GuidesPage : public QWidget
 {
 public:
-	GuidesPage(QWidget* parent = 0);
+    GuidesPage(QWidget* parent = 0);
 };
 
 #endif

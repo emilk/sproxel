@@ -3,36 +3,43 @@
 #include "PreferencesDialog.h"
 
 PreferencesDialog::PreferencesDialog(QWidget *parent) :
-	QDialog(parent)
+    QDialog(parent)
 {
     contentsWidget = new QListWidget;
     contentsWidget->setMovement(QListView::Static);
-	contentsWidget->setSelectionMode(QAbstractItemView::SingleSelection);
+    contentsWidget->setSelectionMode(QAbstractItemView::SingleSelection);
     contentsWidget->setMaximumWidth(128);
     contentsWidget->setCurrentRow(0);
 
-	QListWidgetItem* generalItem = new QListWidgetItem(contentsWidget);
-	generalItem->setText(tr("General"));
-	generalItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+    QListWidgetItem* generalItem = new QListWidgetItem(contentsWidget);
+    generalItem->setText(tr("General"));
+    generalItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
-	QListWidgetItem* guidesItem = new QListWidgetItem(contentsWidget);
-	guidesItem->setText(tr("Guides"));
-	guidesItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
-	
-	contentsWidget->setCurrentItem(generalItem);
-	
-	connect(contentsWidget,
+    QListWidgetItem* guidesItem = new QListWidgetItem(contentsWidget);
+    guidesItem->setText(tr("Guides"));
+    guidesItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
+    QListWidgetItem* modelViewItem = new QListWidgetItem(contentsWidget);
+    modelViewItem->setText(tr("Model View"));
+    modelViewItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
+    contentsWidget->setCurrentItem(generalItem);
+
+    connect(contentsWidget,
             SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)),
             this, SLOT(changePage(QListWidgetItem*,QListWidgetItem*)));
 
-	
+
     pagesWidget = new QStackedWidget;
     pagesWidget->addWidget(new GeneralPage);
     pagesWidget->addWidget(new GuidesPage);
+    pagesWidget->addWidget(new ModelViewPage);
 
-    QPushButton *closeButton = new QPushButton(tr("Close"));
-    connect(closeButton, SIGNAL(clicked()), this, SLOT(close()));
+    QPushButton *cancelButton = new QPushButton(tr("Cancel"));
+    connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
 
+    QPushButton *okButton = new QPushButton(tr("OK"));
+    connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
 
     QHBoxLayout *horizontalLayout = new QHBoxLayout;
     horizontalLayout->addWidget(contentsWidget);
@@ -40,7 +47,8 @@ PreferencesDialog::PreferencesDialog(QWidget *parent) :
 
     QHBoxLayout *buttonsLayout = new QHBoxLayout;
     buttonsLayout->addStretch(1);
-    buttonsLayout->addWidget(closeButton);
+    buttonsLayout->addWidget(cancelButton);
+    buttonsLayout->addWidget(okButton);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
     mainLayout->addLayout(horizontalLayout);
@@ -64,19 +72,11 @@ void PreferencesDialog::changePage(QListWidgetItem *current, QListWidgetItem *pr
 GeneralPage::GeneralPage(QWidget *parent)
     : QWidget(parent)
 {
-    QGroupBox *configGroup = new QGroupBox(tr("Test widgets"));
-
-    QLabel *stuffzLabel = new QLabel(tr("Stuffz:"));
-    QComboBox *stuffzCombo = new QComboBox;
-    stuffzCombo->addItem(tr("A"));
-    stuffzCombo->addItem(tr("B"));
-    stuffzCombo->addItem(tr("C"));
-    stuffzCombo->addItem(tr("D"));
-    stuffzCombo->addItem(tr("E"));
+    QGroupBox *configGroup = new QGroupBox(tr("UI"));
+    QCheckBox* saveWindowPositions = new QCheckBox("Save Window Positions", this);
 
     QHBoxLayout *stuffzLayout = new QHBoxLayout;
-    stuffzLayout->addWidget(stuffzLabel);
-    stuffzLayout->addWidget(stuffzCombo);
+    stuffzLayout->addWidget(saveWindowPositions);
 
     QVBoxLayout *configLayout = new QVBoxLayout;
     configLayout->addLayout(stuffzLayout);
@@ -87,6 +87,13 @@ GeneralPage::GeneralPage(QWidget *parent)
     mainLayout->addStretch(1);
     setLayout(mainLayout);
 }
+
+ModelViewPage::ModelViewPage(QWidget *parent)
+    : QWidget(parent)
+{
+    
+}
+
 
 GuidesPage::GuidesPage(QWidget *parent)
     : QWidget(parent)
