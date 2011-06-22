@@ -34,10 +34,28 @@ public:
     ModelViewPage(QWidget* parent = 0);
 };
 
+class GridPage : public QWidget
+{
+public:
+    GridPage(QWidget* parent = 0);
+};
+
+class LightingPage : public QWidget
+{
+public:
+    LightingPage(QWidget* parent = 0);
+};
+
 class GuidesPage : public QWidget
 {
 public:
     GuidesPage(QWidget* parent = 0);
+};
+
+class WIPPage : public QWidget
+{
+public:
+    WIPPage(QWidget* parent = 0);
 };
 
 #endif
