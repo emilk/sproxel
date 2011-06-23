@@ -34,7 +34,7 @@ PreferencesDialog::PreferencesDialog(QWidget *parent) :
 
     QListWidgetItem* keysItem = new QListWidgetItem(contentsWidget);
     keysItem->setText(tr("Custom Keys"));
-    keysItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+    keysItem->setFlags(Qt::ItemIsSelectable);
 
     contentsWidget->setCurrentItem(generalItem);
 
@@ -129,19 +129,31 @@ GridPage::GridPage(QWidget *parent)
     : QWidget(parent)
 {
     QLabel* gridColor = new QLabel("Grid Color", this);
+
     QLabel* gridSize = new QLabel("Grid Size", this);
+    QSpinBox *sizeSpinBox = new QSpinBox;
+    sizeSpinBox->setRange(0, 200);
+    sizeSpinBox->setSingleStep(1);
+    sizeSpinBox->setValue(16);
+
     QLabel* gridCellSize = new QLabel("Grid Cell Size", this);
+    QSpinBox *cellSizeSpinBox = new QSpinBox;
+    cellSizeSpinBox->setRange(1, 200);
+    cellSizeSpinBox->setSingleStep(1);
+    cellSizeSpinBox->setValue(1);
 
-    QVBoxLayout *stuffzLayout = new QVBoxLayout;
-    stuffzLayout->addWidget(gridColor);
-    stuffzLayout->addWidget(gridSize);
-    stuffzLayout->addWidget(gridCellSize);
+    QGroupBox* gridGroup = new QGroupBox(tr("Guide Filenames"));
 
-    QGroupBox *configGroup = new QGroupBox();
-    configGroup->setLayout(stuffzLayout);
+    QGridLayout *gridLayout = new QGridLayout;
+    gridLayout->addWidget(gridColor, 0, 0);
+    gridLayout->addWidget(gridSize, 1, 0);
+    gridLayout->addWidget(sizeSpinBox, 1, 1);
+    gridLayout->addWidget(gridCellSize, 2, 0);
+    gridLayout->addWidget(cellSizeSpinBox, 2, 1);
+    gridGroup->setLayout(gridLayout);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(configGroup);
+    mainLayout->addWidget(gridGroup);
     mainLayout->addStretch(1);
     setLayout(mainLayout);
 }
@@ -150,7 +162,7 @@ GridPage::GridPage(QWidget *parent)
 LightingPage::LightingPage(QWidget *parent)
     : QWidget(parent)
 {
-    QLabel* fixedDir = new QLabel("Fix Light Direction", this);
+    QCheckBox* fixedDir = new QCheckBox("Fixed Light Direction", this);
     QLabel* lightDir = new QLabel("Light Direction", this);
     QLabel* lightColor = new QLabel("Light Color", this);
     QLabel* ambientColor = new QLabel("Ambient Color", this);
@@ -174,7 +186,7 @@ LightingPage::LightingPage(QWidget *parent)
 GuidesPage::GuidesPage(QWidget *parent)
     : QWidget(parent)
 {
-    QGroupBox *packagesGroup = new QGroupBox(tr("Guide Filenames"));
+    QGroupBox *guidesGroup = new QGroupBox(tr("Guide Filenames"));
 
     QLabel *xyLabel = new QLabel(tr("XY Plane:"));
     QLineEdit *xyEdit = new QLineEdit;
@@ -192,10 +204,10 @@ GuidesPage::GuidesPage(QWidget *parent)
     packagesLayout->addWidget(xzEdit, 1, 1);
     packagesLayout->addWidget(yzLabel, 2, 0);
     packagesLayout->addWidget(yzEdit, 2, 1);
-    packagesGroup->setLayout(packagesLayout);
+    guidesGroup->setLayout(packagesLayout);
 
     QVBoxLayout *mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(packagesGroup);
+    mainLayout->addWidget(guidesGroup);
     mainLayout->addStretch(1);
     setLayout(mainLayout);
 }
