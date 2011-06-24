@@ -18,22 +18,21 @@
 Imath::Line3d fakeLine;
 Imath::Box3d fakeBounds(Imath::V3d(-50, -50, -50), Imath::V3d(50, 50, 50));
 
-GLModelWidget::GLModelWidget(QWidget *parent)
+GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings)
     : QGLWidget(parent),
       m_cam(),
       m_gvg(Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ)),
       m_intersects(),
       m_activeVoxel(-1,-1,-1),
       m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
-      m_gridColor(0.0f, 0.0f, 0.0f, 0.0f),
-      m_backgroundColor(0.63f, 0.63f, 0.63f, 0.0f),
       m_lastMouse(),
       m_drawGrid(true),
       m_drawVoxelGrid(true),
       m_drawBoundingBox(false),
       m_shiftWrap(true),
       m_currAxis(Y_AXIS),
-      m_activeTool(TOOL_SPLAT)
+      m_activeTool(TOOL_SPLAT),
+      m_appSettings(appSettings)
 {
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
 
@@ -147,7 +146,9 @@ QSize GLModelWidget::sizeHint() const
 
 void GLModelWidget::initializeGL()
 {
-    glClearColor(m_backgroundColor.r, m_backgroundColor.g, m_backgroundColor.b, 0.0);
+    QColor bg = m_appSettings->value("GLModelWidget/backgroundColor", QColor(161,161,161)).value<QColor>();
+
+    glClearColor(bg.redF(), bg.greenF(), bg.blueF(), 0.0);
     glShadeModel(GL_FLAT);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -177,7 +178,15 @@ void GLModelWidget::paintGL()
         Imath::Box3d worldBox = m_gvg.worldBounds();
         glPushMatrix();
         glTranslatef(0, worldBox.min.y, 0);
-        glDrawGrid(16, m_gridColor, m_backgroundColor);
+
+        // Grid drawing with color conversion
+        QColor tempG  = m_appSettings->value("GLModelWidget/gridColor", QColor(0,0,0)).value<QColor>();
+        QColor tempBG = m_appSettings->value("GLModelWidget/backgroundColor", QColor(161,161,161)).value<QColor>();
+        glDrawGrid(m_appSettings->value("GLModelWidget/gridSize", 16).toInt(),
+                   m_appSettings->value("GLModelWidget/gridCellSize", 1).toInt(),
+                   Imath::Color4f(tempG.redF(),  tempG.greenF(),  tempG.blueF(),  1.0f),
+                   Imath::Color4f(tempBG.redF(), tempBG.greenF(), tempBG.blueF(), 1.0f));
+
         glPopMatrix();
     }
     
@@ -334,8 +343,9 @@ double* GLModelWidget::glMatrix(const Imath::M44d& m)
 
 
 void GLModelWidget::glDrawGrid(const int size, 
-                               const Imath::Color4f gridColor,
-                               const Imath::Color4f bgColor)
+                               const int gridCellSize,
+                               const Imath::Color4f& gridColor,
+                               const Imath::Color4f& bgColor)
 {
     // TODO: Query and restore depth test
     glDisable(GL_DEPTH_TEST);
@@ -348,6 +358,7 @@ void GLModelWidget::glDrawGrid(const int size,
     for (int i = -size; i <= size; i++)
     {
         if (i == 0) continue;
+        if (i % gridCellSize) continue;
         glVertex3f(i, 0,  size);
         glVertex3f(i, 0, -size);
         glVertex3f( size, 0, i);

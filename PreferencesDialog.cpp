@@ -32,6 +32,10 @@ PreferencesDialog::PreferencesDialog(QWidget *parent) :
     guidesItem->setText(tr("  Image Guides"));
     guidesItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
+    QListWidgetItem* paletteItem = new QListWidgetItem(contentsWidget);
+    paletteItem->setText(tr("Palette"));
+    paletteItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
     QListWidgetItem* keysItem = new QListWidgetItem(contentsWidget);
     keysItem->setText(tr("Custom Keys"));
     keysItem->setFlags(Qt::ItemIsSelectable);
@@ -49,6 +53,7 @@ PreferencesDialog::PreferencesDialog(QWidget *parent) :
     pagesWidget->addWidget(new GridPage);
     pagesWidget->addWidget(new LightingPage);
     pagesWidget->addWidget(new GuidesPage);
+    pagesWidget->addWidget(new PalettePage);
     pagesWidget->addWidget(new WIPPage);
 
     QPushButton *cancelButton = new QPushButton(tr("Cancel"));
@@ -211,6 +216,30 @@ GuidesPage::GuidesPage(QWidget *parent)
     mainLayout->addStretch(1);
     setLayout(mainLayout);
 }
+
+
+PalettePage::PalettePage(QWidget *parent)
+    : QWidget(parent)
+{
+    QGroupBox *guidesGroup = new QGroupBox(tr("Guide Filenames"));
+
+    QCheckBox* saveActiveColors = new QCheckBox("Save Active Colors", this);
+
+    QLabel *filenameLabel = new QLabel(tr("Palette filename:"));
+    QLineEdit *filenameEdit = new QLineEdit;
+
+    QGridLayout *packagesLayout = new QGridLayout;
+    packagesLayout->addWidget(saveActiveColors, 0, 0, 1, 2);
+    packagesLayout->addWidget(filenameLabel, 1, 0);
+    packagesLayout->addWidget(filenameEdit, 1, 1);
+    guidesGroup->setLayout(packagesLayout);
+
+    QVBoxLayout *mainLayout = new QVBoxLayout;
+    mainLayout->addWidget(guidesGroup);
+    mainLayout->addStretch(1);
+    setLayout(mainLayout);
+}
+
 
 WIPPage::WIPPage(QWidget *parent)
     : QWidget(parent)

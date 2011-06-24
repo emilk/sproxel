@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <QGLWidget>
+#include <QSettings>
 #include <QUndoStack>
 #include <QUndoCommand>
 
@@ -25,7 +26,7 @@ public:
                 TOOL_DROPPER, TOOL_ERASER, TOOL_REPLACE, TOOL_SLAB };
 
 public:
-    GLModelWidget(QWidget *parent = 0);
+    GLModelWidget(QWidget* parent, QSettings* appSettings);
     ~GLModelWidget();
 
     QSize minimumSizeHint() const;
@@ -97,9 +98,6 @@ private:
     Imath::V3i m_activeVoxel;
     Imath::Color4f m_activeColor;
 
-    Imath::Color4f m_gridColor;
-    Imath::Color4f m_backgroundColor;
-
     QPoint m_lastMouse;
     bool m_drawGrid;
     bool m_drawVoxelGrid;
@@ -130,8 +128,9 @@ private:
 
     void glDrawAxes();
     void glDrawGrid(const int size, 
-                    const Imath::Color4f gridColor,
-                    const Imath::Color4f bgColor);
+                    const int gridCellSize,
+                    const Imath::Color4f& gridColor,
+                    const Imath::Color4f& bgColor);
 
     void glDrawCubeWire();
     void glDrawCubePoly();
@@ -142,6 +141,7 @@ private:
     void glDrawVoxelCenter(const size_t sx, const size_t sy, const size_t sz);
 
     QUndoStack m_undoStack;
+    QSettings* m_appSettings;
 };
 
 

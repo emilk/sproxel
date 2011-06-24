@@ -52,6 +52,12 @@ public:
     GuidesPage(QWidget* parent = 0);
 };
 
+class PalettePage : public QWidget
+{
+public:
+    PalettePage(QWidget* parent = 0);
+};
+
 class WIPPage : public QWidget
 {
 public:

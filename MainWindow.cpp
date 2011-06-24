@@ -15,7 +15,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_activeFilename("")
 {
     // Windows
-    m_glModelWidget = new GLModelWidget(this);
+    m_glModelWidget = new GLModelWidget(this, &m_appSettings);
     setCentralWidget(m_glModelWidget);
 
     // The docking palette
