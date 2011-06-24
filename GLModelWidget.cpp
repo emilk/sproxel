@@ -175,6 +175,7 @@ void GLModelWidget::paintGL()
     if (m_drawGrid)
     {
         // Shift the grid to the floor of the voxel grid
+        // TODO: Eventually stop moving this to the floor and just keep it at 0,0,0
         Imath::Box3d worldBox = m_gvg.worldBounds();
         glPushMatrix();
         glTranslatef(0, worldBox.min.y, 0);
@@ -186,7 +187,6 @@ void GLModelWidget::paintGL()
                    m_appSettings->value("GLModelWidget/gridCellSize", 1).toInt(),
                    Imath::Color4f(tempG.redF(),  tempG.greenF(),  tempG.blueF(),  1.0f),
                    Imath::Color4f(tempBG.redF(), tempBG.greenF(), tempBG.blueF(), 1.0f));
-
         glPopMatrix();
     }
     
