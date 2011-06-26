@@ -9,6 +9,9 @@ QT       += core gui opengl
 TARGET = sproxel
 TEMPLATE = app
 
+INCLUDEPATH += ../python/include
+LIBS += -L../python/libs -lpython27
+
 unix:!macx {
   CONFIG += link_pkgconfig
   PKGCONFIG += IlmBase
@@ -38,7 +41,9 @@ SOURCES += \
     main.cpp \
     NewGridDialog.cpp \
     PreferencesDialog.cpp \
-    PaletteWidget.cpp
+    PaletteWidget.cpp \
+    script.cpp \
+    pyConsole.cpp
 
 HEADERS  += \
     Foundation.h \
@@ -48,7 +53,11 @@ HEADERS  += \
     MainWindow.h \
     NewGridDialog.h \
     PreferencesDialog.h \
-    PaletteWidget.h
+    PaletteWidget.h \
+    script.h \
+    pyConsole.h \
+    ConsoleWidget.h \
+    glue/classGlue.h
 
 FORMS += \
     NewGridDialog.ui

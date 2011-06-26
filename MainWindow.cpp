@@ -5,6 +5,8 @@
 #include "GLCamera.h"
 #include "MainWindow.h"
 #include "GLModelWidget.h"
+#include "ConsoleWidget.h"
+#include "pyConsole.h"
 
 #include <QFileDialog>
 #include <QColorDialog>
@@ -184,6 +186,8 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_menuWindow = menuBar()->addMenu("&Window");
     m_menuWindow->addAction(m_toolbar->toggleViewAction());
     m_menuWindow->addAction(m_paletteDocker->toggleViewAction());
+    m_menuWindow->addAction(get_python_console_widget()->toggleViewAction());
+    get_python_console_widget()->toggleViewAction()->setChecked(false);
 
 
     // ------ toolbar hookups
@@ -283,6 +287,8 @@ void MainWindow::closeEvent(QCloseEvent* event)
         m_appSettings.setValue("toolbar/visibility", m_toolbar->isVisible());
         m_appSettings.setValue("paletteWindow/visibility", m_paletteDocker->isVisible());
     }
+
+    if (event->isAccepted()) close_python_console();
 }
 
 

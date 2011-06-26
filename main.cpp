@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "script.h"
 
 #include <QtGui>
 #include <QApplication>
@@ -10,7 +11,16 @@ int main(int argc, char *argv[])
         filename = argv[1];
 
     QApplication a(argc, argv);
+
+    init_script(argc>=1 ? argv[0] : "sproxel.exe");
+
     MainWindow window(filename);
     window.show();
-    return a.exec();
+
+    script_set_main_window(&window);
+    run_script("test.py");
+
+    int r=a.exec();
+    close_script();
+    return r;
 }
