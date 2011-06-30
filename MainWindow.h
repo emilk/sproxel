@@ -10,7 +10,6 @@
 
 #include "NewGridDialog.h"
 #include "PaletteWidget.h"
-#include "PreferencesDialog.h"
 
 #define SPROXEL_VERSION "0.3"
 #define BASE_WINDOW_TITLE (tr("Sproxel " SPROXEL_VERSION))

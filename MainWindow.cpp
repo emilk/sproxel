@@ -5,6 +5,7 @@
 #include "GLCamera.h"
 #include "MainWindow.h"
 #include "GLModelWidget.h"
+#include "PreferencesDialog.h"
 #include "ConsoleWidget.h"
 #include "pyConsole.h"
 
@@ -540,13 +541,10 @@ void MainWindow::exportGrid()
 
 void MainWindow::editPreferences()
 {
-    PreferencesDialog dlg(this);
+    PreferencesDialog dlg(this, &m_appSettings);
     dlg.setModal(true);
-    if (dlg.exec())
-    {
-        std::cout << "DONE" << std::endl;
-    }
-    std::cout << "FINE" << std::endl;
+    QObject::connect(&dlg, SIGNAL(preferenceChanged()), m_glModelWidget, SLOT(updateGL()));
+    dlg.exec();
 }
 
 
