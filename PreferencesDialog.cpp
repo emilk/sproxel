@@ -196,14 +196,6 @@ ModelViewPage::ModelViewPage(QWidget* parent, QSettings* appSettings) :
     setLayout(mainLayout);
 
     // Populate the settings
-    //if (m_pAppSettings->value("GLModelWidget/backgroundColor", true).toBool())
-    //    saveWindowPositions->setCheckState(Qt::Checked);
-    //else
-    //    saveWindowPositions->setCheckState(Qt::Unchecked);
-    //if (m_pAppSettings->value("???/voxelDisplay", false).toBool())
-    //    frameOnOpen->setCheckState(Qt::Checked);
-    //else
-    //    frameOnOpen->setCheckState(Qt::Unchecked);
 }
 
 

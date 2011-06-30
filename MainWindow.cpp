@@ -187,8 +187,8 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_menuWindow = menuBar()->addMenu("&Window");
     m_menuWindow->addAction(m_toolbar->toggleViewAction());
     m_menuWindow->addAction(m_paletteDocker->toggleViewAction());
-    m_menuWindow->addAction(get_python_console_widget()->toggleViewAction());
-    get_python_console_widget()->toggleViewAction()->setChecked(false);
+    //m_menuWindow->addAction(get_python_console_widget()->toggleViewAction());
+    //get_python_console_widget()->toggleViewAction()->setChecked(false);
 
 
     // ------ toolbar hookups
@@ -247,6 +247,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     // Load the commandline supplied filename
     if (initialFilename != "")
     {
+        // TODO: Can be merged with openFile to be more tidy
         bool success = false;
         if (initialFilename.endsWith(".PNG", Qt::CaseInsensitive))
             success = m_glModelWidget->loadGridPNG(initialFilename.toStdString());
@@ -257,6 +258,8 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
         {
             m_activeFilename = initialFilename;
             setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
+            if (m_appSettings.value("frameOnOpen", false).toBool())
+                m_glModelWidget->frame(true);
         }
     }
 }
@@ -289,7 +292,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
         m_appSettings.setValue("paletteWindow/visibility", m_paletteDocker->isVisible());
     }
 
-    if (event->isAccepted()) close_python_console();
+    //if (event->isAccepted()) close_python_console();
 }
 
 
@@ -491,6 +494,8 @@ void MainWindow::openFile()
         m_glModelWidget->clearUndoStack();
         m_activeFilename = filename;
         setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
+        if (m_appSettings.value("frameOnOpen", false).toBool())
+            m_glModelWidget->frame(true);
     }
 }
 
