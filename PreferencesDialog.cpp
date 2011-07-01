@@ -3,6 +3,10 @@
 
 #include "PreferencesDialog.h"
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Main preferences dialog /////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 PreferencesDialog::PreferencesDialog(QWidget* parent, QSettings* appSettings) :
     QDialog(parent),
     m_pAppSettings(appSettings)
@@ -76,8 +80,8 @@ PreferencesDialog::PreferencesDialog(QWidget* parent, QSettings* appSettings) :
 
     QHBoxLayout* buttonsLayout = new QHBoxLayout;
     buttonsLayout->addStretch(1);
-    buttonsLayout->addWidget(cancelButton);
     buttonsLayout->addWidget(okButton);
+    buttonsLayout->addWidget(cancelButton);
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addLayout(horizontalLayout);
@@ -90,8 +94,9 @@ PreferencesDialog::PreferencesDialog(QWidget* parent, QSettings* appSettings) :
     resize(QSize(530, 300));
 
     // Daisy chain the signals
-    QObject::connect(m_pGeneralPage, SIGNAL(preferenceChanged()), this, SIGNAL(preferenceChanged()));
-    QObject::connect(m_pGridPage,    SIGNAL(preferenceChanged()), this, SIGNAL(preferenceChanged()));
+    QObject::connect(m_pGeneralPage,   SIGNAL(preferenceChanged()), this, SIGNAL(preferenceChanged()));
+    QObject::connect(m_pModelViewPage, SIGNAL(preferenceChanged()), this, SIGNAL(preferenceChanged()));
+    QObject::connect(m_pGridPage,      SIGNAL(preferenceChanged()), this, SIGNAL(preferenceChanged()));
 }
 
 void PreferencesDialog::changePage(QListWidgetItem* current, QListWidgetItem* previous)
@@ -116,6 +121,10 @@ void PreferencesDialog::reject()
 }
 
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Preference Sub-Pages ////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 GeneralPage::GeneralPage(QWidget* parent, QSettings* appSettings) :
     QWidget(parent),
     m_pAppSettings(appSettings)
@@ -175,41 +184,59 @@ void GeneralPage::setFrameOnOpen(int state)
 }
 
 
-
+// MODELVIEW PAGE //
 ModelViewPage::ModelViewPage(QWidget* parent, QSettings* appSettings) :
     QWidget(parent),
     m_pAppSettings(appSettings)
 {
     QLabel* backgroundColor = new QLabel("Window Background Color", this);
+    ColorWidget* bgColorSelect = new ColorWidget(this);
     QLabel* voxelDisplay = new QLabel("Voxel Display Style", this);
 
-    QVBoxLayout* stuffzLayout = new QVBoxLayout;
-    stuffzLayout->addWidget(backgroundColor);
-    stuffzLayout->addWidget(voxelDisplay);
+    QGroupBox* modelViewGroup = new QGroupBox(tr("Guide Filenames"));
 
-    QGroupBox* configGroup = new QGroupBox();
-    configGroup->setLayout(stuffzLayout);
+    QGridLayout* gridLayout = new QGridLayout;
+    gridLayout->addWidget(backgroundColor, 0, 0);
+    gridLayout->addWidget(bgColorSelect, 0, 1);
+    gridLayout->addWidget(voxelDisplay, 1, 0);
+    modelViewGroup->setLayout(gridLayout);
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
-    mainLayout->addWidget(configGroup);
+    mainLayout->addWidget(modelViewGroup);
     mainLayout->addStretch(1);
     setLayout(mainLayout);
 
     // Populate the settings
-}
+    bgColorSelect->setColor(m_pAppSettings->value("GLModelWidget/backgroundColor", 
+                                                  QColor(161,161,161)).value<QColor>());
 
+    // Backup original values
+    m_backgroundColorOrig = bgColorSelect->color();
+
+    // Hook up the signals
+    QObject::connect(bgColorSelect, SIGNAL(colorChanged(QColor)),
+                     this, SLOT(setBackgroundColor(QColor)));
+}
 
 void ModelViewPage::restoreOriginals()
 {
-    
+    m_pAppSettings->setValue("GLModelWidget/backgroundColor", m_backgroundColorOrig);
+}
+
+void ModelViewPage::setBackgroundColor(const QColor& value)
+{
+    m_pAppSettings->setValue("GLModelWidget/backgroundColor", value);
+    emit preferenceChanged();
 }
 
 
+// GRID PAGE //
 GridPage::GridPage(QWidget* parent, QSettings* appSettings) :
     QWidget(parent),
     m_pAppSettings(appSettings)
 {
     QLabel* gridColor = new QLabel("Grid Color", this);
+    ColorWidget* gridColorSelect = new ColorWidget(this);
 
     QLabel* gridSize = new QLabel("Grid Size", this);
     QSpinBox* sizeSpinBox = new QSpinBox;
@@ -227,6 +254,7 @@ GridPage::GridPage(QWidget* parent, QSettings* appSettings) :
 
     QGridLayout* gridLayout = new QGridLayout;
     gridLayout->addWidget(gridColor, 0, 0);
+    gridLayout->addWidget(gridColorSelect, 0, 1);
     gridLayout->addWidget(gridSize, 1, 0);
     gridLayout->addWidget(sizeSpinBox, 1, 1);
     gridLayout->addWidget(gridCellSize, 2, 0);
@@ -239,18 +267,19 @@ GridPage::GridPage(QWidget* parent, QSettings* appSettings) :
     setLayout(mainLayout);
 
     // Populate the settings
-    //if (m_pAppSettings->value("GLModelWidget/gridColor", true).toBool())
-    //    saveWindowPositions->setCheckState(Qt::Checked);
-    //else
-    //    saveWindowPositions->setCheckState(Qt::Unchecked);
+    gridColorSelect->setColor(m_pAppSettings->value("GLModelWidget/gridColor", 
+                                                    QColor(0,0,0)).value<QColor>());
     sizeSpinBox->setValue(m_pAppSettings->value("GLModelWidget/gridSize", 16).toInt());
     cellSizeSpinBox->setValue(m_pAppSettings->value("GLModelWidget/gridCellSize", 1).toInt());
 
     // Backup original values
+    m_gridColorOrig = gridColorSelect->color();
     m_gridSizeOrig = sizeSpinBox->value();
     m_gridCellSizeOrig = cellSizeSpinBox->value();
 
     // Hook up the signals
+    QObject::connect(gridColorSelect, SIGNAL(colorChanged(QColor)),
+                     this, SLOT(setGridColor(QColor)));
     QObject::connect(sizeSpinBox, SIGNAL(valueChanged(int)),
                      this, SLOT(setGridSize(int)));
     QObject::connect(cellSizeSpinBox, SIGNAL(valueChanged(int)),
@@ -259,6 +288,7 @@ GridPage::GridPage(QWidget* parent, QSettings* appSettings) :
 
 void GridPage::restoreOriginals()
 {
+    m_pAppSettings->setValue("GLModelWidget/gridColor", m_gridColorOrig);
     m_pAppSettings->setValue("GLModelWidget/gridSize", m_gridSizeOrig);
     m_pAppSettings->setValue("GLModelWidget/gridCellSize", m_gridCellSizeOrig);
 }
@@ -275,8 +305,14 @@ void GridPage::setgridCellSize(int value)
     emit preferenceChanged();
 }
 
+void GridPage::setGridColor(const QColor& value)
+{
+    m_pAppSettings->setValue("GLModelWidget/gridColor", value);
+    emit preferenceChanged();
+}
 
 
+// LIGHTING PAGE //
 LightingPage::LightingPage(QWidget* parent, QSettings* appSettings) :
     QWidget(parent),
     m_pAppSettings(appSettings)
@@ -301,8 +337,9 @@ LightingPage::LightingPage(QWidget* parent, QSettings* appSettings) :
     setLayout(mainLayout);
 
     // Populate the settings
+    // Backup original values
+    // Hook up the signals
 }
-
 
 void LightingPage::restoreOriginals()
 {
@@ -310,6 +347,7 @@ void LightingPage::restoreOriginals()
 }
 
 
+// GUIDES PAGE //
 GuidesPage::GuidesPage(QWidget* parent, QSettings* appSettings) :
     QWidget(parent),
     m_pAppSettings(appSettings)
@@ -340,8 +378,9 @@ GuidesPage::GuidesPage(QWidget* parent, QSettings* appSettings) :
     setLayout(mainLayout);
 
     // Populate the settings
+    // Backup original values
+    // Hook up the signals
 }
-
 
 void GuidesPage::restoreOriginals()
 {
@@ -349,6 +388,7 @@ void GuidesPage::restoreOriginals()
 }
 
 
+// PALETTE PAGE //
 PalettePage::PalettePage(QWidget* parent, QSettings* appSettings) :
     QWidget(parent),
     m_pAppSettings(appSettings)
@@ -372,8 +412,9 @@ PalettePage::PalettePage(QWidget* parent, QSettings* appSettings) :
     setLayout(mainLayout);
 
     // Populate the settings
+    // Backup original values
+    // Hook up the signals
 }
-
 
 void PalettePage::restoreOriginals()
 {
@@ -381,6 +422,7 @@ void PalettePage::restoreOriginals()
 }
 
 
+// WIP PAGE //
 WIPPage::WIPPage(QWidget* parent, QSettings* appSettings) :
     QWidget(parent),
     m_pAppSettings(appSettings)
@@ -389,8 +431,6 @@ WIPPage::WIPPage(QWidget* parent, QSettings* appSettings) :
     QVBoxLayout* mainLayout = new QVBoxLayout;
     mainLayout->addWidget(wip);
     setLayout(mainLayout);
-
-    // Populate the settings
 }
 
 void WIPPage::restoreOriginals()
@@ -399,3 +439,46 @@ void WIPPage::restoreOriginals()
 }
 
 
+
+////////////////////////////////////////////////////////////////////////////////
+// Helper Widgets //////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+void ColorWidget::paintEvent(QPaintEvent*)
+{
+    QPainter painter(this);
+    painter.fillRect(2, 2, width()-4, height()-4, QBrush(m_color));
+
+    const int wm1 = width()-1;
+    const int hm1 = height()-1;
+
+    painter.setPen(QPen(QColor(0,0,0)));
+    painter.drawLine(0,   0,   wm1, 0);
+    painter.drawLine(0,   0,   0,   hm1);
+    painter.drawLine(wm1, hm1, 0,   hm1);
+    painter.drawLine(wm1, hm1, wm1, 0);
+}
+
+
+void ColorWidget::colorChangedSlot(QColor color)
+{
+    m_color = color;
+    emit colorChanged(m_color);
+    update();
+}
+
+
+void ColorWidget::mousePressEvent(QMouseEvent*)
+{
+    QColor backupColor = m_color;
+
+    QColorDialog qcd(m_color, this);
+    connect(&qcd, SIGNAL(currentColorChanged(QColor)), 
+            this, SLOT(colorChangedSlot(QColor)));
+    qcd.exec();
+
+    QColor newColor = qcd.selectedColor();
+    if (newColor.isValid())
+        colorChangedSlot(newColor);
+    else
+        colorChangedSlot(backupColor);
+}

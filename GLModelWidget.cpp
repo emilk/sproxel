@@ -147,8 +147,8 @@ QSize GLModelWidget::sizeHint() const
 void GLModelWidget::initializeGL()
 {
     QColor bg = m_appSettings->value("GLModelWidget/backgroundColor", QColor(161,161,161)).value<QColor>();
-
     glClearColor(bg.redF(), bg.greenF(), bg.blueF(), 0.0);
+
     glShadeModel(GL_FLAT);
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
@@ -168,6 +168,9 @@ void GLModelWidget::resizeGL(int width, int height)
 
 void GLModelWidget::paintGL()
 {
+    QColor bg = m_appSettings->value("GLModelWidget/backgroundColor", QColor(161,161,161)).value<QColor>();
+    glClearColor(bg.redF(), bg.greenF(), bg.blueF(), 0.0);
+
     m_cam.apply();
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

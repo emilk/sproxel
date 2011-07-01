@@ -1,7 +1,10 @@
 #ifndef _SETTINGS_DIALOG_H_
 #define _SETTINGS_DIALOG_H_
 
+#include <iostream>
+
 #include <QDialog>
+#include <QPainter>
 #include <QSettings>
 #include <QListWidget>
 #include <QStackedWidget>
@@ -14,7 +17,10 @@ class GuidesPage;
 class PalettePage;
 class WIPPage;
 
-// Main preferences dialog
+
+////////////////////////////////////////////////////////////////////////////////
+// Main preferences dialog /////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 class PreferencesDialog : public QDialog
 {
     Q_OBJECT
@@ -45,7 +51,10 @@ private:
 };
 
 
-// Preference sub-pages
+
+////////////////////////////////////////////////////////////////////////////////
+// Preference Sub-Pages ////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 class GeneralPage : public QWidget
 {   Q_OBJECT
 public:
@@ -69,11 +78,17 @@ class ModelViewPage : public QWidget
 {   Q_OBJECT
 public:
     ModelViewPage(QWidget* parent = NULL, QSettings* appSettings = NULL);
-    
+
     QSettings* m_pAppSettings;
     QColor m_backgroundColorOrig;
     int m_voxelDisplayOrig;
     void restoreOriginals();
+
+signals:
+    void preferenceChanged();
+
+public slots:
+    void setBackgroundColor(const QColor& value);
 };
 
 
@@ -92,6 +107,7 @@ signals:
     void preferenceChanged();
 
 public slots:
+    void setGridColor(const QColor& value);
     void setGridSize(int value);
     void setgridCellSize(int value);
 };
@@ -134,6 +150,40 @@ public:
     
     QSettings* m_pAppSettings;
     void restoreOriginals();
+};
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Helper Widgets //////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+class ColorWidget : public QWidget
+{
+    Q_OBJECT
+            
+public:
+    ColorWidget(QWidget* parent = NULL) : 
+        QWidget(parent), 
+        m_color(255,0,0) 
+    {
+        setMinimumSize(50, 22);
+    }
+
+    void setColor(const QColor& nc) { m_color = nc; }
+    QColor color() { return m_color; }
+
+public slots:
+    void colorChangedSlot(QColor color);
+
+signals:
+    void colorChanged(QColor color);
+
+protected:
+    void paintEvent(QPaintEvent* event);
+    virtual void mousePressEvent(QMouseEvent* event);
+
+private:
+    QColor m_color;
 };
 
 #endif
