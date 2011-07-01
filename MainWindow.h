@@ -52,6 +52,8 @@ private:
     QAction* m_actShiftUp;
     QAction* m_actShiftDown;
     QAction* m_actShiftWrap;
+    QAction* m_actRotateCw;
+    QAction* m_actRotateCcw;
     QAction* m_actMirror;
     QAction* m_actUpRes;
     QAction* m_actDownRes;
@@ -96,6 +98,8 @@ public slots:
 
     void shiftUp();
     void shiftDown();
+    void rotateCw();
+    void rotateCcw();
     void mirror();
 
     void upRes();

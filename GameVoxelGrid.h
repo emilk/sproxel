@@ -30,11 +30,23 @@ template <class T>
 class GameVoxelGrid
 {
 public:
+    GameVoxelGrid() : m_transform(), m_cellDimensions(0,0,0)
+    {
+        resizeData();
+    }
+
     GameVoxelGrid(const Imath::V3i& cellDim) 
         : m_transform(),
           m_cellDimensions(cellDim)
     {
         resizeData();
+    }
+
+    GameVoxelGrid(const GameVoxelGrid& gvg)
+    {
+        m_transform = gvg.m_transform;
+        m_cellDimensions = gvg.m_cellDimensions;
+        m_data = gvg.m_data;
     }
     ~GameVoxelGrid() { }
 
@@ -147,6 +159,7 @@ public:
 private:
     Imath::M44d m_transform;
     Imath::V3i m_cellDimensions;
+    std::vector< std::vector < std::vector< T > > > m_data;
 
     Imath::V3d voxelCenter(const Imath::V3i& v) const
     {
@@ -168,8 +181,6 @@ private:
             }
         }
     }
-    
-    std::vector< std::vector < std::vector< T > > > m_data;
 };
 
 #endif

@@ -127,6 +127,18 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     connect(m_actShiftWrap, SIGNAL(toggled(bool)),
             m_glModelWidget, SLOT(setShiftWrap(bool)));
 
+    m_actRotateCw = new QAction("Rotate clockwise", this);
+    m_actRotateCw->setShortcut(Qt::CTRL + Qt::Key_Greater);
+    m_menuEdit->addAction(m_actRotateCw);
+    connect(m_actRotateCw, SIGNAL(triggered()),
+            this, SLOT(rotateCw()));
+
+    m_actRotateCcw = new QAction("Rotate counter-clockwise", this);
+    m_actRotateCcw->setShortcut(Qt::CTRL + Qt::Key_Less);
+    m_menuEdit->addAction(m_actRotateCcw);
+    connect(m_actRotateCcw, SIGNAL(triggered()),
+            this, SLOT(rotateCcw()));
+
     m_actMirror = new QAction("Mirror", this);
     m_actMirror->setShortcut(Qt::CTRL + Qt::Key_M);
     m_menuEdit->addAction(m_actMirror);
@@ -564,6 +576,14 @@ void MainWindow::shiftDown()
 {
     m_glModelWidget->shiftVoxels(m_glModelWidget->currentAxis(),
                                  false, m_glModelWidget->shiftWrap());
+}
+void MainWindow::rotateCw()
+{
+    m_glModelWidget->rotateVoxels(m_glModelWidget->currentAxis(), 1);
+}
+void MainWindow::rotateCcw()
+{
+    m_glModelWidget->rotateVoxels(m_glModelWidget->currentAxis(), -1);
 }
 void MainWindow::mirror()
 {

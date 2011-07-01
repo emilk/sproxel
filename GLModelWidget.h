@@ -15,6 +15,7 @@
 #include <ImathVec.h>
 #include <ImathColor.h>
 
+typedef GameVoxelGrid<Imath::Color4f> SproxelGrid;
 
 class GLModelWidget : public QGLWidget
 {
@@ -93,7 +94,7 @@ protected:
 private:
     GLCamera m_cam;
 
-    GameVoxelGrid<Imath::Color4f> m_gvg;
+    SproxelGrid m_gvg;
     std::vector<Imath::V3i> m_intersects;
 
     Imath::V3i m_activeVoxel;
@@ -146,11 +147,39 @@ private:
 };
 
 
-// The only real command this GUI does - any more should be broken out into their own file.
+// This GUI now has two undo'able commands - TODO: break out into their own file.
+class CmdChangeEntireVoxelGrid : public QUndoCommand
+{
+public:
+    CmdChangeEntireVoxelGrid(SproxelGrid* gvg, const SproxelGrid& newGrid) :
+        m_pGvg(gvg)
+    {
+        m_newGrid = newGrid;
+        m_oldGrid = *gvg;
+        setText("Change grid");
+    }
+
+    virtual void redo()
+    {
+        *m_pGvg = m_newGrid;
+    }
+
+    virtual void undo()
+    {
+        *m_pGvg = m_oldGrid;
+    }
+
+private:
+    SproxelGrid* m_pGvg;
+    SproxelGrid  m_newGrid;
+    SproxelGrid  m_oldGrid;
+};
+
+
 class CmdSetVoxelColor : public QUndoCommand
 {
 public:
-    CmdSetVoxelColor(GameVoxelGrid<Imath::Color4f>* gvg, const Imath::V3i& index, const Imath::Color4f color) :
+    CmdSetVoxelColor(SproxelGrid* gvg, const Imath::V3i& index, const Imath::Color4f color) :
         m_pGvg(gvg),
         m_index(),
         m_newColor(),
@@ -188,7 +217,7 @@ protected:
     }
 
 private:
-    GameVoxelGrid<Imath::Color4f>* m_pGvg;
+    SproxelGrid* m_pGvg;
     std::vector<Imath::V3i> m_index;
     std::vector<Imath::Color4f> m_newColor;
     std::vector<Imath::Color4f> m_oldColor;

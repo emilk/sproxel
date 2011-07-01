@@ -55,9 +55,10 @@ GLModelWidget::~GLModelWidget()
 }
 
 
+// TODO: Hook up to undo
 void GLModelWidget::resizeVoxelGrid(Imath::V3i size)
 {
-    m_gvg = GameVoxelGrid<Imath::Color4f>(size);
+    m_gvg = SproxelGrid(size);
 
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
 
@@ -70,10 +71,10 @@ void GLModelWidget::resizeVoxelGrid(Imath::V3i size)
     updateGL();
 }
 
-
+// TODO: Hook up to undo
 void GLModelWidget::reresVoxelGrid(const float scale)
 {
-    GameVoxelGrid<Imath::Color4f> tempGVG = m_gvg;
+    SproxelGrid tempGVG = m_gvg;
 
     Imath::V3i newDimensions;
     newDimensions.x = (int)((float)m_gvg.cellDimensions().x * scale);
@@ -1738,34 +1739,47 @@ void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
 }
 
 
-void GLModelWidget::rotateVoxels(const Axis axis, const int)
+void GLModelWidget::rotateVoxels(const Axis axis, const int dir)
 {
-    GameVoxelGrid<Imath::Color4f> backup = m_gvg;
+    SproxelGrid newGrid = m_gvg;
 
     // Set some new dimensions
     Imath::V3i newDim(0,0,0);
-    Imath::V3i oldDim = backup.cellDimensions();
+    Imath::V3i oldDim = m_gvg.cellDimensions();
     switch (axis)
     {
         case X_AXIS: newDim.x = oldDim.x; newDim.y = oldDim.z; newDim.z = oldDim.y; break;
         case Y_AXIS: newDim.x = oldDim.z; newDim.y = oldDim.y; newDim.z = oldDim.x; break;
         case Z_AXIS: newDim.x = oldDim.y; newDim.y = oldDim.x; newDim.z = oldDim.z; break;
     }
-    m_gvg.setCellDimensions(newDim);
+    newGrid.setCellDimensions(newDim);
 
     // Do the rotation
-    for (int x = 0; x < m_gvg.cellDimensions().x; x++)
+    for (int x = 0; x < newGrid.cellDimensions().x; x++)
     {
-        for (int y = 0; y < m_gvg.cellDimensions().y; y++)
+        for (int y = 0; y < newGrid.cellDimensions().y; y++)
         {
-            for (int z = 0; z < m_gvg.cellDimensions().z; z++)
+            for (int z = 0; z < newGrid.cellDimensions().z; z++)
             {
-                //Imath::V3i oldLocation = Imath::V3i(oldDim.x-1-z, y, x);  // CCW
-                Imath::V3i oldLocation = Imath::V3i(z, y, oldDim.z-1-x);    // CW
-                setVoxelColor(Imath::V3i(x,y,z), backup.get(oldLocation));
+                Imath::V3i oldLocation(0,0,0);
+                switch (axis)
+                {
+                    case X_AXIS: if (dir > 0) oldLocation = Imath::V3i(x, oldDim.y-1-z, y);
+                                 else         oldLocation = Imath::V3i(x, z, oldDim.z-1-y);
+                                 break;
+                    case Y_AXIS: if (dir > 0) oldLocation = Imath::V3i(z, y, oldDim.z-1-x);
+                                 else         oldLocation = Imath::V3i(oldDim.x-1-z, y, x);
+                                 break;
+                    case Z_AXIS: if (dir > 0) oldLocation = Imath::V3i(oldDim.x-1-y, x, z);
+                                 else         oldLocation = Imath::V3i(y, oldDim.y-1-x, z);
+                                 break;
+                }
+                newGrid.set(Imath::V3i(x,y,z), m_gvg.get(oldLocation));
             }
         }
-    }    
+    }
+
+    m_undoStack.push(new CmdChangeEntireVoxelGrid(&m_gvg, newGrid));
 
     // Transform and update - todo: functionize
     Imath::M44d transform;
@@ -1773,15 +1787,12 @@ void GLModelWidget::rotateVoxels(const Axis axis, const int)
     transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
     m_gvg.setTransform(transform);
 
-    // TODO: Make undo'able by adding resize command
-    clearUndoStack();
-
     updateGL();
 }
 
 void GLModelWidget::mirrorVoxels(const Axis axis)
 {
-    GameVoxelGrid<Imath::Color4f> backup = m_gvg;
+    SproxelGrid backup = m_gvg;
 
     m_undoStack.beginMacro("Mirror");    
     
