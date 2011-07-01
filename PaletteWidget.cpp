@@ -40,7 +40,12 @@ void PaletteWidget::paintEvent(QPaintEvent*)
     painter.fillRect(0, 0, width(), height(), QBrush(toQColor(m_backgroundColor)));
     
     // Active and passive colors get drawn in the upper-left
+    painter.fillRect(40, 30, 28, 28, QBrush(QColor(0,0,0)));
+    painter.fillRect(41, 31, 26, 26, QBrush(QColor(255, 255, 255)));
     painter.fillRect(42, 32, 24, 24, QBrush(toQColor(m_passiveColor)));
+
+    painter.fillRect(28, 18, 28, 28, QBrush(QColor(0,0,0)));
+    painter.fillRect(29, 19, 26, 26, QBrush(QColor(255, 255, 255)));
     painter.fillRect(30, 20, 24, 24, QBrush(toQColor(m_activeColor)));
     
     // Horizontal rule
