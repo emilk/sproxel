@@ -50,6 +50,7 @@ public:
 
     void shiftVoxels(const Axis axis, const bool up, const bool wrap);
     void mirrorVoxels(const Axis axis);
+    void rotateVoxels(const Axis axis, const int dir);
     void setVoxelColor(const Imath::V3i& index, const Imath::Color4f color);
 
     void clearUndoStack() { m_undoStack.clear(); }

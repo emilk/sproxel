@@ -1738,11 +1738,52 @@ void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
 }
 
 
+void GLModelWidget::rotateVoxels(const Axis axis, const int dir)
+{
+    GameVoxelGrid<Imath::Color4f> backup = m_gvg;
+
+    // Set some new dimensions
+    Imath::V3i newDim(0,0,0);
+    Imath::V3i oldDim = backup.cellDimensions();
+    switch (axis)
+    {
+        case X_AXIS: newDim.x = oldDim.x; newDim.y = oldDim.z; newDim.z = oldDim.y; break;
+        case Y_AXIS: newDim.x = oldDim.z; newDim.y = oldDim.y; newDim.z = oldDim.x; break;
+        case Z_AXIS: newDim.x = oldDim.y; newDim.y = oldDim.x; newDim.z = oldDim.z; break;
+    }
+    m_gvg.setCellDimensions(newDim);
+
+    // Do the rotation
+    for (int x = 0; x < m_gvg.cellDimensions().x; x++)
+    {
+        for (int y = 0; y < m_gvg.cellDimensions().y; y++)
+        {
+            for (int z = 0; z < m_gvg.cellDimensions().z; z++)
+            {
+                //Imath::V3i oldLocation = Imath::V3i(oldDim.x-1-z, y, x);  // CCW
+                Imath::V3i oldLocation = Imath::V3i(z, y, oldDim.z-1-x);    // CW
+                setVoxelColor(Imath::V3i(x,y,z), backup.get(oldLocation));
+            }
+        }
+    }    
+
+    // Transform and update - todo: functionize
+    Imath::M44d transform;
+    Imath::V3d dDims = m_gvg.cellDimensions();
+    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
+    m_gvg.setTransform(transform);
+
+    // TODO: Make undo'able by adding resize command
+    clearUndoStack();
+
+    updateGL();
+}
+
 void GLModelWidget::mirrorVoxels(const Axis axis)
 {
     GameVoxelGrid<Imath::Color4f> backup = m_gvg;
 
-    m_undoStack.beginMacro("Shift");    
+    m_undoStack.beginMacro("Mirror");    
     
     for (int x = 0; x < m_gvg.cellDimensions().x; x++)
     {
