@@ -1738,7 +1738,7 @@ void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
 }
 
 
-void GLModelWidget::rotateVoxels(const Axis axis, const int dir)
+void GLModelWidget::rotateVoxels(const Axis axis, const int)
 {
     GameVoxelGrid<Imath::Color4f> backup = m_gvg;
 
