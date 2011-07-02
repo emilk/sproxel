@@ -127,6 +127,7 @@ private:
                              const Imath::Color4f& newColor);
 
     Imath::Box3d dataBounds();
+    void centerGrid();
 
     void glDrawAxes();
     void glDrawGrid(const int size, 

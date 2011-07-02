@@ -35,12 +35,7 @@ GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings)
       m_appSettings(appSettings)
 {
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
-
-    // Transform and update - todo: functionize
-    Imath::M44d transform;
-    Imath::V3d dDims = m_gvg.cellDimensions();
-    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
-    m_gvg.setTransform(transform);
+    centerGrid();
 
     // Be sure to tell the parent window every time we muck with the scene
     QObject::connect(&m_undoStack, SIGNAL(cleanChanged(bool)),
@@ -61,12 +56,7 @@ void GLModelWidget::resizeVoxelGrid(Imath::V3i size)
 
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
 
-    // Transform and update - todo: functionize
-    Imath::M44d transform;
-    Imath::V3d dDims = m_gvg.cellDimensions();
-    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
-    m_gvg.setTransform(transform);
-
+    centerGrid();
     updateGL();
 }
 
@@ -802,6 +792,15 @@ Imath::Box3d GLModelWidget::dataBounds()
 }
 
 
+void GLModelWidget::centerGrid()
+{
+    Imath::M44d transform;
+    Imath::V3d dDims = m_gvg.cellDimensions();
+    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
+    m_gvg.setTransform(transform);
+}
+
+
 void GLModelWidget::rayGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
 {
     m_undoStack.beginMacro("Ray Blast");
@@ -1208,11 +1207,7 @@ bool GLModelWidget::loadGridCSV(const std::string& filename)
     }
     fclose(fp);
 
-    // Transform and update - todo: functionize
-    Imath::M44d transform;
-    Imath::V3d dDims = m_gvg.cellDimensions();
-    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
-    m_gvg.setTransform(transform);
+    centerGrid();
     updateGL();
     return true;
 }
@@ -1292,11 +1287,7 @@ bool GLModelWidget::loadGridPNG(const std::string& filename)
         }
     }
 
-    // Transform and update - todo: functionize
-    Imath::M44d transform;
-    Imath::V3d dDims = m_gvg.cellDimensions();
-    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
-    m_gvg.setTransform(transform);
+    centerGrid();
     updateGL();
     return true;
 }
@@ -1384,12 +1375,7 @@ bool GLModelWidget::importImageIntoGrid(const std::string& filename)
         }
     }
     
-    // Transform and update - todo: functionize
-    Imath::M44d transform;
-    Imath::V3d dDims = m_gvg.cellDimensions();
-    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
-    m_gvg.setTransform(transform);
-
+    centerGrid();
     updateGL();
     return true;
 }
@@ -1781,12 +1767,7 @@ void GLModelWidget::rotateVoxels(const Axis axis, const int dir)
 
     m_undoStack.push(new CmdChangeEntireVoxelGrid(&m_gvg, newGrid));
 
-    // Transform and update - todo: functionize
-    Imath::M44d transform;
-    Imath::V3d dDims = m_gvg.cellDimensions();
-    transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
-    m_gvg.setTransform(transform);
-
+    centerGrid();
     updateGL();
 }
 
