@@ -11,7 +11,7 @@
 #include "NewGridDialog.h"
 #include "PaletteWidget.h"
 
-#define SPROXEL_VERSION "0.3"
+#define SPROXEL_VERSION "0.4"
 #define BASE_WINDOW_TITLE (tr("Sproxel " SPROXEL_VERSION))
 
 class GLModelWidget;
