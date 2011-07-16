@@ -46,7 +46,8 @@ public:
     bool importImageIntoGrid(const std::string& filename);
     bool exportGridOBJ(const std::string& filename, bool asTriangles);
 
-    void resizeVoxelGrid(Imath::V3i size);
+    void resizeAndClearVoxelGrid(const Imath::V3i& size);
+    void resizeAndShiftVoxelGrid(const Imath::V3i& size, const Imath::V3i& shift);
     void reresVoxelGrid(const float scale);
 
     void shiftVoxels(const Axis axis, const bool up, const bool wrap);

@@ -147,24 +147,38 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
 
     m_menuEdit->addSeparator();
 
-    m_actUpRes = new QAction("Double grid resolution", this);
-    m_actUpRes->setShortcut(Qt::CTRL + Qt::Key_Plus);
-    m_menuEdit->addAction(m_actUpRes);
-    connect(m_actUpRes, SIGNAL(triggered()),
-            this, SLOT(upRes()));
-
-    m_actDownRes = new QAction("Half grid resolution", this);
-    m_actDownRes->setShortcut(Qt::CTRL + Qt::Key_Minus);
-    m_menuEdit->addAction(m_actDownRes);
-    connect(m_actDownRes, SIGNAL(triggered()),
-            this, SLOT(downRes()));
-
-    m_menuEdit->addSeparator();
-
     m_actPreferences = new QAction("Preferences...", this);
     m_menuEdit->addAction(m_actPreferences);
     connect(m_actPreferences, SIGNAL(triggered()),
             this, SLOT(editPreferences()));
+
+
+    // ------ grid menu
+    m_menuGrid = menuBar()->addMenu("&Grid");
+
+    m_actExtendUp = new QAction("Extend grid dimension up", this);
+    m_actExtendUp->setShortcut(Qt::CTRL + Qt::Key_Plus);
+    m_menuGrid->addAction(m_actExtendUp);
+    connect(m_actExtendUp, SIGNAL(triggered()),
+            this, SLOT(extendUp()));
+
+    m_actExtendDown = new QAction("Extend grid dimension down", this);
+    m_actExtendDown->setShortcut(Qt::CTRL + Qt::Key_Minus);
+    m_menuGrid->addAction(m_actExtendDown);
+    connect(m_actExtendDown, SIGNAL(triggered()),
+            this, SLOT(extendDown()));
+
+    m_menuGrid->addSeparator();
+
+    m_actUpRes = new QAction("Double grid resolution", this);
+    m_menuGrid->addAction(m_actUpRes);
+    connect(m_actUpRes, SIGNAL(triggered()),
+            this, SLOT(upRes()));
+
+    m_actDownRes = new QAction("Half grid resolution", this);
+    m_menuGrid->addAction(m_actDownRes);
+    connect(m_actDownRes, SIGNAL(triggered()),
+            this, SLOT(downRes()));
 
 
     // ------ view menu
@@ -413,7 +427,7 @@ void MainWindow::newGrid()
         m_glModelWidget->cleanUndoStack();
         m_glModelWidget->clearUndoStack();
         setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
-        m_glModelWidget->resizeVoxelGrid(dlg.getVoxelSize());
+        m_glModelWidget->resizeAndClearVoxelGrid(dlg.getVoxelSize());
     }
 }
 
@@ -588,6 +602,31 @@ void MainWindow::rotateCcw()
 void MainWindow::mirror()
 {
     m_glModelWidget->mirrorVoxels(m_glModelWidget->currentAxis());
+}
+
+void MainWindow::extendUp()
+{
+    Imath::V3i sizeInc(0,0,0);
+    switch (m_glModelWidget->currentAxis())
+    {
+        case GLModelWidget::X_AXIS: sizeInc.x += 1; break;
+        case GLModelWidget::Y_AXIS: sizeInc.y += 1; break;
+        case GLModelWidget::Z_AXIS: sizeInc.z += 1; break;
+    }
+    m_glModelWidget->resizeAndShiftVoxelGrid(sizeInc, Imath::V3i(0,0,0));
+}
+
+void MainWindow::extendDown()
+{
+    Imath::V3i shift(0,0,0);
+    Imath::V3i sizeInc(0,0,0);
+    switch (m_glModelWidget->currentAxis())
+    {
+        case GLModelWidget::X_AXIS: sizeInc.x += 1; shift.x += 1; break;
+        case GLModelWidget::Y_AXIS: sizeInc.y += 1; shift.y += 1; break;
+        case GLModelWidget::Z_AXIS: sizeInc.z += 1; shift.z += 1; break;
+    }
+    m_glModelWidget->resizeAndShiftVoxelGrid(sizeInc, shift);
 }
 
 void MainWindow::upRes()   { m_glModelWidget->reresVoxelGrid(2.0f); }

@@ -36,6 +36,7 @@ private:
     // Menus
     QMenu* m_menuFile;
     QMenu* m_menuEdit;
+    QMenu* m_menuGrid;
     QMenu* m_menuView;
     QMenu* m_menuWindow;
 
@@ -55,9 +56,12 @@ private:
     QAction* m_actRotateCw;
     QAction* m_actRotateCcw;
     QAction* m_actMirror;
+    QAction* m_actPreferences;
+
+    QAction* m_actExtendUp;
+    QAction* m_actExtendDown;
     QAction* m_actUpRes;
     QAction* m_actDownRes;
-    QAction* m_actPreferences;
 
     QAction* m_actViewGrid;
     QAction* m_actViewVoxgrid;
@@ -102,6 +106,8 @@ public slots:
     void rotateCcw();
     void mirror();
 
+    void extendUp();
+    void extendDown();
     void upRes();
     void downRes();
 

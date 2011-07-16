@@ -50,12 +50,44 @@ GLModelWidget::~GLModelWidget()
 }
 
 
-void GLModelWidget::resizeVoxelGrid(Imath::V3i size)
+void GLModelWidget::resizeAndClearVoxelGrid(const Imath::V3i& size)
 {
     m_gvg = SproxelGrid(size);
 
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
 
+    centerGrid();
+    updateGL();
+}
+
+
+void GLModelWidget::resizeAndShiftVoxelGrid(const Imath::V3i& sizeInc, 
+                                            const Imath::V3i& shift)
+{
+    SproxelGrid newGrid = SproxelGrid(m_gvg.cellDimensions() + sizeInc);
+    newGrid.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
+    
+    for (int x = 0; x < m_gvg.cellDimensions().x; x++)
+    {
+        const int xDest = x + shift.x;
+        for (int y = 0; y < m_gvg.cellDimensions().y; y++)
+        {
+            const int yDest = y + shift.y;
+            for (int z = 0; z < m_gvg.cellDimensions().z; z++)
+            {
+                const int zDest = z + shift.z;
+                if ((xDest < 0 || xDest >= newGrid.cellDimensions().x) ||
+                    (yDest < 0 || yDest >= newGrid.cellDimensions().y) ||
+                    (zDest < 0 || zDest >= newGrid.cellDimensions().z))
+                    continue;
+
+                newGrid.set(Imath::V3i(xDest, yDest, zDest), 
+                            m_gvg.get(Imath::V3i(x, y, z)));
+            }
+        }
+    }
+    
+    m_undoStack.push(new CmdChangeEntireVoxelGrid(&m_gvg, newGrid));
     centerGrid();
     updateGL();
 }
