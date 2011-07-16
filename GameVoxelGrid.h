@@ -151,6 +151,7 @@ public:
                     }
                 }
             }
+            m_transform = other.m_transform;
         }
         return *this;
     }
