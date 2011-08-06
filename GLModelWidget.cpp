@@ -18,9 +18,10 @@
 Imath::Line3d fakeLine;
 Imath::Box3d fakeBounds(Imath::V3d(-50, -50, -50), Imath::V3d(50, 50, 50));
 
-GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings)
+GLModelWidget::GLModelWidget(QWidget* parent, const QSettings* appSettings)
     : QGLWidget(parent),
       m_cam(),
+      m_undoManager(),
       m_gvg(Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ)),
       m_intersects(),
       m_activeVoxel(-1,-1,-1),
@@ -32,13 +33,14 @@ GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings)
       m_shiftWrap(true),
       m_currAxis(Y_AXIS),
       m_activeTool(TOOL_SPLAT),
-      m_appSettings(appSettings)
+      p_appSettings(appSettings),
+      m_toolStates()
 {
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
     centerGrid();
 
     // Be sure to tell the parent window every time we muck with the scene
-    QObject::connect(&m_undoStack, SIGNAL(cleanChanged(bool)),
+    QObject::connect(&m_undoManager, SIGNAL(cleanChanged(bool)),
                      parent, SLOT(reactToModified(bool)));
 }
 
@@ -87,7 +89,7 @@ void GLModelWidget::resizeAndShiftVoxelGrid(const Imath::V3i& sizeInc,
         }
     }
     
-    m_undoStack.push(new CmdChangeEntireVoxelGrid(&m_gvg, newGrid));
+    m_undoManager.changeEntireVoxelGrid(m_gvg, newGrid);
     centerGrid();
     updateGL();
 }
@@ -150,7 +152,7 @@ void GLModelWidget::reresVoxelGrid(const float scale)
         }
     }
     
-    m_undoStack.push(new CmdChangeEntireVoxelGrid(&m_gvg, newGrid));
+    m_undoManager.changeEntireVoxelGrid(m_gvg, newGrid);
     updateGL();
 }
 
@@ -169,7 +171,7 @@ QSize GLModelWidget::sizeHint() const
 
 void GLModelWidget::initializeGL()
 {
-    QColor bg = m_appSettings->value("GLModelWidget/backgroundColor", QColor(161,161,161)).value<QColor>();
+    QColor bg = p_appSettings->value("GLModelWidget/backgroundColor", QColor(161,161,161)).value<QColor>();
     glClearColor(bg.redF(), bg.greenF(), bg.blueF(), 0.0);
 
     glShadeModel(GL_FLAT);
@@ -191,7 +193,7 @@ void GLModelWidget::resizeGL(int width, int height)
 
 void GLModelWidget::paintGL()
 {
-    QColor bg = m_appSettings->value("GLModelWidget/backgroundColor", QColor(161,161,161)).value<QColor>();
+    QColor bg = p_appSettings->value("GLModelWidget/backgroundColor", QColor(161,161,161)).value<QColor>();
     glClearColor(bg.redF(), bg.greenF(), bg.blueF(), 0.0);
 
     m_cam.apply();
@@ -207,10 +209,10 @@ void GLModelWidget::paintGL()
         glTranslatef(0, worldBox.min.y, 0);
 
         // Grid drawing with color conversion
-        QColor tempG  = m_appSettings->value("GLModelWidget/gridColor", QColor(0,0,0)).value<QColor>();
-        QColor tempBG = m_appSettings->value("GLModelWidget/backgroundColor", QColor(161,161,161)).value<QColor>();
-        glDrawGrid(m_appSettings->value("GLModelWidget/gridSize", 16).toInt(),
-                   m_appSettings->value("GLModelWidget/gridCellSize", 1).toInt(),
+        QColor tempG  = p_appSettings->value("GLModelWidget/gridColor", QColor(0,0,0)).value<QColor>();
+        QColor tempBG = p_appSettings->value("GLModelWidget/backgroundColor", QColor(161,161,161)).value<QColor>();
+        glDrawGrid(p_appSettings->value("GLModelWidget/gridSize", 16).toInt(),
+                   p_appSettings->value("GLModelWidget/gridCellSize", 1).toInt(),
                    Imath::Color4f(tempG.redF(),  tempG.greenF(),  tempG.blueF(),  1.0f),
                    Imath::Color4f(tempBG.redF(), tempBG.greenF(), tempBG.blueF(), 1.0f));
         glPopMatrix();
@@ -698,6 +700,8 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
     const bool ctrlDown = event->modifiers() & Qt::ControlModifier;
     //const bool shiftDown = event->modifiers() & Qt::ShiftModifier;
     
+    // TODO: WARNING:  This tool state stuff is incomplete, it leaks, and it's pointless right now!  FINISH!
+    
     if (altDown)
     {
         // TODO: Likely won't need to confine this to the "Alt Down" case
@@ -709,8 +713,8 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
         {
             // CTRL+LMB is always replace
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
-            m_intersects = m_gvg.rayIntersection(fakeLine, true);
-            paintGunReplace(m_intersects, m_activeColor);
+            m_toolStates.push_back(new ReplaceToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg));
+            m_toolStates.back()->execute();
             updateGL();
         }
     }
@@ -719,29 +723,46 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
         if (event->buttons() & Qt::LeftButton)
         {
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
-            m_intersects = m_gvg.rayIntersection(fakeLine, true);
-
+            
+            bool gridOperation = true;
             switch (m_activeTool)
             {
-                case TOOL_SPLAT: paintGunBlast(m_intersects, m_activeColor); updateGL(); break;
-                case TOOL_FLOOD: paintGunFlood(m_intersects, m_activeColor); updateGL(); break;
-                case TOOL_RAY: break;
-                case TOOL_ERASER: paintGunDelete(m_intersects); updateGL(); break;
-                case TOOL_REPLACE: paintGunReplace(m_intersects, m_activeColor); updateGL(); break;
-                case TOOL_SLAB: paintGunFillSlice(m_intersects, m_activeColor); updateGL(); break;
+                case TOOL_SPLAT: 
+                    m_toolStates.push_back(new SplatToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg)); 
+                    break;
+                case TOOL_FLOOD:
+                    m_toolStates.push_back(new FloodToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg)); 
+                    break;
+                case TOOL_RAY: 
+                    break;
+                case TOOL_ERASER:
+                    m_toolStates.push_back(new EraserToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg)); 
+                    break;
+                case TOOL_REPLACE: 
+                    m_toolStates.push_back(new ReplaceToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg)); 
+                    break;
+                case TOOL_SLAB: 
+                    m_toolStates.push_back(new SlabToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg, currentAxis())); 
+                    break;
                 case TOOL_DROPPER:
-                    Imath::Color4f result = colorPick(m_intersects);
+                    Imath::Color4f result = colorPick(fakeLine);
                     if (result.a != 0.0f)
                         emit colorSampled(result);
+                    gridOperation = false;
                     break;
+            }
+            
+            if (gridOperation)
+            {
+                m_toolStates.back()->execute();
+                updateGL();
             }
         }
         else if (event->buttons() & Qt::MidButton)
         {
             // Middle button is always the color picker
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
-            m_intersects = m_gvg.rayIntersection(fakeLine, true);
-            Imath::Color4f result = colorPick(m_intersects);
+            Imath::Color4f result = colorPick(fakeLine);
             if (result.a != 0.0f)
                 emit colorSampled(result);
         }
@@ -749,8 +770,8 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
         {
             // Right button is always delete
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
-            m_intersects = m_gvg.rayIntersection(fakeLine, true);
-            paintGunDelete(m_intersects); 
+            m_toolStates.push_back(new EraserToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg));
+            m_toolStates.back()->execute();
             updateGL();
         }
         return;
@@ -835,219 +856,25 @@ void GLModelWidget::centerGrid()
 
 void GLModelWidget::rayGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
 {
-    m_undoStack.beginMacro("Ray Blast");
+    m_undoManager.beginMacro("Ray Blast");
     for (size_t i = 0; i < sortedInput.size(); i++)
     {
         setVoxelColor(sortedInput[i], color);
     }
-    m_undoStack.endMacro();
+    m_undoManager.endMacro();
 }
 
 
-void GLModelWidget::paintGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
+Imath::Color4f GLModelWidget::colorPick(const Imath::Line3d& ray)
 {
-    for (size_t i = 0; i < sortedInput.size(); i++)
+    m_intersects = m_gvg.rayIntersection(ray, true);
+    for (size_t i = 0; i < m_intersects.size(); i++)
     {
-        if (m_gvg.get(sortedInput[i]).a != 0.0f)
-        {
-            // Hit a voxel at the near edge of the grid?  Abort.
-            if (i == 0) return;
-            
-            // Hit a voxel in the middle?  Set the previous voxel and return.
-            setVoxelColor(sortedInput[i-1], color); 
-            break;
-        }
-        
-        // Didn't hit anything?  Just fill in the last voxel.
-        if (i == sortedInput.size()-1)
-        {
-            setVoxelColor(sortedInput[i], color);
-            break;
-        }
-    }
-}
-
-
-void GLModelWidget::paintGunReplace(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
-{
-    // Get the first voxel hit
-    Imath::V3i hit(-1,-1,-1);
-    for (size_t i = 0; i < sortedInput.size(); i++)
-    {
-        if (m_gvg.get(sortedInput[i]).a != 0.0f)
-        {
-            hit = sortedInput[i];
-            break;
-        }
-    }
-
-    // Crap out if there was no hit
-    if (hit == Imath::V3i(-1,-1,-1))
-        return;
-    
-    setVoxelColor(hit, color);
-}
-
-
-void GLModelWidget::paintGunFillSlice(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
-{
-    // TODO: Should this do an intersection at all, or maybe just fill in the row based on the first hit?
-    
-    // Sanity
-    if (sortedInput.size() == 0)
-        return;
-
-    // Get the position to fill from
-    Imath::V3i fillPos(-1,-1,-1);
-    for (size_t i = 0; i < sortedInput.size(); i++)
-    {
-        if (m_gvg.get(sortedInput[i]).a != 0.0f)
-        {
-            // Hit a voxel at the near edge of the grid?  Start there.
-            if (i == 0)
-            {
-                fillPos = sortedInput[0];
-                break;
-            }
-            else
-            {
-                // Hit a voxel in the middle?
-                fillPos = sortedInput[i-1];
-                break;
-            }
-        }
-    }
-
-    // Didn't hit anything?  Just fill in the last voxel.
-    if (fillPos == Imath::V3i(-1,-1,-1))
-    {
-        fillPos  = sortedInput[0];
-    }
-
-    // Fill
-    switch (m_currAxis)
-    {
-        case X_AXIS:
-            m_undoStack.beginMacro("Fill X Slice");
-            for (int y=0; y < m_gvg.cellDimensions().y; y++)
-            {
-                for (int z=0; z < m_gvg.cellDimensions().z; z++)
-                {
-                    setVoxelColor(Imath::V3i(fillPos.x, y, z), color);
-                }
-            }
-            m_undoStack.endMacro();
-            break;
-        case Y_AXIS:
-            m_undoStack.beginMacro("Fill Y Slice");
-            for (int x=0; x < m_gvg.cellDimensions().x; x++)
-            {
-                for (int z=0; z < m_gvg.cellDimensions().z; z++)
-                {
-                    setVoxelColor(Imath::V3i(x, fillPos.y, z), color);
-                }
-            }
-            m_undoStack.endMacro();
-            break;
-        case Z_AXIS:
-            m_undoStack.beginMacro("Fill Z Slice");
-            for (int x=0; x < m_gvg.cellDimensions().x; x++)
-            {
-                for (int y=0; y < m_gvg.cellDimensions().y; y++)
-                {
-                    setVoxelColor(Imath::V3i(x, y, fillPos.z), color);
-                }
-            }
-            m_undoStack.endMacro();
-            break;
-    }
-}
-
-
-void GLModelWidget::setNeighborsRecurse(const Imath::V3i& alreadySet, 
-                                        const Imath::Color4f& repColor, 
-                                        const Imath::Color4f& newColor)
-{
-    // Directions
-    Imath::V3i doUs[6];
-    doUs[0] = Imath::V3i(alreadySet.x+1, alreadySet.y,   alreadySet.z);
-    doUs[3] = Imath::V3i(alreadySet.x-1, alreadySet.y,   alreadySet.z);
-    doUs[1] = Imath::V3i(alreadySet.x,   alreadySet.y+1, alreadySet.z);
-    doUs[4] = Imath::V3i(alreadySet.x,   alreadySet.y-1, alreadySet.z);
-    doUs[2] = Imath::V3i(alreadySet.x,   alreadySet.y,   alreadySet.z+1);
-    doUs[5] = Imath::V3i(alreadySet.x,   alreadySet.y,   alreadySet.z-1);
-
-    for (int i = 0; i < 6; i++)
-    {
-        // Bounds protection
-        if (doUs[i].x < 0 || doUs[i].x >= m_gvg.cellDimensions().x) continue;
-        if (doUs[i].y < 0 || doUs[i].y >= m_gvg.cellDimensions().y) continue;
-        if (doUs[i].z < 0 || doUs[i].z >= m_gvg.cellDimensions().z) continue;
-        
-        // Recurse
-        if (m_gvg.get(doUs[i]) == repColor)
-        {
-            setVoxelColor(doUs[i], newColor);
-            setNeighborsRecurse(doUs[i], repColor, newColor);
-        }
-    }
-}
-
-
-void GLModelWidget::paintGunFlood(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
-{
-    // Get the first voxel hit
-    Imath::V3i hit(-1,-1,-1);
-    for (size_t i = 0; i < sortedInput.size(); i++)
-    {
-        if (m_gvg.get(sortedInput[i]).a != 0.0f)
-        {
-            hit = sortedInput[i];
-            break;
-        }
-    }
-    
-    // Dump out if there was no hit
-    if (hit == Imath::V3i(-1,-1,-1))
-        return;
-
-    // Get the color we're replacing.
-    const Imath::Color4f repColor = m_gvg.get(hit);
-
-    // Die early if there's nothing to do
-    if (repColor == color)
-        return;
-    
-    // Recurse
-    m_undoStack.beginMacro("Flood Fill");
-    setVoxelColor(hit, color);
-    setNeighborsRecurse(hit, repColor, color);
-    m_undoStack.endMacro();
-}
-
-
-Imath::Color4f GLModelWidget::colorPick(const std::vector<Imath::V3i>& sortedInput)
-{
-    for (size_t i = 0; i < sortedInput.size(); i++)
-    {
-        const Imath::Color4f color = m_gvg.get(sortedInput[i]);
+        const Imath::Color4f color = m_gvg.get(m_intersects[i]);
         if (color.a != 0.0f)
             return color;
     }
     return Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f);
-}
-
-
-void GLModelWidget::paintGunDelete(const std::vector<Imath::V3i>& sortedInput)
-{
-    for (size_t i = 0; i < sortedInput.size(); i++)
-    {
-        if (m_gvg.get(sortedInput[i]).a != 0.0f)
-        {
-            setVoxelColor(sortedInput[i], Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
-            break;
-        }
-    }
 }
 
 
@@ -1667,7 +1494,7 @@ void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
     if (up) std::swap(backupIndex, clearIndex);
 
 
-    m_undoStack.beginMacro("Shift");
+    m_undoManager.beginMacro("Shift");
 
     // Backup the necessary slice
     Imath::Color4f* sliceBackup = NULL;
@@ -1752,7 +1579,7 @@ void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
     }
     delete[] sliceBackup;
 
-    m_undoStack.endMacro();
+    m_undoManager.endMacro();
     updateGL();
 }
 
@@ -1797,7 +1624,7 @@ void GLModelWidget::rotateVoxels(const Axis axis, const int dir)
         }
     }
 
-    m_undoStack.push(new CmdChangeEntireVoxelGrid(&m_gvg, newGrid));
+    m_undoManager.changeEntireVoxelGrid(m_gvg, newGrid);
 
     centerGrid();
     updateGL();
@@ -1807,7 +1634,7 @@ void GLModelWidget::mirrorVoxels(const Axis axis)
 {
     SproxelGrid backup = m_gvg;
 
-    m_undoStack.beginMacro("Mirror");    
+    m_undoManager.beginMacro("Mirror");    
     
     for (int x = 0; x < m_gvg.cellDimensions().x; x++)
     {
@@ -1827,7 +1654,7 @@ void GLModelWidget::mirrorVoxels(const Axis axis)
         }
     }
     
-    m_undoStack.endMacro();
+    m_undoManager.endMacro();
     updateGL();
 }
 
@@ -1840,5 +1667,5 @@ void GLModelWidget::setVoxelColor(const Imath::V3i& index, const Imath::Color4f 
         index.x >= cd.x || index.y >= cd.y || index.z >= cd.z)
         return;
     
-    m_undoStack.push(new CmdSetVoxelColor(&m_gvg, index, color));
+    m_undoManager.setVoxelColor(m_gvg, index, color);
 }

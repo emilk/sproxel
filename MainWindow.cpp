@@ -288,6 +288,10 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
                 m_glModelWidget->frame(true);
         }
     }
+    
+    // Better way to keep the state in one place
+    //std::cout << (m_toolbarActionGroup->checkedAction()->text() == "Splat") << std::endl;
+    //std::cout << qPrintable(m_toolbarActionGroup->checkedAction()->text()) << std::endl;
 }
 
 
