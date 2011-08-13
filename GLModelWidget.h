@@ -15,8 +15,6 @@
 #include <ImathVec.h>
 #include <ImathColor.h>
 
-class ToolState;
-
 class GLModelWidget : public QGLWidget
 {
     Q_OBJECT
@@ -67,13 +65,13 @@ signals:
     void colorSampled(const Imath::Color4f& color);
 
 public slots:
+    void setActiveTool(const SproxelTool tool);
     void setDrawGrid(const bool value) { m_drawGrid = value; updateGL(); }
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
     void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
     void setShiftWrap(const bool value) { m_shiftWrap = value; }
     void setCurrentAxis(const SproxelAxis val) { m_currAxis = val; updateGL(); }
     void setActiveColor(const Imath::Color4f& c) { m_activeColor = c; }
-    void setActiveTool(const SproxelTool tool) { m_activeTool = tool; }
 
     void undo() { m_undoManager.undo(); updateGL(); }
     void redo() { m_undoManager.redo(); updateGL(); }
@@ -85,6 +83,7 @@ protected:
 
     virtual void mousePressEvent(QMouseEvent* event);
     virtual void mouseMoveEvent(QMouseEvent* event);
+    virtual void mouseReleaseEvent(QMouseEvent* event);
 
 private:
     GLCamera m_cam;
@@ -103,14 +102,11 @@ private:
     bool m_shiftWrap;
 
     SproxelAxis m_currAxis;
-    SproxelTool m_activeTool;
+    ToolState* m_activeTool;
 
     double* glMatrix(const Imath::M44d& m);
     void objWritePoly(FILE* fp, bool asTriangles,
                       const int& v0, const int& v1, const int& v2, const int& v3);
-
-    void rayGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color);
-    Imath::Color4f colorPick(const Imath::Line3d& ray);
 
     Imath::Box3d dataBounds();
     void centerGrid();
@@ -130,7 +126,6 @@ private:
     void glDrawVoxelCenter(const size_t sx, const size_t sy, const size_t sz);
 
     const QSettings* p_appSettings;
-    std::vector<ToolState*> m_toolStates;   // Warning: This is not a substitute for the undo buffer
 };
 
 

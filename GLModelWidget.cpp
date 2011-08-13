@@ -12,9 +12,9 @@
 #include "GLModelWidget.h"
 
 #define DEBUG_ME (0)
-
 #define DEFAULT_VOXGRID_SZ (8)
 
+// TODO: Kill because the tool holds this guy now
 Imath::Line3d fakeLine;
 Imath::Box3d fakeBounds(Imath::V3d(-50, -50, -50), Imath::V3d(50, 50, 50));
 
@@ -32,9 +32,8 @@ GLModelWidget::GLModelWidget(QWidget* parent, const QSettings* appSettings)
       m_drawBoundingBox(false),
       m_shiftWrap(true),
       m_currAxis(Y_AXIS),
-      m_activeTool(TOOL_SPLAT),
-      p_appSettings(appSettings),
-      m_toolStates()
+      m_activeTool(NULL),
+      p_appSettings(appSettings)
 {
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
     centerGrid();
@@ -49,6 +48,8 @@ GLModelWidget::~GLModelWidget()
 {
     //makeCurrent();
     //glDeleteLists(object, 1);
+
+    delete m_activeTool;
 }
 
 
@@ -166,6 +167,22 @@ QSize GLModelWidget::minimumSizeHint() const
 QSize GLModelWidget::sizeHint() const
 {
     return QSize(400, 400);
+}
+
+
+void GLModelWidget::setActiveTool(const SproxelTool tool)
+{ 
+    delete m_activeTool;
+    switch (tool)
+    {
+        case TOOL_RAY: break;   // TODO: Add icon and implement!
+        case TOOL_SPLAT: m_activeTool = new SplatToolState(&m_undoManager); break;
+        case TOOL_FLOOD: m_activeTool = new FloodToolState(&m_undoManager); break;
+        case TOOL_DROPPER: m_activeTool = new DropperToolState(&m_undoManager); break;
+        case TOOL_ERASER: m_activeTool = new EraserToolState(&m_undoManager); break;
+        case TOOL_REPLACE: m_activeTool = new ReplaceToolState(&m_undoManager); break;
+        case TOOL_SLAB: m_activeTool = new SlabToolState(&m_undoManager); break;
+    }
 }
 
 
@@ -627,7 +644,7 @@ void GLModelWidget::glDrawVoxelGrid()
                         continue;
                 }
 
-                if (Imath::V3i(x,y,z)   == m_activeVoxel || Imath::V3i(x-1,y,z)   == m_activeVoxel ||
+                if (Imath::V3i(x,y,z) == m_activeVoxel   || Imath::V3i(x-1,y,z) == m_activeVoxel ||
                     Imath::V3i(x,y-1,z) == m_activeVoxel || Imath::V3i(x-1,y-1,z) == m_activeVoxel)
                 {
                     continue;
@@ -700,21 +717,22 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
     const bool ctrlDown = event->modifiers() & Qt::ControlModifier;
     //const bool shiftDown = event->modifiers() & Qt::ShiftModifier;
     
-    // TODO: WARNING:  This tool state stuff is incomplete, it leaks, and it's pointless right now!  FINISH!
-    
     if (altDown)
     {
-        // TODO: Likely won't need to confine this to the "Alt Down" case
         m_lastMouse = event->pos();
     }
     else if (ctrlDown)
     {
         if (event->buttons() & Qt::LeftButton)
         {
-            // CTRL+LMB is always replace
+            // TODO: Figure out how to restore old tool properly in ReleaseEvent
+            // CTRL+LMB is always replace - switch tools and execute
+            SproxelTool currentTool = m_activeTool->type();
+            setActiveTool(TOOL_REPLACE);
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
-            m_toolStates.push_back(new ReplaceToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg));
-            m_toolStates.back()->execute();
+            m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
+            m_activeTool->execute();
+            setActiveTool(currentTool);
             updateGL();
         }
     }
@@ -724,54 +742,59 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
         {
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
             
-            bool gridOperation = true;
-            switch (m_activeTool)
+            // TODO: Unify the set function so this is cleaner
+            switch (m_activeTool->type())
             {
-                case TOOL_SPLAT: 
-                    m_toolStates.push_back(new SplatToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg)); 
-                    break;
+                case TOOL_RAY:
+                case TOOL_SPLAT:
                 case TOOL_FLOOD:
-                    m_toolStates.push_back(new FloodToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg)); 
-                    break;
-                case TOOL_RAY: 
-                    break;
                 case TOOL_ERASER:
-                    m_toolStates.push_back(new EraserToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg)); 
+                case TOOL_REPLACE:
+                    m_activeTool->setDragSupport(true);
+                    m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
                     break;
-                case TOOL_REPLACE: 
-                    m_toolStates.push_back(new ReplaceToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg)); 
-                    break;
-                case TOOL_SLAB: 
-                    m_toolStates.push_back(new SlabToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg, currentAxis())); 
+                case TOOL_SLAB:
+                    dynamic_cast<SlabToolState*>(m_activeTool)->set(&m_gvg, fakeLine, m_activeColor, currentAxis());
                     break;
                 case TOOL_DROPPER:
-                    Imath::Color4f result = colorPick(fakeLine);
-                    if (result.a != 0.0f)
+                    dynamic_cast<DropperToolState*>(m_activeTool)->set(&m_gvg, fakeLine, m_activeColor);
+                    std::vector<Imath::V3i> ints = dynamic_cast<DropperToolState*>(m_activeTool)->voxelsAffected();
+                    if (ints.size() != 0)
+                    {
+                        Imath::Color4f result = m_gvg.get(ints[0]);
                         emit colorSampled(result);
-                    gridOperation = false;
+                    }
                     break;
             }
-            
-            if (gridOperation)
-            {
-                m_toolStates.back()->execute();
-                updateGL();
-            }
+            m_activeTool->execute();
+            updateGL();
         }
         else if (event->buttons() & Qt::MidButton)
         {
+            // TODO: Figure out how to restore old tool properly in ReleaseEvent
             // Middle button is always the color picker
+            SproxelTool currentTool = m_activeTool->type();
+            setActiveTool(TOOL_DROPPER);
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
-            Imath::Color4f result = colorPick(fakeLine);
-            if (result.a != 0.0f)
+            dynamic_cast<DropperToolState*>(m_activeTool)->set(&m_gvg, fakeLine, m_activeColor);
+            std::vector<Imath::V3i> ints = dynamic_cast<DropperToolState*>(m_activeTool)->voxelsAffected();
+            if (ints.size() != 0)
+            {
+                Imath::Color4f result = m_gvg.get(ints[0]);
                 emit colorSampled(result);
+            }
+            setActiveTool(currentTool);
         }
         else if (event->buttons() & Qt::RightButton)
         {
+            // TODO: Figure out how to restore old tool properly in ReleaseEvent
             // Right button is always delete
+            SproxelTool currentTool = m_activeTool->type();
+            setActiveTool(TOOL_ERASER);
             fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
-            m_toolStates.push_back(new EraserToolState(&m_undoManager, fakeLine, m_activeColor, &m_gvg));
-            m_toolStates.back()->execute();
+            m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
+            m_activeTool->execute();
+            setActiveTool(currentTool);
             updateGL();
         }
         return;
@@ -782,10 +805,10 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
 void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
 {
     const bool altDown = event->modifiers() & Qt::AltModifier;
-    //const bool ctrlDown = event->modifiers() & Qt::ControlModifier;
     
     if (altDown)
     {
+        // Camera movement
         const int dx = event->pos().x() - m_lastMouse.x();
         const int dy = event->pos().y() - m_lastMouse.y();
         m_lastMouse = event->pos();
@@ -810,14 +833,27 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
     }
     else
     {
-        // Left click means shoot a ray
-        if (event->buttons() & Qt::LeftButton)
+        // If your tool supports drag, engage the drag
+        if (m_activeTool->supportsDrag())
         {
-            fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
-            m_intersects = m_gvg.rayIntersection(fakeLine, true);
-            updateGL();
+            // Left click means shoot a ray
+            if (event->buttons() & Qt::LeftButton)
+            {
+                fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
+                m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
+                m_activeTool->execute();
+                if (DEBUG_ME)
+                    m_intersects = m_gvg.rayIntersection(fakeLine, true);
+                updateGL();
+            }
         }
     }
+}
+
+
+void GLModelWidget::mouseReleaseEvent(QMouseEvent*)
+{
+    m_activeTool->decrementClicks();
 }
 
 
@@ -851,30 +887,6 @@ void GLModelWidget::centerGrid()
     Imath::V3d dDims = m_gvg.cellDimensions();
     transform.setTranslation(Imath::V3d(-dDims.x/2.0, 0, -dDims.z/2.0));
     m_gvg.setTransform(transform);
-}
-
-
-void GLModelWidget::rayGunBlast(const std::vector<Imath::V3i>& sortedInput, const Imath::Color4f& color)
-{
-    m_undoManager.beginMacro("Ray Blast");
-    for (size_t i = 0; i < sortedInput.size(); i++)
-    {
-        setVoxelColor(sortedInput[i], color);
-    }
-    m_undoManager.endMacro();
-}
-
-
-Imath::Color4f GLModelWidget::colorPick(const Imath::Line3d& ray)
-{
-    m_intersects = m_gvg.rayIntersection(ray, true);
-    for (size_t i = 0; i < m_intersects.size(); i++)
-    {
-        const Imath::Color4f color = m_gvg.get(m_intersects[i]);
-        if (color.a != 0.0f)
-            return color;
-    }
-    return Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f);
 }
 
 
@@ -1659,6 +1671,7 @@ void GLModelWidget::mirrorVoxels(const SproxelAxis axis)
 }
 
 
+// This is only here for the MainWindow now.  Should be changed.
 void GLModelWidget::setVoxelColor(const Imath::V3i& index, const Imath::Color4f color)
 {
     // Validity check

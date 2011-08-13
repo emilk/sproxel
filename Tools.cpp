@@ -9,8 +9,6 @@ void SplatToolState::execute()
     {
         p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color); 
     }
-
-    m_totalClicks--;
 }
 
 
@@ -68,8 +66,6 @@ void FloodToolState::execute()
     p_undoManager->setVoxelColor(*p_gvg, hit, m_color);
     setNeighborsRecurse(hit, repColor, m_color);
     p_undoManager->endMacro();
-    
-    m_totalClicks--;
 }
 
 
@@ -137,8 +133,6 @@ void EraserToolState::execute()
         p_undoManager->setVoxelColor(*p_gvg, voxels[i], 
                                      Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f)); 
     }
-
-    m_totalClicks--;
 }
 
 
@@ -172,10 +166,10 @@ void ReplaceToolState::execute()
     std::vector<Imath::V3i> voxels = voxelsAffected();
     for (size_t i = 0; i < voxels.size(); i++)
     {
-        p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color); 
+        // Don't replace if you're already identical
+        if (p_gvg->get(voxels[i]) != m_color)
+            p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color); 
     }
-    
-    m_totalClicks--;
 }
 
 
@@ -204,6 +198,26 @@ std::vector<Imath::V3i> ReplaceToolState::voxelsAffected()
 
 
 ////////////////////////////////////////
+void RayToolState::execute()
+{
+    std::vector<Imath::V3i> voxels = voxelsAffected();
+
+    p_undoManager->beginMacro("Ray Blast");
+    for (size_t i = 0; i < voxels.size(); i++)
+    {
+        p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color); 
+    }
+    p_undoManager->endMacro();
+}
+
+
+std::vector<Imath::V3i> RayToolState::voxelsAffected()
+{
+    return p_gvg->rayIntersection(m_ray, true);
+}
+
+
+////////////////////////////////////////
 void SlabToolState::execute()
 {
     std::vector<Imath::V3i> voxels = voxelsAffected();
@@ -219,8 +233,6 @@ void SlabToolState::execute()
         p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color); 
     }
     p_undoManager->endMacro();
-    
-    m_totalClicks--;
 }
 
 
@@ -295,3 +307,35 @@ std::vector<Imath::V3i> SlabToolState::voxelsAffected()
     }
     return voxels;
 }
+
+
+////////////////////////////////////////
+void DropperToolState::execute()
+{
+}
+
+
+std::vector<Imath::V3i> DropperToolState::voxelsAffected()
+{
+    std::vector<Imath::V3i> voxels;
+
+    // Intersect and check
+    std::vector<Imath::V3i> intersects = 
+        p_gvg->rayIntersection(m_ray, true);
+    if (intersects.size() == 0)
+        return voxels;
+
+    // Get the first voxel hit
+    for (size_t i = 0; i < intersects.size(); i++)
+    {
+        if (p_gvg->get(intersects[i]).a != 0.0f)
+        {
+            voxels.push_back(intersects[i]);
+            break;
+        }
+    }
+
+    return voxels;
+}
+
+

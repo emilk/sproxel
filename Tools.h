@@ -13,42 +13,42 @@
 class ToolState
 {
 public:
-    ToolState(UndoManager* um,
-              const Imath::Line3d& ray, 
-              const Imath::Color4f& color, 
-              SproxelGrid* gvg) : m_totalClicks(0), 
-                                  p_undoManager(um), 
-                                  m_ray(ray), 
-                                  m_color(color), 
-                                  p_gvg(gvg) {}
+    ToolState(UndoManager* um) : m_clicksRemain(0),
+                                 p_undoManager(um), 
+                                 m_ray(Imath::Line3d()), 
+                                 m_color(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f)), 
+                                 p_gvg(NULL),
+                                 m_supportsDrag(false) {}
+
     virtual ~ToolState() {}
     
     virtual void execute() = 0;
     virtual SproxelTool type() = 0;
     virtual std::vector<Imath::V3i> voxelsAffected() = 0;
-    virtual bool supportsDrag() { return false; }
     
-    int clicksRemaining()
+    virtual void set(SproxelGrid* gvg,
+                     const Imath::Line3d& ray, 
+                     const Imath::Color4f& color)
     {
-        return m_totalClicks;
+        m_ray = ray;
+        m_color = color;
+        p_gvg = gvg;
     }
     
-    virtual ToolState& operator=(const ToolState& right)
-    {
-        m_totalClicks = right.m_totalClicks;
-        p_undoManager = right.p_undoManager;
-        m_color = right.m_color;
-        p_gvg = right.p_gvg;
-        return *this;
-    }
-    
+    virtual void decrementClicks() { m_clicksRemain--; }
+    virtual int clicksRemaining() { return m_clicksRemain; }
+
+    virtual void setDragSupport(bool support) { m_supportsDrag = support; }
+    virtual bool supportsDrag() { return m_supportsDrag; }
+
 protected:
-    int m_totalClicks;
+    int m_clicksRemain;
         
     UndoManager* p_undoManager;
     Imath::Line3d m_ray;
     Imath::Color4f m_color;
     SproxelGrid* p_gvg;
+    bool m_supportsDrag;
 };
 
 
@@ -58,14 +58,10 @@ protected:
 class SplatToolState : public ToolState
 {
 public:
-    SplatToolState(UndoManager* um,
-                   const Imath::Line3d& ray, 
-                   const Imath::Color4f& color, 
-                   SproxelGrid* gvg) : ToolState(um, ray, color, gvg)
+    SplatToolState(UndoManager* um) : ToolState(um)
     {
-        m_totalClicks = 1;
+        m_clicksRemain = 1;
     }
-    
     ~SplatToolState() {}
     
     void execute();
@@ -80,14 +76,10 @@ public:
 class FloodToolState : public ToolState
 {
 public:
-    FloodToolState(UndoManager* um,
-                   const Imath::Line3d& ray, 
-                   const Imath::Color4f& color, 
-                   SproxelGrid* gvg) : ToolState(um, ray, color, gvg)
+    FloodToolState(UndoManager* um) : ToolState(um)
     {
-        m_totalClicks = 1;
+        m_clicksRemain = 1;
     }
-    
     ~FloodToolState() {}
     
     void execute();
@@ -107,14 +99,10 @@ private:
 class EraserToolState : public ToolState
 {
 public:
-    EraserToolState(UndoManager* um,
-                    const Imath::Line3d& ray, 
-                    const Imath::Color4f& color, 
-                    SproxelGrid* gvg) : ToolState(um, ray, color, gvg)
+    EraserToolState(UndoManager* um) : ToolState(um)
     {
-        m_totalClicks = 1;
+        m_clicksRemain = 1;
     }
-    
     ~EraserToolState() {}
     
     void execute();
@@ -129,12 +117,9 @@ public:
 class ReplaceToolState : public ToolState
 {
 public:
-    ReplaceToolState(UndoManager* um,
-                     const Imath::Line3d& ray, 
-                     const Imath::Color4f& color, 
-                     SproxelGrid* gvg) : ToolState(um, ray, color, gvg)
+    ReplaceToolState(UndoManager* um) : ToolState(um)
     {
-        m_totalClicks = 1;
+        m_clicksRemain = 1;
     }
     
     ~ReplaceToolState() {}
@@ -146,61 +131,74 @@ public:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// Ray tool
+////////////////////////////////////////////////////////////////////////////////
+class RayToolState : public ToolState
+{
+public:
+    RayToolState(UndoManager* um) : ToolState(um)
+    {
+        m_clicksRemain = 1;
+    }
+    ~RayToolState() {}
+    
+    void execute();
+    SproxelTool type() { return TOOL_RAY; }
+    std::vector<Imath::V3i> voxelsAffected();
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Slab tool
 ////////////////////////////////////////////////////////////////////////////////
 class SlabToolState : public ToolState
 {
 public:
-    SlabToolState(UndoManager* um,
-                  const Imath::Line3d& ray, 
-                  const Imath::Color4f& color, 
-                  SproxelGrid* gvg,
-                  const int axis) : ToolState(um, ray, color, gvg)
+    SlabToolState(UndoManager* um) : ToolState(um)
     {
-        m_workingAxis = axis;
-        m_totalClicks = 1;
+        m_workingAxis = Y_AXIS;
+        m_clicksRemain = 1;
     }
     
     ~SlabToolState() {}
+
+    virtual void set(SproxelGrid* gvg,
+                     const Imath::Line3d& ray, 
+                     const Imath::Color4f& color, 
+                     SproxelAxis axis)
+    {
+        m_ray = ray;
+        m_color = color;
+        p_gvg = gvg;
+        m_workingAxis = axis;
+    }
     
     void execute();
     SproxelTool type() { return TOOL_SLAB; }
     std::vector<Imath::V3i> voxelsAffected();
 
-    virtual SlabToolState& operator=(const SlabToolState& right)
-    {
-        m_totalClicks = right.m_totalClicks;
-        p_undoManager = right.p_undoManager;
-        m_color = right.m_color;
-        p_gvg = right.p_gvg;
-        m_workingAxis = right.m_workingAxis;
-        return *this;
-    }
-
 private:
-    int m_workingAxis;      // Why can't i do : GLModelWidget::Axis?
+    SproxelAxis m_workingAxis;
 };
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Dropper tool
 ////////////////////////////////////////////////////////////////////////////////
-// class DropperToolState : public ToolState
-// {
-// public:
-//     DropperToolState(UndoManager* um,
-//                      const Imath::Line3d& ray, 
-//                      const Imath::Color4f& color, 
-//                      SproxelGrid* gvg) : ToolState(um, ray, color, gvg)
-//     {
-//         m_totalClicks = 1;
-//     }
-//     
-//     ~DropperToolState() {}
-//     
-//     void execute();
-//     virtual std::vector<Imath::V3i> voxelsAffected();
-// };
+class DropperToolState : public ToolState
+{
+public:
+    DropperToolState(UndoManager* um) : ToolState(um)
+    {
+        m_clicksRemain = 1;
+    }
+    
+    ~DropperToolState() {}
+    
+    void execute();
+    SproxelTool type() { return TOOL_DROPPER; }
+    std::vector<Imath::V3i> voxelsAffected();
+};
 
 
 #endif
