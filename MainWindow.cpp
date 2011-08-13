@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "Global.h"
 #include "GLCamera.h"
 #include "MainWindow.h"
 #include "GLModelWidget.h"
@@ -334,15 +335,15 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 
     if (altDown && event->key() == Qt::Key_X)
     {
-        m_glModelWidget->setCurrentAxis(GLModelWidget::X_AXIS);
+        m_glModelWidget->setCurrentAxis(X_AXIS);
     }
     else if (altDown && event->key() == Qt::Key_Y)
     {
-        m_glModelWidget->setCurrentAxis(GLModelWidget::Y_AXIS);
+        m_glModelWidget->setCurrentAxis(Y_AXIS);
     }
     else if (altDown && event->key() == Qt::Key_Z)
     {
-        m_glModelWidget->setCurrentAxis(GLModelWidget::Z_AXIS);
+        m_glModelWidget->setCurrentAxis(Z_AXIS);
     }
     else if (ctrlDown && event->key() == Qt::Key_C)
     {
@@ -613,9 +614,9 @@ void MainWindow::extendUp()
     Imath::V3i sizeInc(0,0,0);
     switch (m_glModelWidget->currentAxis())
     {
-        case GLModelWidget::X_AXIS: sizeInc.x += 1; break;
-        case GLModelWidget::Y_AXIS: sizeInc.y += 1; break;
-        case GLModelWidget::Z_AXIS: sizeInc.z += 1; break;
+        case X_AXIS: sizeInc.x += 1; break;
+        case Y_AXIS: sizeInc.y += 1; break;
+        case Z_AXIS: sizeInc.z += 1; break;
     }
     m_glModelWidget->resizeAndShiftVoxelGrid(sizeInc, Imath::V3i(0,0,0));
 }
@@ -626,9 +627,9 @@ void MainWindow::extendDown()
     Imath::V3i sizeInc(0,0,0);
     switch (m_glModelWidget->currentAxis())
     {
-        case GLModelWidget::X_AXIS: sizeInc.x += 1; shift.x += 1; break;
-        case GLModelWidget::Y_AXIS: sizeInc.y += 1; shift.y += 1; break;
-        case GLModelWidget::Z_AXIS: sizeInc.z += 1; shift.z += 1; break;
+        case X_AXIS: sizeInc.x += 1; shift.x += 1; break;
+        case Y_AXIS: sizeInc.y += 1; shift.y += 1; break;
+        case Z_AXIS: sizeInc.z += 1; shift.z += 1; break;
     }
     m_glModelWidget->resizeAndShiftVoxelGrid(sizeInc, shift);
 }
@@ -636,13 +637,13 @@ void MainWindow::extendDown()
 void MainWindow::upRes()   { m_glModelWidget->reresVoxelGrid(2.0f); }
 void MainWindow::downRes() { m_glModelWidget->reresVoxelGrid(0.5f); }
 
-void MainWindow::setToolSplat(bool stat)   { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_SPLAT); }
-void MainWindow::setToolFlood(bool stat)   { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_FLOOD); }
-void MainWindow::setToolRay(bool stat)     { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_RAY); }
-void MainWindow::setToolDropper(bool stat) { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_DROPPER); }
-void MainWindow::setToolEraser(bool stat)  { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_ERASER); }
-void MainWindow::setToolReplace(bool stat) { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_REPLACE); }
-void MainWindow::setToolSlab(bool stat)    { if (stat) m_glModelWidget->setActiveTool(GLModelWidget::TOOL_SLAB); }
+void MainWindow::setToolSplat(bool stat)   { if (stat) m_glModelWidget->setActiveTool(TOOL_SPLAT); }
+void MainWindow::setToolFlood(bool stat)   { if (stat) m_glModelWidget->setActiveTool(TOOL_FLOOD); }
+void MainWindow::setToolRay(bool stat)     { if (stat) m_glModelWidget->setActiveTool(TOOL_RAY); }
+void MainWindow::setToolDropper(bool stat) { if (stat) m_glModelWidget->setActiveTool(TOOL_DROPPER); }
+void MainWindow::setToolEraser(bool stat)  { if (stat) m_glModelWidget->setActiveTool(TOOL_ERASER); }
+void MainWindow::setToolReplace(bool stat) { if (stat) m_glModelWidget->setActiveTool(TOOL_REPLACE); }
+void MainWindow::setToolSlab(bool stat)    { if (stat) m_glModelWidget->setActiveTool(TOOL_SLAB); }
 
 void MainWindow::reactToModified(bool clean)
 {

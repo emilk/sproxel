@@ -7,6 +7,7 @@
 #include <QSettings>
 
 #include "Tools.h"
+#include "Global.h"
 #include "GLCamera.h"
 #include "GameVoxelGrid.h"
 #include "UndoManager.h"
@@ -16,16 +17,10 @@
 #include <ImathColor.h>
 
 class ToolState;
-typedef GameVoxelGrid<Imath::Color4f> SproxelGrid;
 
 class GLModelWidget : public QGLWidget
 {
     Q_OBJECT
-
-public:
-    enum Axis { X_AXIS, Y_AXIS, Z_AXIS };
-    enum Tool { TOOL_SPLAT, TOOL_FLOOD, TOOL_RAY,
-                TOOL_DROPPER, TOOL_ERASER, TOOL_REPLACE, TOOL_SLAB };
 
 public:
     GLModelWidget(QWidget* parent, const QSettings* appSettings);
@@ -51,9 +46,9 @@ public:
     void resizeAndShiftVoxelGrid(const Imath::V3i& size, const Imath::V3i& shift);
     void reresVoxelGrid(const float scale);
 
-    void shiftVoxels(const Axis axis, const bool up, const bool wrap);
-    void mirrorVoxels(const Axis axis);
-    void rotateVoxels(const Axis axis, const int dir);
+    void shiftVoxels(const SproxelAxis axis, const bool up, const bool wrap);
+    void mirrorVoxels(const SproxelAxis axis);
+    void rotateVoxels(const SproxelAxis axis, const int dir);
     void setVoxelColor(const Imath::V3i& index, const Imath::Color4f color);
 
     void clearUndoStack() { m_undoManager.clear(); }
@@ -67,8 +62,8 @@ public:
     bool drawVoxelGrid() const { return m_drawVoxelGrid; }
     bool drawBoundingBox() const { return m_drawBoundingBox; }
     bool shiftWrap() const { return m_shiftWrap; }
-    Axis currentAxis() const { return m_currAxis; }
-    Tool activeTool() const { return m_activeTool; }
+    SproxelAxis currentAxis() const { return m_currAxis; }
+    SproxelTool activeTool() const { return m_activeTool; }
 
 signals:
     void colorSampled(const Imath::Color4f& color);
@@ -78,9 +73,9 @@ public slots:
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
     void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
     void setShiftWrap(const bool value) { m_shiftWrap = value; }
-    void setCurrentAxis(const Axis val) { m_currAxis = val; updateGL(); }
+    void setCurrentAxis(const SproxelAxis val) { m_currAxis = val; updateGL(); }
     void setActiveColor(const Imath::Color4f& c) { m_activeColor = c; }
-    void setActiveTool(const Tool tool) { m_activeTool = tool; }
+    void setActiveTool(const SproxelTool tool) { m_activeTool = tool; }
 
     void undo() { m_undoManager.undo(); updateGL(); }
     void redo() { m_undoManager.redo(); updateGL(); }
@@ -109,8 +104,8 @@ private:
     bool m_drawBoundingBox;
     bool m_shiftWrap;
 
-    Axis m_currAxis;
-    Tool m_activeTool;
+    SproxelAxis m_currAxis;
+    SproxelTool m_activeTool;
 
     double* glMatrix(const Imath::M44d& m);
     void objWritePoly(FILE* fp, bool asTriangles,

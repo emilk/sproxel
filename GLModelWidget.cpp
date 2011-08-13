@@ -1469,7 +1469,7 @@ bool GLModelWidget::exportGridOBJ(const std::string& filename, bool asTriangles)
 }
 
 
-void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
+void GLModelWidget::shiftVoxels(const SproxelAxis axis, const bool up, const bool wrap)
 {
     // Simplifiers for which way to shift
     size_t tan0AxisDim = 0;
@@ -1584,7 +1584,7 @@ void GLModelWidget::shiftVoxels(const Axis axis, const bool up, const bool wrap)
 }
 
 
-void GLModelWidget::rotateVoxels(const Axis axis, const int dir)
+void GLModelWidget::rotateVoxels(const SproxelAxis axis, const int dir)
 {
     SproxelGrid newGrid = m_gvg;
 
@@ -1630,7 +1630,7 @@ void GLModelWidget::rotateVoxels(const Axis axis, const int dir)
     updateGL();
 }
 
-void GLModelWidget::mirrorVoxels(const Axis axis)
+void GLModelWidget::mirrorVoxels(const SproxelAxis axis)
 {
     SproxelGrid backup = m_gvg;
 
