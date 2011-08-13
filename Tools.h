@@ -24,13 +24,22 @@ public:
     virtual ~ToolState() {}
     
     virtual void execute() = 0;
-    virtual std::vector<Imath::V3i> voxelsAffected() = 0;
     virtual SproxelTool type() = 0;
+    virtual std::vector<Imath::V3i> voxelsAffected() = 0;
     virtual bool supportsDrag() { return false; }
     
     int clicksRemaining()
     {
         return m_totalClicks;
+    }
+    
+    virtual ToolState& operator=(const ToolState& right)
+    {
+        m_totalClicks = right.m_totalClicks;
+        p_undoManager = right.p_undoManager;
+        m_color = right.m_color;
+        p_gvg = right.p_gvg;
+        return *this;
     }
     
 protected:
@@ -59,8 +68,8 @@ public:
     
     ~SplatToolState() {}
     
-    SproxelTool type() { return TOOL_SPLAT; }
     void execute();
+    SproxelTool type() { return TOOL_SPLAT; }
     std::vector<Imath::V3i> voxelsAffected();
 };
 
@@ -81,8 +90,8 @@ public:
     
     ~FloodToolState() {}
     
-    SproxelTool type() { return TOOL_FLOOD; }
     void execute();
+    SproxelTool type() { return TOOL_FLOOD; }
     std::vector<Imath::V3i> voxelsAffected();
 
 private:
@@ -108,8 +117,8 @@ public:
     
     ~EraserToolState() {}
     
-    SproxelTool type() { return TOOL_ERASER; }
     void execute();
+    SproxelTool type() { return TOOL_ERASER; }
     std::vector<Imath::V3i> voxelsAffected();
 };
 
@@ -130,8 +139,8 @@ public:
     
     ~ReplaceToolState() {}
     
-    SproxelTool type() { return TOOL_REPLACE; }
     void execute();
+    SproxelTool type() { return TOOL_REPLACE; }
     std::vector<Imath::V3i> voxelsAffected();
 };
 
@@ -154,9 +163,19 @@ public:
     
     ~SlabToolState() {}
     
-    SproxelTool type() { return TOOL_SLAB; }
     void execute();
+    SproxelTool type() { return TOOL_SLAB; }
     std::vector<Imath::V3i> voxelsAffected();
+
+    virtual SlabToolState& operator=(const SlabToolState& right)
+    {
+        m_totalClicks = right.m_totalClicks;
+        p_undoManager = right.p_undoManager;
+        m_color = right.m_color;
+        p_gvg = right.p_gvg;
+        m_workingAxis = right.m_workingAxis;
+        return *this;
+    }
 
 private:
     int m_workingAxis;      // Why can't i do : GLModelWidget::Axis?

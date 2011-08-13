@@ -1,5 +1,5 @@
-#ifndef __GLOBAL_H
-#define __GLOBAL_H
+#ifndef __GLOBAL_H__
+#define __GLOBAL_H__
 
 #include <ImathColor.h>
 #include "GameVoxelGrid.h"

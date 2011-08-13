@@ -1,13 +1,13 @@
 #ifndef __UNDO_MANAGER_H__
 #define __UNDO_MANAGER_H__
 
+#include "Global.h"
+
 #include <QString>
 #include <QWidget>
 #include <QUndoStack>
 #include <QUndoCommand>
 
-#include "Global.h"
-#include "GameVoxelGrid.h"
 
 // A wrapper class for Sproxel.  
 // Allows for an easy subset of undo/redo operations.

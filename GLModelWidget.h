@@ -9,7 +9,6 @@
 #include "Tools.h"
 #include "Global.h"
 #include "GLCamera.h"
-#include "GameVoxelGrid.h"
 #include "UndoManager.h"
 
 #include <ImathBox.h>
@@ -63,7 +62,6 @@ public:
     bool drawBoundingBox() const { return m_drawBoundingBox; }
     bool shiftWrap() const { return m_shiftWrap; }
     SproxelAxis currentAxis() const { return m_currAxis; }
-    SproxelTool activeTool() const { return m_activeTool; }
 
 signals:
     void colorSampled(const Imath::Color4f& color);
