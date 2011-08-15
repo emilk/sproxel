@@ -162,14 +162,8 @@ public:
     
     ~SlabToolState() {}
 
-    virtual void set(SproxelGrid* gvg,
-                     const Imath::Line3d& ray, 
-                     const Imath::Color4f& color, 
-                     SproxelAxis axis)
+    virtual void setAxis(SproxelAxis axis)
     {
-        m_ray = ray;
-        m_color = color;
-        p_gvg = gvg;
         m_workingAxis = axis;
     }
     

@@ -738,63 +738,58 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
     }
     else
     {
+        fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
         if (event->buttons() & Qt::LeftButton)
         {
-            fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
+            m_activeTool->setDragSupport(p_appSettings->value("GLModelWidget/dragEnabled", 1).toInt());
+            m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
+
+            if (m_activeTool->type() == TOOL_SLAB)
+                dynamic_cast<SlabToolState*>(m_activeTool)->setAxis(currentAxis());
             
-            // TODO: Unify the set function so this is cleaner
-            switch (m_activeTool->type())
+            else if (m_activeTool->type() == TOOL_DROPPER)
             {
-                case TOOL_RAY:
-                case TOOL_SPLAT:
-                case TOOL_FLOOD:
-                case TOOL_ERASER:
-                case TOOL_REPLACE:
-                    m_activeTool->setDragSupport(true);
-                    m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
-                    break;
-                case TOOL_SLAB:
-                    dynamic_cast<SlabToolState*>(m_activeTool)->set(&m_gvg, fakeLine, m_activeColor, currentAxis());
-                    break;
-                case TOOL_DROPPER:
-                    dynamic_cast<DropperToolState*>(m_activeTool)->set(&m_gvg, fakeLine, m_activeColor);
-                    std::vector<Imath::V3i> ints = dynamic_cast<DropperToolState*>(m_activeTool)->voxelsAffected();
-                    if (ints.size() != 0)
-                    {
-                        Imath::Color4f result = m_gvg.get(ints[0]);
-                        emit colorSampled(result);
-                    }
-                    break;
+                // TODO: Coalesce this dropper code so i don't repeat it everywhere
+                std::vector<Imath::V3i> ints = m_activeTool->voxelsAffected();
+                if (ints.size() != 0)
+                {
+                    Imath::Color4f result = m_gvg.get(ints[0]);
+                    emit colorSampled(result);
+                }
+                return;
             }
+            
             m_activeTool->execute();
             updateGL();
         }
         else if (event->buttons() & Qt::MidButton)
         {
-            // TODO: Figure out how to restore old tool properly in ReleaseEvent
             // Middle button is always the color picker
+            // TODO: Restore old tool properly in ReleaseEvent
             SproxelTool currentTool = m_activeTool->type();
             setActiveTool(TOOL_DROPPER);
-            fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
-            dynamic_cast<DropperToolState*>(m_activeTool)->set(&m_gvg, fakeLine, m_activeColor);
-            std::vector<Imath::V3i> ints = dynamic_cast<DropperToolState*>(m_activeTool)->voxelsAffected();
+            m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
+            
+            // TODO: Coalesce this dropper code so i don't repeat it everywhere
+            std::vector<Imath::V3i> ints = m_activeTool->voxelsAffected();
             if (ints.size() != 0)
             {
                 Imath::Color4f result = m_gvg.get(ints[0]);
                 emit colorSampled(result);
             }
             setActiveTool(currentTool);
+            m_activeTool->setDragSupport(p_appSettings->value("GLModelWidget/dragEnabled", 1).toInt());
         }
         else if (event->buttons() & Qt::RightButton)
         {
-            // TODO: Figure out how to restore old tool properly in ReleaseEvent
             // Right button is always delete
+            // TODO: Restore old tool properly in ReleaseEvent
             SproxelTool currentTool = m_activeTool->type();
             setActiveTool(TOOL_ERASER);
-            fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
             m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
             m_activeTool->execute();
             setActiveTool(currentTool);
+            m_activeTool->setDragSupport(p_appSettings->value("GLModelWidget/dragEnabled", 1).toInt());
             updateGL();
         }
         return;
@@ -842,6 +837,17 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
                 fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
                 m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
                 m_activeTool->execute();
+                // TODO: Coalesce this dropper code so i don't repeat it everywhere
+                if (m_activeTool->type() == TOOL_DROPPER)
+                {
+                    std::vector<Imath::V3i> ints = m_activeTool->voxelsAffected();
+                    if (ints.size() != 0)
+                    {
+                        Imath::Color4f result = m_gvg.get(ints[0]);
+                        emit colorSampled(result);
+                    }
+                    return;
+                }
                 if (DEBUG_ME)
                     m_intersects = m_gvg.rayIntersection(fakeLine, true);
                 updateGL();

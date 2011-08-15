@@ -192,13 +192,15 @@ ModelViewPage::ModelViewPage(QWidget* parent, QSettings* appSettings) :
     QLabel* backgroundColor = new QLabel("Window Background Color", this);
     ColorWidget* bgColorSelect = new ColorWidget(this);
     QLabel* voxelDisplay = new QLabel("Voxel Display Style", this);
+    QCheckBox* dragEnabled = new QCheckBox("Dragging enabled", this);
 
-    QGroupBox* modelViewGroup = new QGroupBox(tr("Guide Filenames"));
+    QGroupBox* modelViewGroup = new QGroupBox();
 
     QGridLayout* gridLayout = new QGridLayout;
     gridLayout->addWidget(backgroundColor, 0, 0);
     gridLayout->addWidget(bgColorSelect, 0, 1);
     gridLayout->addWidget(voxelDisplay, 1, 0);
+    gridLayout->addWidget(dragEnabled, 2, 0);
     modelViewGroup->setLayout(gridLayout);
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
@@ -209,18 +211,26 @@ ModelViewPage::ModelViewPage(QWidget* parent, QSettings* appSettings) :
     // Populate the settings
     bgColorSelect->setColor(m_pAppSettings->value("GLModelWidget/backgroundColor", 
                                                   QColor(161,161,161)).value<QColor>());
+    if (m_pAppSettings->value("GLModelWidget/dragEnabled", true).toBool())
+        dragEnabled->setCheckState(Qt::Checked);
+    else
+        dragEnabled->setCheckState(Qt::Unchecked);
 
     // Backup original values
     m_backgroundColorOrig = bgColorSelect->color();
+    m_dragEnabledOrig = dragEnabled->isChecked();
 
     // Hook up the signals
     QObject::connect(bgColorSelect, SIGNAL(colorChanged(QColor)),
                      this, SLOT(setBackgroundColor(QColor)));
+    QObject::connect(dragEnabled, SIGNAL(stateChanged(int)),
+                     this, SLOT(setDragEnabled(int)));
 }
 
 void ModelViewPage::restoreOriginals()
 {
     m_pAppSettings->setValue("GLModelWidget/backgroundColor", m_backgroundColorOrig);
+    m_pAppSettings->setValue("GLModelWidget/dragEnabled", m_dragEnabledOrig);
 }
 
 void ModelViewPage::setBackgroundColor(const QColor& value)
@@ -228,6 +238,13 @@ void ModelViewPage::setBackgroundColor(const QColor& value)
     m_pAppSettings->setValue("GLModelWidget/backgroundColor", value);
     emit preferenceChanged();
 }
+
+void ModelViewPage::setDragEnabled(int state)
+{
+    m_pAppSettings->setValue("GLModelWidget/dragEnabled", state);
+    emit preferenceChanged();
+}
+
 
 
 // GRID PAGE //
@@ -250,7 +267,7 @@ GridPage::GridPage(QWidget* parent, QSettings* appSettings) :
     cellSizeSpinBox->setSingleStep(1);
     cellSizeSpinBox->setValue(1);
 
-    QGroupBox* gridGroup = new QGroupBox(tr("Guide Filenames"));
+    QGroupBox* gridGroup = new QGroupBox();
 
     QGridLayout* gridLayout = new QGridLayout;
     gridLayout->addWidget(gridColor, 0, 0);
