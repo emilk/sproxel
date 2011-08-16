@@ -10,6 +10,8 @@
 #include <ImathLine.h>
 #include <ImathMatrix.h>
 
+#include "RayWalk.h"
+
 
 //-*****************************************************************************
 // Sort util
@@ -35,7 +37,7 @@ public:
         resizeData();
     }
 
-    GameVoxelGrid(const Imath::V3i& cellDim) 
+    GameVoxelGrid(const Imath::V3i& cellDim)
         : m_transform(),
           m_cellDimensions(cellDim)
     {
@@ -92,13 +94,16 @@ public:
         return m_data[cell.x][cell.y][cell.z];
     }
 
-    std::vector<Imath::V3i> rayIntersection(Imath::Line3d worldRay, bool sort)
+    std::vector<Imath::V3i> rayIntersection(Imath::Line3d worldRay, bool /*sort*/)
     {
         // Transform the ray into voxel space
         Imath::Line3d localRay = worldRay * m_transform.inverse();
 
+        return walk_ray(localRay, Imath::Box3i(Imath::V3i(0), m_cellDimensions-Imath::V3i(1)));
+
+        /*
         std::vector<SortElement> sortList;
-        
+
         // Ray-boxes intersection
         // TODO: Acceleration structure
         for (int x = 0; x < m_cellDimensions.x; x++)
@@ -121,7 +126,7 @@ public:
                 }
             }
         }
-        
+
         // Sort the list
         if (sort)
             std::sort(sortList.begin(), sortList.end(), sortFunction);
@@ -132,6 +137,7 @@ public:
         for (size_t i = 0; i < sortList.size(); i++)
             orderedCells[i] = sortList[i].index;
         return orderedCells;
+        */
     }
 
     GameVoxelGrid& operator=(const GameVoxelGrid& other)
@@ -154,6 +160,28 @@ public:
             m_transform = other.m_transform;
         }
         return *this;
+    }
+
+
+    void resize(const Imath::V3i &size, const Imath::V3i &offset, const T &value)
+    {
+      GameVoxelGrid<T> newGrid(size);
+      newGrid.setAll(value);
+
+      int x0=offset.x; if (x0<0) x0=0;
+      int y0=offset.y; if (y0<0) y0=0;
+      int z0=offset.z; if (z0<0) z0=0;
+
+      int x1=offset.x+m_cellDimensions.x; if (x1>size.x) x1=size.x;
+      int y1=offset.y+m_cellDimensions.y; if (y1>size.y) y1=size.y;
+      int z1=offset.z+m_cellDimensions.z; if (z1>size.z) z1=size.z;
+
+      for (int x=x0; x<x1; ++x)
+        for (int y=y0; y<y1; ++y)
+          for (int z=z0; z<z1; ++z)
+            newGrid.set(Imath::V3i(x, y, z), get(Imath::V3i(x, y, z)-offset));
+
+      *this=newGrid;
     }
 
 
