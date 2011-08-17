@@ -18,7 +18,7 @@ std::vector<Imath::V3i> SplatToolState::voxelsAffected()
     
     // Intersect and check
     std::vector<Imath::V3i> intersects = 
-        p_gvg->rayIntersection(m_ray, true);
+        p_gvg->rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 
@@ -106,7 +106,7 @@ std::vector<Imath::V3i> FloodToolState::voxelsAffected()
 
     // Intersect and check
     std::vector<Imath::V3i> intersects = 
-        p_gvg->rayIntersection(m_ray, true);
+        p_gvg->rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 
@@ -142,7 +142,7 @@ std::vector<Imath::V3i> EraserToolState::voxelsAffected()
 
     // Intersect and check
     std::vector<Imath::V3i> intersects = 
-        p_gvg->rayIntersection(m_ray, true);
+        p_gvg->rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 
@@ -179,7 +179,7 @@ std::vector<Imath::V3i> ReplaceToolState::voxelsAffected()
 
     // Intersect and check
     std::vector<Imath::V3i> intersects = 
-        p_gvg->rayIntersection(m_ray, true);
+        p_gvg->rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 
@@ -213,7 +213,7 @@ void RayToolState::execute()
 
 std::vector<Imath::V3i> RayToolState::voxelsAffected()
 {
-    return p_gvg->rayIntersection(m_ray, true);
+    return p_gvg->rayIntersection(m_ray);
 }
 
 
@@ -243,7 +243,7 @@ std::vector<Imath::V3i> SlabToolState::voxelsAffected()
     // TODO: Should this do an intersection at all, or maybe just fill in the 
     //       row based on the first hit?
     std::vector<Imath::V3i> intersects = 
-        p_gvg->rayIntersection(m_ray, true);
+        p_gvg->rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 
@@ -321,7 +321,7 @@ std::vector<Imath::V3i> DropperToolState::voxelsAffected()
 
     // Intersect and check
     std::vector<Imath::V3i> intersects = 
-        p_gvg->rayIntersection(m_ray, true);
+        p_gvg->rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 

@@ -70,7 +70,7 @@ public slots:
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
     void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
     void setShiftWrap(const bool value) { m_shiftWrap = value; }
-    void setCurrentAxis(const SproxelAxis val) { m_currAxis = val; updateGL(); }
+    void setCurrentAxis(const SproxelAxis val) { m_currAxis = val; updateGL(); }    // TODO: Change tool as well.
     void setActiveColor(const Imath::Color4f& c) { m_activeColor = c; }
 
     void undo() { m_undoManager.undo(); updateGL(); }

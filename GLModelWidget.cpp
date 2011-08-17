@@ -35,8 +35,12 @@ GLModelWidget::GLModelWidget(QWidget* parent, const QSettings* appSettings)
       m_activeTool(NULL),
       p_appSettings(appSettings)
 {
+    // Default empty grid
     m_gvg.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
     centerGrid();
+
+    // Always shoot rays through the scene - even when a mouse button isn't pressed
+    setMouseTracking(true);
 
     // Be sure to tell the parent window every time we muck with the scene
     QObject::connect(&m_undoManager, SIGNAL(cleanChanged(bool)),
@@ -312,7 +316,7 @@ void GLModelWidget::paintGL()
         glDrawVoxelGrid();
     }
 
-    if (DEBUG_ME)
+    if (1)  // DEBUG_ME : TODO : Becomes an option
     {
         glColor4f(1.0f, 0.0f, 0.0f, 0.2f);
         glDrawSelectedVoxels();
@@ -545,7 +549,7 @@ void GLModelWidget::glDrawVoxelGrid()
         {
             for (int z = 0; z < dim.z+1; z++)
             {
-                if (DEBUG_ME)
+                if (1)  // DEBUG_ME : TODO : Becomes an option
                 {
                     if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x,y,z)) != m_intersects.end())
                         continue;
@@ -587,7 +591,7 @@ void GLModelWidget::glDrawVoxelGrid()
         {
             for (int z = 0; z < dim.z+1; z++)
             {
-                if (DEBUG_ME)
+                if (1)  // DEBUG_ME : TODO : Becomes an option
                 {
                     if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x,y,z)) != m_intersects.end())
                         continue;
@@ -629,7 +633,7 @@ void GLModelWidget::glDrawVoxelGrid()
         {
             for (int z = 0; z < dim.z; z++)
             {
-                if (DEBUG_ME)
+                if (1)  // DEBUG_ME : TODO : Becomes an option
                 {
                     if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x,y,z)) != m_intersects.end())
                         continue;
@@ -741,7 +745,8 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
         fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
         if (event->buttons() & Qt::LeftButton)
         {
-            m_activeTool->setDragSupport(p_appSettings->value("GLModelWidget/dragEnabled", 1).toInt());
+            bool draggingEnabled = p_appSettings->value("GLModelWidget/dragEnabled", 1).toBool();
+            m_activeTool->setDragSupport(draggingEnabled);
             m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
 
             if (m_activeTool->type() == TOOL_SLAB)
@@ -800,7 +805,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
 void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
 {
     const bool altDown = event->modifiers() & Qt::AltModifier;
-    
+
     if (altDown)
     {
         // Camera movement
@@ -828,13 +833,16 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
     }
     else
     {
-        // If your tool supports drag, engage the drag
-        if (m_activeTool->supportsDrag())
+        // Always shoot a ray through the scene
+        Imath::Line3d localLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
+
+        // Left click means you're tooling.
+        if (event->buttons() & Qt::LeftButton)
         {
-            // Left click means shoot a ray
-            if (event->buttons() & Qt::LeftButton)
+            // If your active tool supports drag, tool away
+            if (m_activeTool->supportsDrag())
             {
-                fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
+                fakeLine = localLine;
                 m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
                 m_activeTool->execute();
                 // TODO: Coalesce this dropper code so i don't repeat it everywhere
@@ -849,9 +857,21 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
                     return;
                 }
                 if (DEBUG_ME)
-                    m_intersects = m_gvg.rayIntersection(fakeLine, true);
+                    m_intersects = m_gvg.rayIntersection(fakeLine);
                 updateGL();
             }
+        }
+        else
+        {
+            // Tool preview!
+            // TODO: OPTION!
+            // TODO: Coalesce with above "set" call (once fakeLine is gone)
+            m_activeTool->set(&m_gvg, localLine, m_activeColor);
+            if (m_activeTool->type() == TOOL_SLAB)
+                dynamic_cast<SlabToolState*>(m_activeTool)->setAxis(currentAxis());
+
+            m_intersects = m_activeTool->voxelsAffected();
+            updateGL();
         }
     }
 }
