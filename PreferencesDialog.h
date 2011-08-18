@@ -82,6 +82,7 @@ public:
     QSettings* m_pAppSettings;
     QColor m_backgroundColorOrig;
     bool m_dragEnabledOrig;
+    bool m_previewEnabledOrig;
     int m_voxelDisplayOrig;
     void restoreOriginals();
 
@@ -91,6 +92,7 @@ signals:
 public slots:
     void setBackgroundColor(const QColor& value);
     void setDragEnabled(int value);
+    void setPreviewEnabled(int value);
 };
 
 

@@ -26,6 +26,8 @@ public:
     virtual SproxelTool type() = 0;
     virtual std::vector<Imath::V3i> voxelsAffected() = 0;
     
+    const Imath::Line3d& ray() const { return m_ray; }
+    
     virtual void set(SproxelGrid* gvg,
                      const Imath::Line3d& ray, 
                      const Imath::Color4f& color)

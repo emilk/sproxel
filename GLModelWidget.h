@@ -90,7 +90,7 @@ private:
     UndoManager m_undoManager;
 
     SproxelGrid m_gvg;
-    std::vector<Imath::V3i> m_intersects;
+    std::vector<Imath::V3i> m_previews;
 
     Imath::V3i m_activeVoxel;
     Imath::Color4f m_activeColor;
@@ -122,7 +122,7 @@ private:
 
     void glDrawVoxelGrid();
     void glDrawActiveVoxel();
-    void glDrawSelectedVoxels();
+    void glDrawPreviewVoxels();
     void glDrawVoxelCenter(const size_t sx, const size_t sy, const size_t sz);
 
     const QSettings* p_appSettings;

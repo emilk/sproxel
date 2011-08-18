@@ -192,7 +192,8 @@ ModelViewPage::ModelViewPage(QWidget* parent, QSettings* appSettings) :
     QLabel* backgroundColor = new QLabel("Window Background Color", this);
     ColorWidget* bgColorSelect = new ColorWidget(this);
     QLabel* voxelDisplay = new QLabel("Voxel Display Style", this);
-    QCheckBox* dragEnabled = new QCheckBox("Dragging enabled", this);
+    QCheckBox* dragEnabled = new QCheckBox("Tool Dragging Enabled", this);
+    QCheckBox* previewEnabled = new QCheckBox("Tool Preview Enabled", this);
 
     QGroupBox* modelViewGroup = new QGroupBox();
 
@@ -201,6 +202,7 @@ ModelViewPage::ModelViewPage(QWidget* parent, QSettings* appSettings) :
     gridLayout->addWidget(bgColorSelect, 0, 1);
     gridLayout->addWidget(voxelDisplay, 1, 0);
     gridLayout->addWidget(dragEnabled, 2, 0);
+    gridLayout->addWidget(previewEnabled, 3, 0);
     modelViewGroup->setLayout(gridLayout);
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
@@ -215,22 +217,31 @@ ModelViewPage::ModelViewPage(QWidget* parent, QSettings* appSettings) :
         dragEnabled->setCheckState(Qt::Checked);
     else
         dragEnabled->setCheckState(Qt::Unchecked);
+    if (m_pAppSettings->value("GLModelWidget/previewEnabled", true).toBool())
+        previewEnabled->setCheckState(Qt::Checked);
+    else
+        previewEnabled->setCheckState(Qt::Unchecked);
+
 
     // Backup original values
     m_backgroundColorOrig = bgColorSelect->color();
     m_dragEnabledOrig = dragEnabled->isChecked();
+    m_previewEnabledOrig = previewEnabled->isChecked();
 
     // Hook up the signals
     QObject::connect(bgColorSelect, SIGNAL(colorChanged(QColor)),
                      this, SLOT(setBackgroundColor(QColor)));
     QObject::connect(dragEnabled, SIGNAL(stateChanged(int)),
                      this, SLOT(setDragEnabled(int)));
+    QObject::connect(previewEnabled, SIGNAL(stateChanged(int)),
+                     this, SLOT(setPreviewEnabled(int)));
 }
 
 void ModelViewPage::restoreOriginals()
 {
     m_pAppSettings->setValue("GLModelWidget/backgroundColor", m_backgroundColorOrig);
     m_pAppSettings->setValue("GLModelWidget/dragEnabled", m_dragEnabledOrig);
+    m_pAppSettings->setValue("GLModelWidget/previewEnabled", m_previewEnabledOrig);
 }
 
 void ModelViewPage::setBackgroundColor(const QColor& value)
@@ -245,6 +256,11 @@ void ModelViewPage::setDragEnabled(int state)
     emit preferenceChanged();
 }
 
+void ModelViewPage::setPreviewEnabled(int state)
+{
+    m_pAppSettings->setValue("GLModelWidget/previewEnabled", state);
+    emit preferenceChanged();
+}
 
 
 // GRID PAGE //

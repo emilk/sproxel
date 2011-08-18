@@ -15,7 +15,6 @@
 #define DEFAULT_VOXGRID_SZ (8)
 
 // TODO: Kill because the tool holds this guy now
-Imath::Line3d fakeLine;
 Imath::Box3d fakeBounds(Imath::V3d(-50, -50, -50), Imath::V3d(50, 50, 50));
 
 GLModelWidget::GLModelWidget(QWidget* parent, const QSettings* appSettings)
@@ -23,7 +22,7 @@ GLModelWidget::GLModelWidget(QWidget* parent, const QSettings* appSettings)
       m_cam(),
       m_undoManager(),
       m_gvg(Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ)),
-      m_intersects(),
+      m_previews(),
       m_activeVoxel(-1,-1,-1),
       m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_lastMouse(),
@@ -297,12 +296,13 @@ void GLModelWidget::paintGL()
     // DRAW UNPROJECTED LINE
     if (DEBUG_ME)
     {
+        const Imath::Line3d& lastRay = m_activeTool->ray();
         glColor4f(1.0f, 1.0f, 0.0f, 1.0f);
         glBegin(GL_LINES);
-        glVertex3d(fakeLine.pos.x, fakeLine.pos.y, fakeLine.pos.z);
-        glVertex3f(fakeLine.pos.x + fakeLine.dir.x*100, 
-                   fakeLine.pos.y + fakeLine.dir.y*100, 
-                   fakeLine.pos.z + fakeLine.dir.z*100);
+        glVertex3d(lastRay.pos.x, lastRay.pos.y, lastRay.pos.z);
+        glVertex3f(lastRay.pos.x + lastRay.dir.x * 100.0, 
+                   lastRay.pos.y + lastRay.dir.y * 100.0, 
+                   lastRay.pos.z + lastRay.dir.z * 100.0);
         glEnd();
     }
 
@@ -316,10 +316,10 @@ void GLModelWidget::paintGL()
         glDrawVoxelGrid();
     }
 
-    if (1)  // DEBUG_ME : TODO : Becomes an option
+    if (p_appSettings->value("GLModelWidget/previewEnabled", 1).toBool())
     {
         glColor4f(1.0f, 0.0f, 0.0f, 0.2f);
-        glDrawSelectedVoxels();
+        glDrawPreviewVoxels();
     }
 
     if (m_activeVoxel != Imath::V3i(-1,-1,-1))
@@ -549,18 +549,18 @@ void GLModelWidget::glDrawVoxelGrid()
         {
             for (int z = 0; z < dim.z+1; z++)
             {
-                if (1)  // DEBUG_ME : TODO : Becomes an option
+                if (p_appSettings->value("GLModelWidget/previewEnabled", 1).toBool())
                 {
-                    if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x,y,z)) != m_intersects.end())
+                    if (std::find(m_previews.begin(), m_previews.end(), Imath::V3i(x,y,z)) != m_previews.end())
                         continue;
 
-                    if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x,y-1,z)) != m_intersects.end())
+                    if (std::find(m_previews.begin(), m_previews.end(), Imath::V3i(x,y-1,z)) != m_previews.end())
                         continue;
 
-                    if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x,y,z-1)) != m_intersects.end())
+                    if (std::find(m_previews.begin(), m_previews.end(), Imath::V3i(x,y,z-1)) != m_previews.end())
                         continue;
 
-                    if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x,y-1,z-1)) != m_intersects.end())
+                    if (std::find(m_previews.begin(), m_previews.end(), Imath::V3i(x,y-1,z-1)) != m_previews.end())
                         continue;
                 }
 
@@ -591,18 +591,18 @@ void GLModelWidget::glDrawVoxelGrid()
         {
             for (int z = 0; z < dim.z+1; z++)
             {
-                if (1)  // DEBUG_ME : TODO : Becomes an option
+                if (p_appSettings->value("GLModelWidget/previewEnabled", 1).toBool())
                 {
-                    if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x,y,z)) != m_intersects.end())
+                    if (std::find(m_previews.begin(), m_previews.end(), Imath::V3i(x,y,z)) != m_previews.end())
                         continue;
 
-                    if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x-1,y,z)) != m_intersects.end())
+                    if (std::find(m_previews.begin(), m_previews.end(), Imath::V3i(x-1,y,z)) != m_previews.end())
                         continue;
 
-                    if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x,y,z-1)) != m_intersects.end())
+                    if (std::find(m_previews.begin(), m_previews.end(), Imath::V3i(x,y,z-1)) != m_previews.end())
                         continue;
 
-                    if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x-1,y,z-1)) != m_intersects.end())
+                    if (std::find(m_previews.begin(), m_previews.end(), Imath::V3i(x-1,y,z-1)) != m_previews.end())
                         continue;
                 }
 
@@ -633,18 +633,18 @@ void GLModelWidget::glDrawVoxelGrid()
         {
             for (int z = 0; z < dim.z; z++)
             {
-                if (1)  // DEBUG_ME : TODO : Becomes an option
+                if (p_appSettings->value("GLModelWidget/previewEnabled", 1).toBool())
                 {
-                    if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x,y,z)) != m_intersects.end())
+                    if (std::find(m_previews.begin(), m_previews.end(), Imath::V3i(x,y,z)) != m_previews.end())
                         continue;
 
-                    if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x-1,y,z)) != m_intersects.end())
+                    if (std::find(m_previews.begin(), m_previews.end(), Imath::V3i(x-1,y,z)) != m_previews.end())
                         continue;
 
-                    if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x,y-1,z)) != m_intersects.end())
+                    if (std::find(m_previews.begin(), m_previews.end(), Imath::V3i(x,y-1,z)) != m_previews.end())
                         continue;
 
-                    if (std::find(m_intersects.begin(), m_intersects.end(), Imath::V3i(x-1,y-1,z)) != m_intersects.end())
+                    if (std::find(m_previews.begin(), m_previews.end(), Imath::V3i(x-1,y-1,z)) != m_previews.end())
                         continue;
                 }
 
@@ -681,19 +681,19 @@ void GLModelWidget::glDrawActiveVoxel()
 }
 
 
-void GLModelWidget::glDrawSelectedVoxels()
+void GLModelWidget::glDrawPreviewVoxels()
 {
     Imath::Color4f curColor;
     glGetFloatv(GL_CURRENT_COLOR, (float*)&curColor);
 
-    for (unsigned int i = 0; i < m_intersects.size(); i++)
+    for (unsigned int i = 0; i < m_previews.size(); i++)
     {
-        float scalar = 1.0f - ((float)i / (float)(m_intersects.size()));
+        float scalar = 1.0f - ((float)i / (float)(m_previews.size()));
         curColor.r = curColor.r * scalar;
         curColor.g = curColor.g * scalar;
         curColor.b = curColor.b * scalar;
         
-        const Imath::M44d mat = m_gvg.voxelTransform(m_intersects[i]);
+        const Imath::M44d mat = m_gvg.voxelTransform(m_previews[i]);
         glPushMatrix();
         glMultMatrixd(glMatrix(mat));
         glColor4f(curColor.r, curColor.g, curColor.b, curColor.a);
@@ -729,12 +729,14 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
     {
         if (event->buttons() & Qt::LeftButton)
         {
+            const Imath::Line3d localLine = 
+                    m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
+
             // TODO: Figure out how to restore old tool properly in ReleaseEvent
             // CTRL+LMB is always replace - switch tools and execute
             SproxelTool currentTool = m_activeTool->type();
             setActiveTool(TOOL_REPLACE);
-            fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
-            m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
+            m_activeTool->set(&m_gvg, localLine, m_activeColor);
             m_activeTool->execute();
             setActiveTool(currentTool);
             updateGL();
@@ -742,12 +744,14 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
     }
     else
     {
-        fakeLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
+        Imath::Line3d localLine = 
+                m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
+
         if (event->buttons() & Qt::LeftButton)
         {
             bool draggingEnabled = p_appSettings->value("GLModelWidget/dragEnabled", 1).toBool();
             m_activeTool->setDragSupport(draggingEnabled);
-            m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
+            m_activeTool->set(&m_gvg, localLine, m_activeColor);
 
             if (m_activeTool->type() == TOOL_SLAB)
                 dynamic_cast<SlabToolState*>(m_activeTool)->setAxis(currentAxis());
@@ -773,7 +777,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
             // TODO: Restore old tool properly in ReleaseEvent
             SproxelTool currentTool = m_activeTool->type();
             setActiveTool(TOOL_DROPPER);
-            m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
+            m_activeTool->set(&m_gvg, localLine, m_activeColor);
             
             // TODO: Coalesce this dropper code so i don't repeat it everywhere
             std::vector<Imath::V3i> ints = m_activeTool->voxelsAffected();
@@ -791,7 +795,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
             // TODO: Restore old tool properly in ReleaseEvent
             SproxelTool currentTool = m_activeTool->type();
             setActiveTool(TOOL_ERASER);
-            m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
+            m_activeTool->set(&m_gvg, localLine, m_activeColor);
             m_activeTool->execute();
             setActiveTool(currentTool);
             m_activeTool->setDragSupport(p_appSettings->value("GLModelWidget/dragEnabled", 1).toInt());
@@ -833,8 +837,10 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
     }
     else
     {
-        // Always shoot a ray through the scene
-        Imath::Line3d localLine = m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
+        const Imath::Line3d localLine = 
+                m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
+
+        m_activeTool->set(&m_gvg, localLine, m_activeColor);
 
         // Left click means you're tooling.
         if (event->buttons() & Qt::LeftButton)
@@ -842,9 +848,12 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
             // If your active tool supports drag, tool away
             if (m_activeTool->supportsDrag())
             {
-                fakeLine = localLine;
-                m_activeTool->set(&m_gvg, fakeLine, m_activeColor);
+                // You want your preview to update even when you're tooling
+                m_previews = m_activeTool->voxelsAffected();
+                
+                // Tool execution
                 m_activeTool->execute();
+                
                 // TODO: Coalesce this dropper code so i don't repeat it everywhere
                 if (m_activeTool->type() == TOOL_DROPPER)
                 {
@@ -854,24 +863,21 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
                         Imath::Color4f result = m_gvg.get(ints[0]);
                         emit colorSampled(result);
                     }
-                    return;
                 }
-                if (DEBUG_ME)
-                    m_intersects = m_gvg.rayIntersection(fakeLine);
                 updateGL();
             }
         }
         else
         {
-            // Tool preview!
-            // TODO: OPTION!
-            // TODO: Coalesce with above "set" call (once fakeLine is gone)
-            m_activeTool->set(&m_gvg, localLine, m_activeColor);
-            if (m_activeTool->type() == TOOL_SLAB)
-                dynamic_cast<SlabToolState*>(m_activeTool)->setAxis(currentAxis());
+            // Tool preview
+            if (p_appSettings->value("GLModelWidget/previewEnabled", 1).toBool())
+            {
+                if (m_activeTool->type() == TOOL_SLAB)
+                    dynamic_cast<SlabToolState*>(m_activeTool)->setAxis(currentAxis());
 
-            m_intersects = m_activeTool->voxelsAffected();
-            updateGL();
+                m_previews = m_activeTool->voxelsAffected();
+                updateGL();
+            }
         }
     }
 }
