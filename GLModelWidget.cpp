@@ -14,7 +14,6 @@
 #define DEBUG_ME (0)
 #define DEFAULT_VOXGRID_SZ (8)
 
-// TODO: Kill because the tool holds this guy now
 Imath::Box3d fakeBounds(Imath::V3d(-50, -50, -50), Imath::V3d(50, 50, 50));
 
 GLModelWidget::GLModelWidget(QWidget* parent, const QSettings* appSettings)
@@ -280,7 +279,33 @@ void GLModelWidget::paintGL()
 
                     glPushMatrix();
                     glMultMatrixd(glMatrix(mat));
-                    glDrawCubePoly();
+
+                    if (p_appSettings->value("GLModelWidget/drawVoxelOutlines", 1).toBool())
+                    {
+                        // TODO: Make line width a setting
+                        // TODO: Learn how to fix these polygon offset values to work properly.
+                        //glLineWidth(1.5);
+                        glEnable(GL_POLYGON_OFFSET_FILL);
+                        glPolygonOffset(1.0, 1.0);
+                        glDrawCubePoly();
+                        glDisable(GL_POLYGON_OFFSET_FILL);
+
+                        glEnable(GL_POLYGON_OFFSET_LINE);
+                        glPolygonOffset(1.0, -5.0);
+                        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                        glColor3f(1.0f - cellColor.r, 
+                                  1.0f - cellColor.g,
+                                  1.0f - cellColor.b);
+                        glDrawCubePoly();
+                        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                        glDisable(GL_POLYGON_OFFSET_LINE);
+                        //glLineWidth(1.0);
+                    }
+                    else
+                    {
+                        glDrawCubePoly();
+                    }
+
                     glPopMatrix();
                 }
             }
@@ -523,17 +548,17 @@ void GLModelWidget::glDrawCubePoly()
     glVertex3f(-0.5f, 0.5f,-0.5f);
     glVertex3f( 0.5f, 0.5f,-0.5f);
 
-    glNormal3f(-1.0f, 0.0f, 0.0f);
-    glVertex3f(-0.5f, 0.5f, 0.5f);
-    glVertex3f(-0.5f, 0.5f,-0.5f);
-    glVertex3f(-0.5f,-0.5f,-0.5f);
-    glVertex3f(-0.5f,-0.5f, 0.5f);
-
     glNormal3f( 1.0f, 0.0f, 0.0f);
     glVertex3f( 0.5f, 0.5f,-0.5f);
     glVertex3f( 0.5f, 0.5f, 0.5f);
     glVertex3f( 0.5f,-0.5f, 0.5f);
     glVertex3f( 0.5f,-0.5f,-0.5f);
+
+    glNormal3f(-1.0f, 0.0f, 0.0f);
+    glVertex3f(-0.5f, 0.5f, 0.5f);
+    glVertex3f(-0.5f, 0.5f,-0.5f);
+    glVertex3f(-0.5f,-0.5f,-0.5f);
+    glVertex3f(-0.5f,-0.5f, 0.5f);
     glEnd();
 }
 

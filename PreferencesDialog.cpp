@@ -26,6 +26,10 @@ PreferencesDialog::PreferencesDialog(QWidget* parent, QSettings* appSettings) :
     modelViewItem->setText(tr("Model View"));
     modelViewItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
 
+    QListWidgetItem* voxelItem = new QListWidgetItem(m_pContentsWidget);
+    voxelItem->setText(tr("  Voxel"));
+    voxelItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+
     QListWidgetItem* gridItem = new QListWidgetItem(m_pContentsWidget);
     gridItem->setText(tr("  Grid"));
     gridItem->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
@@ -57,6 +61,8 @@ PreferencesDialog::PreferencesDialog(QWidget* parent, QSettings* appSettings) :
     m_pPagesWidget->addWidget(m_pGeneralPage);
     m_pModelViewPage = new ModelViewPage(this, m_pAppSettings);
     m_pPagesWidget->addWidget(m_pModelViewPage);
+    m_pVoxelPage = new VoxelPage(this, m_pAppSettings);
+    m_pPagesWidget->addWidget(m_pVoxelPage);
     m_pGridPage = new GridPage(this, m_pAppSettings);
     m_pPagesWidget->addWidget(m_pGridPage);
     m_pLightingPage = new LightingPage(this, m_pAppSettings);
@@ -96,6 +102,7 @@ PreferencesDialog::PreferencesDialog(QWidget* parent, QSettings* appSettings) :
     // Daisy chain the signals
     QObject::connect(m_pGeneralPage,   SIGNAL(preferenceChanged()), this, SIGNAL(preferenceChanged()));
     QObject::connect(m_pModelViewPage, SIGNAL(preferenceChanged()), this, SIGNAL(preferenceChanged()));
+    QObject::connect(m_pVoxelPage,     SIGNAL(preferenceChanged()), this, SIGNAL(preferenceChanged()));
     QObject::connect(m_pGridPage,      SIGNAL(preferenceChanged()), this, SIGNAL(preferenceChanged()));
 }
 
@@ -112,6 +119,7 @@ void PreferencesDialog::reject()
     // Restore all the settings this dialog had to begin with.
     m_pGeneralPage->restoreOriginals();
     m_pModelViewPage->restoreOriginals();
+    m_pVoxelPage->restoreOriginals();
     m_pGridPage->restoreOriginals();
     m_pLightingPage->restoreOriginals();
     m_pGuidesPage->restoreOriginals();
@@ -191,7 +199,6 @@ ModelViewPage::ModelViewPage(QWidget* parent, QSettings* appSettings) :
 {
     QLabel* backgroundColor = new QLabel("Window Background Color", this);
     ColorWidget* bgColorSelect = new ColorWidget(this);
-    QLabel* voxelDisplay = new QLabel("Voxel Display Style", this);
     QCheckBox* dragEnabled = new QCheckBox("Tool Dragging Enabled", this);
     QCheckBox* previewEnabled = new QCheckBox("Tool Preview Enabled", this);
 
@@ -200,7 +207,6 @@ ModelViewPage::ModelViewPage(QWidget* parent, QSettings* appSettings) :
     QGridLayout* gridLayout = new QGridLayout;
     gridLayout->addWidget(backgroundColor, 0, 0);
     gridLayout->addWidget(bgColorSelect, 0, 1);
-    gridLayout->addWidget(voxelDisplay, 1, 0);
     gridLayout->addWidget(dragEnabled, 2, 0);
     gridLayout->addWidget(previewEnabled, 3, 0);
     modelViewGroup->setLayout(gridLayout);
@@ -259,6 +265,50 @@ void ModelViewPage::setDragEnabled(int state)
 void ModelViewPage::setPreviewEnabled(int state)
 {
     m_pAppSettings->setValue("GLModelWidget/previewEnabled", state);
+    emit preferenceChanged();
+}
+
+
+// VOXEL PAGE //
+VoxelPage::VoxelPage(QWidget* parent, QSettings* appSettings) :
+    QWidget(parent),
+    m_pAppSettings(appSettings)
+{
+    QCheckBox* drawOutlines = new QCheckBox("Draw Outlines", this);
+
+    QGroupBox* gridGroup = new QGroupBox();
+
+    QGridLayout* gridLayout = new QGridLayout;
+    gridLayout->addWidget(drawOutlines, 0, 0);
+    gridGroup->setLayout(gridLayout);
+
+    QVBoxLayout* mainLayout = new QVBoxLayout;
+    mainLayout->addWidget(gridGroup);
+    mainLayout->addStretch(1);
+    setLayout(mainLayout);
+
+    // Populate the settings
+    if (m_pAppSettings->value("GLModelWidget/drawVoxelOutlines", true).toBool())
+        drawOutlines->setCheckState(Qt::Checked);
+    else
+        drawOutlines->setCheckState(Qt::Unchecked);
+
+    // Backup original values
+    m_drawOutlinesOrig = drawOutlines->isChecked();
+
+    // Hook up the signals
+    QObject::connect(drawOutlines, SIGNAL(stateChanged(int)),
+                     this, SLOT(setDrawOutlines(int)));
+}
+
+void VoxelPage::restoreOriginals()
+{
+    m_pAppSettings->setValue("GLModelWidget/drawVoxelOutlines", m_drawOutlinesOrig);
+}
+
+void VoxelPage::setDrawOutlines(int value)
+{
+    m_pAppSettings->setValue("GLModelWidget/drawVoxelOutlines", value);
     emit preferenceChanged();
 }
 

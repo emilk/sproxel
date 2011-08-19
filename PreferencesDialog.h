@@ -11,6 +11,7 @@
 
 class GeneralPage;
 class ModelViewPage;
+class VoxelPage;
 class GridPage;
 class LightingPage;
 class GuidesPage;
@@ -43,6 +44,7 @@ private:
     // Keep track of all the sub-pages
     GeneralPage* m_pGeneralPage;
     ModelViewPage* m_pModelViewPage;
+    VoxelPage* m_pVoxelPage;
     GridPage* m_pGridPage;
     LightingPage* m_pLightingPage;
     GuidesPage* m_pGuidesPage;
@@ -93,6 +95,23 @@ public slots:
     void setBackgroundColor(const QColor& value);
     void setDragEnabled(int value);
     void setPreviewEnabled(int value);
+};
+
+
+class VoxelPage : public QWidget
+{   Q_OBJECT
+public:
+    VoxelPage(QWidget* parent = NULL, QSettings* appSettings = NULL);
+    
+    QSettings* m_pAppSettings;
+    bool m_drawOutlinesOrig;
+    void restoreOriginals();
+
+signals:
+    void preferenceChanged();
+
+public slots:
+    void setDrawOutlines(int value);
 };
 
 
