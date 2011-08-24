@@ -8,5 +8,9 @@
     <file>icons/slab.png</file>
     <file>icons/splat.png</file>
     <file>icons/undo.png</file>
+    <file>icons/layerEye.png</file>
+    <file>icons/layerNew.png</file>
+    <file>icons/layerDuplicate.png</file>
+    <file>icons/layerDelete.png</file>
 </qresource>
 </RCC>

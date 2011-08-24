@@ -746,6 +746,9 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
     const bool ctrlDown = event->modifiers() & Qt::ControlModifier;
     //const bool shiftDown = event->modifiers() & Qt::ShiftModifier;
     
+    // If you click on the GLModelWidget window, bring it forward.
+    setFocus();
+    
     if (altDown)
     {
         m_lastMouse = event->pos();

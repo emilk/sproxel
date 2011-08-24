@@ -42,6 +42,7 @@ SOURCES += \
     NewGridDialog.cpp \
     PreferencesDialog.cpp \
     PaletteWidget.cpp \
+    LayersWidget.cpp \
     Tools.cpp \
     UndoManager.cpp
     #script.cpp \
@@ -56,6 +57,7 @@ HEADERS  += \
     NewGridDialog.h \
     PreferencesDialog.h \
     PaletteWidget.h \
+    LayersWidget.h \
     Tools.h \
     UndoManager.h
     #script.h \

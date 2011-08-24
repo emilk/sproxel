@@ -22,12 +22,19 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_glModelWidget = new GLModelWidget(this, &m_appSettings);
     setCentralWidget(m_glModelWidget);
 
-    // The docking palette
+    // The docking palette widget
     m_paletteDocker = new QDockWidget(tr("Palette"), this);
     m_paletteDocker->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     m_paletteWidget = new PaletteWidget(this);
     m_paletteDocker->setWidget(m_paletteWidget);
     addDockWidget(Qt::RightDockWidgetArea, m_paletteDocker);
+
+    // The docking layers widget
+    m_layersDocker = new QDockWidget(tr("Layers"), this);
+    m_layersDocker->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    m_layersWidget = new LayersWidget(this);
+    m_layersDocker->setWidget(m_layersWidget);
+    addDockWidget(Qt::RightDockWidgetArea, m_layersDocker);
 
     // Connect some window signals together
     QObject::connect(m_paletteWidget, SIGNAL(activeColorChanged(Imath::Color4f)),
@@ -214,6 +221,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_menuWindow = menuBar()->addMenu("&Window");
     m_menuWindow->addAction(m_toolbar->toggleViewAction());
     m_menuWindow->addAction(m_paletteDocker->toggleViewAction());
+    m_menuWindow->addAction(m_layersDocker->toggleViewAction());
     //m_menuWindow->addAction(get_python_console_widget()->toggleViewAction());
     //get_python_console_widget()->toggleViewAction()->setChecked(false);
 
@@ -269,6 +277,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
         move(m_appSettings.value("MainWindow/position", QPoint(200, 200)).toPoint());
         m_toolbar->setVisible(m_appSettings.value("toolbar/visibility", true).toBool());
         m_paletteDocker->setVisible(m_appSettings.value("paletteWindow/visibility", true).toBool());
+        m_layersDocker->setVisible(m_appSettings.value("layersWindow/visibility", true).toBool());
     }
 
     // Load the commandline supplied filename
@@ -293,6 +302,9 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     // Better way to keep the state in one place
     //std::cout << (m_toolbarActionGroup->checkedAction()->text() == "Splat") << std::endl;
     //std::cout << qPrintable(m_toolbarActionGroup->checkedAction()->text()) << std::endl;
+
+    // Start things off focused on the GLWidget
+    m_glModelWidget->setFocus();
 }
 
 
@@ -321,6 +333,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
         m_appSettings.setValue("MainWindow/position", pos());
         m_appSettings.setValue("toolbar/visibility", m_toolbar->isVisible());
         m_appSettings.setValue("paletteWindow/visibility", m_paletteDocker->isVisible());
+        m_appSettings.setValue("layersWindow/visibility", m_layersDocker->isVisible());
     }
 
     //if (event->isAccepted()) close_python_console();

@@ -8,6 +8,7 @@
 #include <QSettings>
 #include <QMainWindow>
 
+#include "LayersWidget.h"
 #include "NewGridDialog.h"
 #include "PaletteWidget.h"
 #include "GLModelWidget.h"
@@ -41,8 +42,12 @@ private:
 
     // Docking windows and toolbars
     QToolBar* m_toolbar;
+
     QDockWidget* m_paletteDocker;
     PaletteWidget* m_paletteWidget;
+
+    QDockWidget* m_layersDocker;
+    LayersWidget* m_layersWidget;
 
     // Actions
     QAction* m_actQuit;
