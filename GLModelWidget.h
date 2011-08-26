@@ -20,6 +20,12 @@ class GLModelWidget : public QGLWidget
     Q_OBJECT
 
 public:
+    enum CubeFaceMask { FACE_POSY = 0x01, FACE_NEGY = 0x02,
+                        FACE_POSX = 0x04, FACE_NEGX = 0x08,
+                        FACE_POSZ = 0x10, FACE_NEGZ = 0x20,
+                        FACE_NONE = 0x00, FACE_ALL  = 0x3f };
+
+public:
     GLModelWidget(QWidget* parent, const QSettings* appSettings);
     ~GLModelWidget();
 
@@ -111,6 +117,8 @@ private:
     Imath::Box3d dataBounds();
     void centerGrid();
 
+    CubeFaceMask computeVoxelFaceMask(const Imath::V3i& index);
+
     void glDrawAxes();
     void glDrawGrid(const int size, 
                     const int gridCellSize,
@@ -118,7 +126,7 @@ private:
                     const Imath::Color4f& bgColor);
 
     void glDrawCubeWire();
-    void glDrawCubePoly();
+    void glDrawCubePoly(const CubeFaceMask mask);
 
     void glDrawVoxelGrid();
     void glDrawActiveVoxel();

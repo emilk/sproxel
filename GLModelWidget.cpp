@@ -195,7 +195,7 @@ void GLModelWidget::initializeGL()
 
     glShadeModel(GL_FLAT);
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
+    glEnable(GL_CULL_FACE);     // Not sure if i should let these go or not.
 
     m_cam.setSize(400, 400);
     m_cam.lookAt(Imath::V3d(28, 21, 28), Imath::V3d(0.0, 0.0, 0.0));
@@ -270,8 +270,9 @@ void GLModelWidget::paintGL()
         {
             for (int z = 0; z < dim.z; z++)
             {
-                Imath::Color4f cellColor = m_gvg.get(Imath::V3i(x,y,z));
-                const Imath::M44d mat = m_gvg.voxelTransform(Imath::V3i(x,y,z));
+                const Imath::V3i index = Imath::V3i(x,y,z);
+                Imath::Color4f cellColor = m_gvg.get(index);
+                const Imath::M44d mat = m_gvg.voxelTransform(index);
 
                 if (cellColor.a != 0.0)
                 {
@@ -280,30 +281,34 @@ void GLModelWidget::paintGL()
                     glPushMatrix();
                     glMultMatrixd(glMatrix(mat));
 
+                    CubeFaceMask mask = computeVoxelFaceMask(index);
+
                     if (p_appSettings->value("GLModelWidget/drawVoxelOutlines", 1).toBool())
                     {
                         // TODO: Make line width a setting
                         // TODO: Learn how to fix these polygon offset values to work properly.
-                        //glLineWidth(1.5);
                         glEnable(GL_POLYGON_OFFSET_FILL);
                         glPolygonOffset(1.0, 1.0);
-                        glDrawCubePoly();
+                        glDrawCubePoly(mask);
                         glDisable(GL_POLYGON_OFFSET_FILL);
 
+                        //glLineWidth(1.5);
+                        glDisable(GL_LIGHTING);
                         glEnable(GL_POLYGON_OFFSET_LINE);
                         glPolygonOffset(1.0, -5.0);
                         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
                         glColor3f(1.0f - cellColor.r, 
                                   1.0f - cellColor.g,
                                   1.0f - cellColor.b);
-                        glDrawCubePoly();
+                        glDrawCubePoly(mask);
                         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
                         glDisable(GL_POLYGON_OFFSET_LINE);
+                        glEnable(GL_LIGHTING);
                         //glLineWidth(1.0);
                     }
                     else
                     {
-                        glDrawCubePoly();
+                        glDrawCubePoly(mask);
                     }
 
                     glPopMatrix();
@@ -456,6 +461,44 @@ void GLModelWidget::glDrawGrid(const int size,
 }
 
 
+GLModelWidget::CubeFaceMask GLModelWidget::computeVoxelFaceMask(const Imath::V3i& index)
+{
+    CubeFaceMask returnMask = FACE_NONE;
+    
+    const Imath::Color4f& cellColor = m_gvg.get(index);
+    if (cellColor.a == 0.0f)
+        return returnMask;
+    
+    // Positive
+    if (index.x == m_gvg.cellDimensions().x-1 || 
+        m_gvg.get(Imath::V3i(index.x+1, index.y, index.z)).a == 0.0)
+        returnMask = (CubeFaceMask)(returnMask | FACE_POSX);
+
+    if (index.y == m_gvg.cellDimensions().y-1 || 
+        m_gvg.get(Imath::V3i(index.x, index.y+1, index.z)).a == 0.0)
+        returnMask = (CubeFaceMask)(returnMask | FACE_POSY);
+
+    if (index.z == m_gvg.cellDimensions().z-1 || 
+        m_gvg.get(Imath::V3i(index.x, index.y, index.z+1)).a == 0.0)
+        returnMask = (CubeFaceMask)(returnMask | FACE_POSZ);
+    
+    // Negative
+    if (index.x == 0 || 
+        m_gvg.get(Imath::V3i(index.x-1, index.y, index.z)).a == 0.0)
+        returnMask = (CubeFaceMask)(returnMask | FACE_NEGX);
+
+    if (index.y == 0 || 
+        m_gvg.get(Imath::V3i(index.x, index.y-1, index.z)).a == 0.0)
+        returnMask = (CubeFaceMask)(returnMask | FACE_NEGY);
+
+    if (index.z == 0 || 
+        m_gvg.get(Imath::V3i(index.x, index.y, index.z-1)).a == 0.0)
+        returnMask = (CubeFaceMask)(returnMask | FACE_NEGZ);
+    
+    return returnMask;
+}
+
+
 void GLModelWidget::glDrawAxes()
 {
     // A little heavy-handed, but it gets the job done.
@@ -521,44 +564,58 @@ void GLModelWidget::glDrawCubeWire()
 }
 
 
-void GLModelWidget::glDrawCubePoly()
+void GLModelWidget::glDrawCubePoly(const CubeFaceMask mask)
 {
     glBegin(GL_QUADS);
-    glNormal3f( 0.0f, 1.0f, 0.0f);
-    glVertex3f( 0.5f, 0.5f,-0.5f);
-    glVertex3f(-0.5f, 0.5f,-0.5f);
-    glVertex3f(-0.5f, 0.5f, 0.5f);
-    glVertex3f( 0.5f, 0.5f, 0.5f);
+    if (mask & FACE_POSY)
+    {
+        glNormal3f( 0.0f, 1.0f, 0.0f);
+        glVertex3f( 0.5f, 0.5f,-0.5f);
+        glVertex3f(-0.5f, 0.5f,-0.5f);
+        glVertex3f(-0.5f, 0.5f, 0.5f);
+        glVertex3f( 0.5f, 0.5f, 0.5f);
+    }
     
-    glNormal3f( 0.0f,-1.0f, 0.0f);
-    glVertex3f( 0.5f,-0.5f, 0.5f);
-    glVertex3f(-0.5f,-0.5f, 0.5f);
-    glVertex3f(-0.5f,-0.5f,-0.5f);
-    glVertex3f( 0.5f,-0.5f,-0.5f);
-
-    glNormal3f( 0.0f, 0.0f, 1.0f);
-    glVertex3f( 0.5f, 0.5f, 0.5f);
-    glVertex3f(-0.5f, 0.5f, 0.5f);
-    glVertex3f(-0.5f,-0.5f, 0.5f);
-    glVertex3f( 0.5f,-0.5f, 0.5f);
-
-    glNormal3f( 0.0f, 0.0f,-1.0f);
-    glVertex3f( 0.5f,-0.5f,-0.5f);
-    glVertex3f(-0.5f,-0.5f,-0.5f);
-    glVertex3f(-0.5f, 0.5f,-0.5f);
-    glVertex3f( 0.5f, 0.5f,-0.5f);
-
-    glNormal3f( 1.0f, 0.0f, 0.0f);
-    glVertex3f( 0.5f, 0.5f,-0.5f);
-    glVertex3f( 0.5f, 0.5f, 0.5f);
-    glVertex3f( 0.5f,-0.5f, 0.5f);
-    glVertex3f( 0.5f,-0.5f,-0.5f);
-
-    glNormal3f(-1.0f, 0.0f, 0.0f);
-    glVertex3f(-0.5f, 0.5f, 0.5f);
-    glVertex3f(-0.5f, 0.5f,-0.5f);
-    glVertex3f(-0.5f,-0.5f,-0.5f);
-    glVertex3f(-0.5f,-0.5f, 0.5f);
+    if (mask & FACE_NEGY)
+    {
+        glNormal3f( 0.0f,-1.0f, 0.0f);
+        glVertex3f( 0.5f,-0.5f, 0.5f);
+        glVertex3f(-0.5f,-0.5f, 0.5f);
+        glVertex3f(-0.5f,-0.5f,-0.5f);
+        glVertex3f( 0.5f,-0.5f,-0.5f);
+    }
+    if (mask & FACE_POSZ)
+    {
+        glNormal3f( 0.0f, 0.0f, 1.0f);
+        glVertex3f( 0.5f, 0.5f, 0.5f);
+        glVertex3f(-0.5f, 0.5f, 0.5f);
+        glVertex3f(-0.5f,-0.5f, 0.5f);
+        glVertex3f( 0.5f,-0.5f, 0.5f);
+    }
+    if (mask & FACE_NEGZ)
+    {
+        glNormal3f( 0.0f, 0.0f,-1.0f);
+        glVertex3f( 0.5f,-0.5f,-0.5f);
+        glVertex3f(-0.5f,-0.5f,-0.5f);
+        glVertex3f(-0.5f, 0.5f,-0.5f);
+        glVertex3f( 0.5f, 0.5f,-0.5f);
+    }
+    if (mask & FACE_POSX)
+    {
+        glNormal3f( 1.0f, 0.0f, 0.0f);
+        glVertex3f( 0.5f, 0.5f,-0.5f);
+        glVertex3f( 0.5f, 0.5f, 0.5f);
+        glVertex3f( 0.5f,-0.5f, 0.5f);
+        glVertex3f( 0.5f,-0.5f,-0.5f);
+    }
+    if (mask & FACE_NEGX)
+    {
+        glNormal3f(-1.0f, 0.0f, 0.0f);
+        glVertex3f(-0.5f, 0.5f, 0.5f);
+        glVertex3f(-0.5f, 0.5f,-0.5f);
+        glVertex3f(-0.5f,-0.5f,-0.5f);
+        glVertex3f(-0.5f,-0.5f, 0.5f);
+    }
     glEnd();
 }
 
