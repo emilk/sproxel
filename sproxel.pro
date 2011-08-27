@@ -31,7 +31,7 @@ win32 {
   }
   LIBS += -lImath -lIex
   DEFINES += NOMINMAX
-  QMAKE_CXXFLAGS += -wd4996 -wd4305
+  QMAKE_CXXFLAGS += -wd4996 -wd4305 -wd4018 -wd4244
 }
 
 SOURCES += \
@@ -45,14 +45,15 @@ SOURCES += \
     LayersWidget.cpp \
     Tools.cpp \
     UndoManager.cpp
-    #script.cpp \
-    #pyConsole.cpp
+#    script.cpp \
+#    pyConsole.cpp
 
 HEADERS  += \
     Foundation.h \
     GLCamera.h \
     GLModelWidget.h \
     GameVoxelGrid.h \
+    VoxelGridGroup.h \
     MainWindow.h \
     NewGridDialog.h \
     PreferencesDialog.h \
@@ -60,10 +61,10 @@ HEADERS  += \
     LayersWidget.h \
     Tools.h \
     UndoManager.h
-    #script.h \
-    #pyConsole.h \
-    #ConsoleWidget.h \
-    #glue/classGlue.h
+#    script.h \
+#    pyConsole.h \
+#    ConsoleWidget.h \
+#    glue/classGlue.h
 
 FORMS += \
     NewGridDialog.ui

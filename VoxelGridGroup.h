@@ -8,6 +8,7 @@
 #include <QString>
 
 #include "GameVoxelGrid.h"
+#include "RayWalk.h"
 
 
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
@@ -364,7 +365,11 @@ public:
   // Layer accessors
   int numLayers() const { return m_layers.size(); }
 
-  VoxelGridLayer* layer(int i) const { return m_layers[i]; }
+  VoxelGridLayer* layer(int i) const
+  {
+    if (i<0 || i>=m_layers.size()) return NULL;
+    return m_layers[i];
+  }
 
   VoxelGridLayer* insertLayerAbove(int i, VoxelGridLayer *layer=NULL)
   {
@@ -442,9 +447,15 @@ public:
     if (layer) layer->set(at, color, index);
   }
 
-  //== setAll
 
-  //== ray
+  std::vector<Imath::V3i> rayIntersection(const Imath::Line3d &worldRay)
+  {
+    // Transform the ray into voxel space
+    Imath::Line3d localRay = worldRay * m_transform.inverse();
+
+    return walk_ray(localRay, bounds());
+  }
+
 };
 
 

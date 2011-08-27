@@ -7,23 +7,25 @@ UndoManager::UndoManager()
 }
 
 
-void UndoManager::changeEntireVoxelGrid(SproxelGrid& origGrid, 
+void UndoManager::changeEntireVoxelGrid(SproxelGrid& origGrid,
                                         const SproxelGrid& newGrid)
 {
     m_undoStack.push(new CmdChangeEntireVoxelGrid(&origGrid, newGrid));
 }
 
 
-void UndoManager::setVoxelColor(SproxelGrid& origGrid, 
-                                const Imath::V3i& index, 
+void UndoManager::setVoxelColor(SproxelGrid& origGrid,
+                                const Imath::V3i& index,
                                 const Imath::Color4f& color)
 {
     // Validity check
+    /*
     const Imath::V3i& cd = origGrid.cellDimensions();
     if (index.x < 0     || index.y < 0     || index.z < 0 ||
         index.x >= cd.x || index.y >= cd.y || index.z >= cd.z)
         return;
-    
+    */
+
     m_undoStack.push(new CmdSetVoxelColor(&origGrid, index, color));
 }
 

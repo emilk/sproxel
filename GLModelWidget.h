@@ -10,6 +10,7 @@
 #include "Global.h"
 #include "GLCamera.h"
 #include "UndoManager.h"
+#include "VoxelGridGroup.h"
 
 #include <ImathBox.h>
 #include <ImathVec.h>
@@ -120,7 +121,7 @@ private:
     CubeFaceMask computeVoxelFaceMask(const Imath::V3i& index);
 
     void glDrawAxes();
-    void glDrawGrid(const int size, 
+    void glDrawGrid(const int size,
                     const int gridCellSize,
                     const Imath::Color4f& gridColor,
                     const Imath::Color4f& bgColor);

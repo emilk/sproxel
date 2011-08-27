@@ -7,7 +7,7 @@ void SplatToolState::execute()
     std::vector<Imath::V3i> voxels = voxelsAffected();
     for (size_t i = 0; i < voxels.size(); i++)
     {
-        p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color); 
+        p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
     }
 }
 
@@ -15,9 +15,9 @@ void SplatToolState::execute()
 std::vector<Imath::V3i> SplatToolState::voxelsAffected()
 {
     std::vector<Imath::V3i> voxels;
-    
+
     // Intersect and check
-    std::vector<Imath::V3i> intersects = 
+    std::vector<Imath::V3i> intersects =
         p_gvg->rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
@@ -27,7 +27,7 @@ std::vector<Imath::V3i> SplatToolState::voxelsAffected()
         if (p_gvg->get(intersects[i]).a != 0.0f)
         {
             // Hit a voxel at the close edge of the grid?  Abort.
-            if (i == 0) 
+            if (i == 0)
                 break;
 
             // Hit a voxel in the middle?  Return previous voxel.
@@ -42,7 +42,7 @@ std::vector<Imath::V3i> SplatToolState::voxelsAffected()
             break;
         }
     }
-    
+
     return voxels;
 }
 
@@ -69,8 +69,8 @@ void FloodToolState::execute()
 }
 
 
-void FloodToolState::setNeighborsRecurse(const Imath::V3i& alreadySet, 
-                                         const Imath::Color4f& repColor, 
+void FloodToolState::setNeighborsRecurse(const Imath::V3i& alreadySet,
+                                         const Imath::Color4f& repColor,
                                          const Imath::Color4f& newColor)
 {
     // Directions
@@ -85,10 +85,8 @@ void FloodToolState::setNeighborsRecurse(const Imath::V3i& alreadySet,
     for (int i = 0; i < 6; i++)
     {
         // Bounds protection
-        if (doUs[i].x < 0 || doUs[i].x >= p_gvg->cellDimensions().x) continue;
-        if (doUs[i].y < 0 || doUs[i].y >= p_gvg->cellDimensions().y) continue;
-        if (doUs[i].z < 0 || doUs[i].z >= p_gvg->cellDimensions().z) continue;
-        
+        if (!p_gvg->bounds().intersects(doUs[i])) continue;
+
         // Recurse
         if (p_gvg->get(doUs[i]) == repColor)
         {
@@ -105,7 +103,7 @@ std::vector<Imath::V3i> FloodToolState::voxelsAffected()
     std::vector<Imath::V3i> voxels;
 
     // Intersect and check
-    std::vector<Imath::V3i> intersects = 
+    std::vector<Imath::V3i> intersects =
         p_gvg->rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
@@ -119,7 +117,7 @@ std::vector<Imath::V3i> FloodToolState::voxelsAffected()
             break;
         }
     }
-    
+
     return voxels;
 }
 
@@ -130,8 +128,8 @@ void EraserToolState::execute()
     std::vector<Imath::V3i> voxels = voxelsAffected();
     for (size_t i = 0; i < voxels.size(); i++)
     {
-        p_undoManager->setVoxelColor(*p_gvg, voxels[i], 
-                                     Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f)); 
+        p_undoManager->setVoxelColor(*p_gvg, voxels[i],
+                                     Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
     }
 }
 
@@ -141,7 +139,7 @@ std::vector<Imath::V3i> EraserToolState::voxelsAffected()
     std::vector<Imath::V3i> voxels;
 
     // Intersect and check
-    std::vector<Imath::V3i> intersects = 
+    std::vector<Imath::V3i> intersects =
         p_gvg->rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
@@ -155,7 +153,7 @@ std::vector<Imath::V3i> EraserToolState::voxelsAffected()
             break;
         }
     }
-    
+
     return voxels;
 }
 
@@ -168,7 +166,7 @@ void ReplaceToolState::execute()
     {
         // Don't replace if you're already identical
         if (p_gvg->get(voxels[i]) != m_color)
-            p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color); 
+            p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
     }
 }
 
@@ -178,7 +176,7 @@ std::vector<Imath::V3i> ReplaceToolState::voxelsAffected()
     std::vector<Imath::V3i> voxels;
 
     // Intersect and check
-    std::vector<Imath::V3i> intersects = 
+    std::vector<Imath::V3i> intersects =
         p_gvg->rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
@@ -192,7 +190,7 @@ std::vector<Imath::V3i> ReplaceToolState::voxelsAffected()
             break;
         }
     }
-    
+
     return voxels;
 }
 
@@ -205,7 +203,7 @@ void RayToolState::execute()
     p_undoManager->beginMacro("Ray Blast");
     for (size_t i = 0; i < voxels.size(); i++)
     {
-        p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color); 
+        p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
     }
     p_undoManager->endMacro();
 }
@@ -230,7 +228,7 @@ void SlabToolState::execute()
     }
     for (size_t i = 0; i < voxels.size(); i++)
     {
-        p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color); 
+        p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
     }
     p_undoManager->endMacro();
 }
@@ -240,15 +238,16 @@ std::vector<Imath::V3i> SlabToolState::voxelsAffected()
 {
     std::vector<Imath::V3i> voxels;
 
-    // TODO: Should this do an intersection at all, or maybe just fill in the 
+    // TODO: Should this do an intersection at all, or maybe just fill in the
     //       row based on the first hit?
-    std::vector<Imath::V3i> intersects = 
+    std::vector<Imath::V3i> intersects =
         p_gvg->rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 
     // Get the position to fill from
-    Imath::V3i fillPos(-1,-1,-1);
+    Imath::V3i fillPos=intersects[0];
+
     for (size_t i = 0; i < intersects.size(); i++)
     {
         if (p_gvg->get(intersects[i]).a != 0.0f)
@@ -268,37 +267,33 @@ std::vector<Imath::V3i> SlabToolState::voxelsAffected()
         }
     }
 
-    // Didn't hit anything?  Just fill in the first voxel.
-    if (fillPos == Imath::V3i(-1,-1,-1))
-    {
-        fillPos = intersects[0];
-    }
-
     // Fill out the slab
+    Imath::Box3i dim=p_gvg->bounds();
+
     switch (m_workingAxis)
     {
         case X_AXIS:
-            for (int y=0; y < p_gvg->cellDimensions().y; y++)
+            for (int y=dim.min.y; y <= dim.max.y; y++)
             {
-                for (int z=0; z < p_gvg->cellDimensions().z; z++)
+                for (int z=dim.min.z; z <= dim.max.z; z++)
                 {
                     voxels.push_back(Imath::V3i(fillPos.x, y, z));
                 }
             }
             break;
         case Y_AXIS:
-            for (int x=0; x < p_gvg->cellDimensions().x; x++)
+            for (int x=dim.min.x; x <= dim.max.x; x++)
             {
-                for (int z=0; z < p_gvg->cellDimensions().z; z++)
+                for (int z=dim.min.z; z <= dim.max.z; z++)
                 {
                     voxels.push_back(Imath::V3i(x, fillPos.y, z));
                 }
             }
             break;
         case Z_AXIS:
-            for (int x=0; x < p_gvg->cellDimensions().x; x++)
+            for (int x=dim.min.x; x <= dim.max.x; x++)
             {
-                for (int y=0; y < p_gvg->cellDimensions().y; y++)
+                for (int y=dim.min.y; y <= dim.max.y; y++)
                 {
                     voxels.push_back(Imath::V3i(x, y, fillPos.z));
                 }
@@ -320,7 +315,7 @@ std::vector<Imath::V3i> DropperToolState::voxelsAffected()
     std::vector<Imath::V3i> voxels;
 
     // Intersect and check
-    std::vector<Imath::V3i> intersects = 
+    std::vector<Imath::V3i> intersects =
         p_gvg->rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;

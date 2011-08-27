@@ -9,21 +9,21 @@
 #include <QUndoCommand>
 
 
-// A wrapper class for Sproxel.  
+// A wrapper class for Sproxel.
 // Allows for an easy subset of undo/redo operations.
 class UndoManager : public QWidget
 {
     Q_OBJECT
-    
+
 public:
     UndoManager();
     virtual ~UndoManager() {}
 
-    void changeEntireVoxelGrid(SproxelGrid& origGrid, 
+    void changeEntireVoxelGrid(SproxelGrid& origGrid,
                                const SproxelGrid& newGrid);
 
-    void setVoxelColor(SproxelGrid& origGrid, 
-                       const Imath::V3i& index, 
+    void setVoxelColor(SproxelGrid& origGrid,
+                       const Imath::V3i& index,
                        const Imath::Color4f& color);
 
     void beginMacro(const QString& macroName);
@@ -81,6 +81,7 @@ class CmdSetVoxelColor : public QUndoCommand
 public:
     CmdSetVoxelColor(SproxelGrid* gvg, const Imath::V3i& index, const Imath::Color4f color) :
         m_pGvg(gvg),
+        m_layerId(gvg->curLayerIndex()),
         m_index(),
         m_newColor(),
         m_oldColor()
@@ -93,14 +94,20 @@ public:
 
     virtual void redo()
     {
+        VoxelGridLayer *layer=m_pGvg->layer(m_layerId);
+        if (!layer) return;
+
         for (size_t i = 0; i < m_index.size(); i++)
-            m_pGvg->set(m_index[i], m_newColor[i]);
+            layer->set(m_index[i], m_newColor[i]);
     }
 
     virtual void undo()
     {
+        VoxelGridLayer *layer=m_pGvg->layer(m_layerId);
+        if (!layer) return;
+
         for (size_t i = 0; i < m_index.size(); i++)
-            m_pGvg->set(m_index[i], m_oldColor[i]);
+            layer->set(m_index[i], m_oldColor[i]);
     }
 
 protected:
@@ -110,6 +117,9 @@ protected:
             return false;
 
         const CmdSetVoxelColor* otherSet = static_cast<const CmdSetVoxelColor*>(other);
+        if (otherSet->m_pGvg!=m_pGvg || otherSet->m_layerId!=m_layerId) return false;
+
+        // TODO: shouldn't it push _all_ elements of otherSet?
         m_index.push_back(otherSet->m_index[0]);
         m_newColor.push_back(otherSet->m_newColor[0]);
         m_oldColor.push_back(otherSet->m_oldColor[0]);
@@ -118,6 +128,7 @@ protected:
 
 private:
     SproxelGrid* m_pGvg;
+    int m_layerId;
     std::vector<Imath::V3i> m_index;
     std::vector<Imath::Color4f> m_newColor;
     std::vector<Imath::Color4f> m_oldColor;
