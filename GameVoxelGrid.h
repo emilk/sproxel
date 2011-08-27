@@ -18,21 +18,19 @@ template <class T>
 class GameVoxelGrid
 {
 public:
-    GameVoxelGrid() : m_transform(), m_cellDimensions(0,0,0)
+    GameVoxelGrid() : m_cellDimensions(0,0,0)
     {
         resizeData();
     }
 
     GameVoxelGrid(const Imath::V3i& cellDim)
-        : m_transform(),
-          m_cellDimensions(cellDim)
+        : m_cellDimensions(cellDim)
     {
         resizeData();
     }
 
     GameVoxelGrid(const GameVoxelGrid& gvg)
     {
-        m_transform = gvg.m_transform;
         m_cellDimensions = gvg.m_cellDimensions;
         m_data = gvg.m_data;
     }
@@ -42,14 +40,11 @@ public:
     const Imath::V3i& cellDimensions() const { return m_cellDimensions; }
     void setCellDimensions(const Imath::V3i& cd) { m_cellDimensions = cd; resizeData(); }
 
-    const Imath::M44d& transform() const { return m_transform; }
-    void setTransform(const Imath::M44d& m) { m_transform = m; }
-
     const Imath::M44d voxelTransform(const Imath::V3i& v) const
     {
         Imath::M44d vMat;
         vMat.setTranslation(voxelCenter(v));
-        return vMat * m_transform;
+        return vMat;
     }
 
     const Imath::Box3d worldBounds() const
@@ -59,7 +54,7 @@ public:
                                              m_cellDimensions.y,
                                              m_cellDimensions.z));
         // (ImathBoxAlgo) This properly computes the world bounding box
-        return Imath::transform(retBox, m_transform);
+        return retBox;
     }
 
     void set(const Imath::V3i& cell, const T& value)
@@ -82,10 +77,7 @@ public:
 
     std::vector<Imath::V3i> rayIntersection(Imath::Line3d worldRay)
     {
-        // Transform the ray into voxel space
-        Imath::Line3d localRay = worldRay * m_transform.inverse();
-
-        return walk_ray(localRay, Imath::Box3i(Imath::V3i(0), m_cellDimensions-Imath::V3i(1)));
+        return walk_ray(worldRay, Imath::Box3i(Imath::V3i(0), m_cellDimensions-Imath::V3i(1)));
     }
 
     GameVoxelGrid& operator=(const GameVoxelGrid& other)
@@ -105,7 +97,6 @@ public:
                     }
                 }
             }
-            m_transform = other.m_transform;
         }
         return *this;
     }
@@ -133,7 +124,6 @@ public:
 
 
 private:
-    Imath::M44d m_transform;
     Imath::V3i m_cellDimensions;
     std::vector< std::vector < std::vector< T > > > m_data;
 
