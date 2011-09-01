@@ -1776,26 +1776,28 @@ void GLModelWidget::rotateVoxels(const SproxelAxis axis, const int dir)
     */
 }
 
+
 void GLModelWidget::mirrorVoxels(const SproxelAxis axis)
 {
-    //== FIXME: rewrite for layers
-    /*
+    //== FIXME: current implementation collapses all layers, should be per-layer operation
     SproxelGrid backup = m_gvg;
 
     m_undoManager.beginMacro("Mirror");
 
-    for (int x = 0; x < m_gvg.cellDimensions().x; x++)
+    Imath::Box3i dim=m_gvg.bounds();
+
+    for (int x = dim.min.x; x <= dim.max.x; x++)
     {
-        for (int y = 0; y < m_gvg.cellDimensions().y; y++)
+        for (int y = dim.min.y; y <= dim.max.y; y++)
         {
-            for (int z = 0; z < m_gvg.cellDimensions().z; z++)
+            for (int z = dim.min.z; z <= dim.max.z; z++)
             {
                 Imath::V3i oldLocation(-1, -1, -1);
                 switch (axis)
                 {
-                    case X_AXIS: oldLocation = Imath::V3i(backup.cellDimensions().x-x-1, y, z); break;
-                    case Y_AXIS: oldLocation = Imath::V3i(x, backup.cellDimensions().y-y-1, z); break;
-                    case Z_AXIS: oldLocation = Imath::V3i(x, y, backup.cellDimensions().z-z-1); break;
+                    case X_AXIS: oldLocation = Imath::V3i(dim.max.x+dim.min.x-x, y, z); break;
+                    case Y_AXIS: oldLocation = Imath::V3i(x, dim.max.y+dim.min.y-y, z); break;
+                    case Z_AXIS: oldLocation = Imath::V3i(x, y, dim.max.z+dim.min.z-z); break;
                 }
                 setVoxelColor(Imath::V3i(x,y,z), backup.get(oldLocation));
             }
@@ -1804,7 +1806,6 @@ void GLModelWidget::mirrorVoxels(const SproxelAxis axis)
 
     m_undoManager.endMacro();
     updateGL();
-    */
 }
 
 
