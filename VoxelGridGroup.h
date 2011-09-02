@@ -56,14 +56,14 @@ public:
 
   SproxelColor color(int i) const
   {
-    if (i<0 || i>=m_colors.size()) return SproxelColor(0, 0, 0, 0);
+    if (i<0 || i>=(int)m_colors.size()) return SproxelColor(0, 0, 0, 0);
     return m_colors[i];
   }
 
   void setColor(int i, const SproxelColor &c)
   {
     if (i<0) return;
-    if (i>=m_colors.size()) resize(i+1);
+    if (i>=(int)m_colors.size()) resize(i+1);
     m_colors[i]=c;
   }
 
@@ -72,7 +72,7 @@ public:
     int bi=-1;
     float bd=FLT_MAX;
 
-    for (int i=0; i<m_colors.size(); ++i)
+    for (size_t i=0; i<m_colors.size(); ++i)
     {
       float d=color_diff(m_colors[i], c);
       if (d<bd) { bd=d; bi=i; }
@@ -303,7 +303,7 @@ public:
     m_curLayer =from.m_curLayer ;
 
     m_layers.reserve(from.m_layers.size());
-    for (int i=0; i<from.m_layers.size(); ++i)
+    for (size_t i=0; i<from.m_layers.size(); ++i)
       m_layers.push_back(new VoxelGridLayer(*from.m_layers[i]));
   }
 
@@ -317,7 +317,7 @@ public:
     m_curLayer =from.m_curLayer ;
 
     m_layers.reserve(from.m_layers.size());
-    for (int i=0; i<from.m_layers.size(); ++i)
+    for (size_t i=0; i<from.m_layers.size(); ++i)
       m_layers.push_back(new VoxelGridLayer(*from.m_layers[i]));
 
     return *this;
@@ -328,7 +328,7 @@ public:
     m_transform.makeIdentity();
     m_curLayer=-1;
 
-    for (int i=0; i<m_layers.size(); ++i) if (m_layers[i]) delete(m_layers[i]);
+    for (size_t i=0; i<m_layers.size(); ++i) if (m_layers[i]) delete(m_layers[i]);
     m_layers.clear();
   }
 
@@ -349,7 +349,7 @@ public:
 
   void setCurLayer(int index)
   {
-    if (index<0 || index>=m_layers.size()) index=-1;
+    if (index<0 || index>=(int)m_layers.size()) index=-1;
     m_curLayer=index;
   }
 
@@ -357,7 +357,7 @@ public:
   Imath::Box3i bounds() const
   {
     Imath::Box3i bbox;
-    for (int i=0; i<m_layers.size(); ++i) bbox.extendBy(m_layers[i]->bounds());
+    for (size_t i=0; i<m_layers.size(); ++i) bbox.extendBy(m_layers[i]->bounds());
     return bbox;
   }
 
@@ -367,7 +367,7 @@ public:
 
   VoxelGridLayer* layer(int i) const
   {
-    if (i<0 || i>=m_layers.size()) return NULL;
+    if (i<0 || i>=(int)m_layers.size()) return NULL;
     return m_layers[i];
   }
 
@@ -381,23 +381,23 @@ public:
 
   void deleteLayer(int i)
   {
-    if (i<0 || i>=m_layers.size()) return;
+    if (i<0 || i>=(int)m_layers.size()) return;
     if (m_layers[i]) delete(m_layers[i]);
     m_layers.erase(m_layers.begin()+i);
 
     if (m_curLayer>i) --m_curLayer;
-    if (m_curLayer>=m_layers.size()) m_curLayer=m_layers.size()-1;
+    if (m_curLayer>=(int)m_layers.size()) m_curLayer=m_layers.size()-1;
   }
 
   bool layerVisible(int i)
   {
-    if (i<0 || i>=m_layers.size()) return false;
+    if (i<0 || i>=(int)m_layers.size()) return false;
     return m_layers[i]->isVisible();
   }
 
   QString layerName(int i)
   {
-    if (i<0 || i>=m_layers.size()) return "";
+    if (i<0 || i>=(int)m_layers.size()) return "";
     return m_layers[i]->name();
   }
 
@@ -432,7 +432,7 @@ public:
   {
     SproxelColor result(0, 0, 0, 0);
 
-    for (int i=0; i<m_layers.size(); ++i)
+    for (size_t i=0; i<m_layers.size(); ++i)
     {
       SproxelColor c=m_layers[i]->getColor(at);
       if (c.a!=0) { result=c; break; }
