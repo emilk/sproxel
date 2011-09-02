@@ -1336,7 +1336,7 @@ bool GLModelWidget::importImageIntoGrid(const std::string& filename)
     if (imageSizeX > oldDims.x) newDims.x = imageSizeX;
     if (imageSizeY > oldDims.y) newDims.y = imageSizeY;
 
-    //== FIXME: import as a new layer maybe?
+    //== FIXME: import as a new layer maybe?  (for sure!  -ajg)
     /*
     m_gvg.setCellDimensions(newDims);
 
@@ -1610,23 +1610,24 @@ bool GLModelWidget::exportGridOBJ(const std::string& filename, bool asTriangles)
 
 void GLModelWidget::shiftVoxels(const SproxelAxis axis, const bool up, const bool wrap)
 {
-    //== FIXME: rewrite for layers
-    /*
+    //== FIXME: current implementation only operates on the current layer
+    //          maybe it should work for all the layers at once.  Or be an option.
+
     // Simplifiers for which way to shift
     size_t tan0AxisDim = 0;
     size_t tan1AxisDim = 0;
     size_t primaryAxisDim = 0;
     switch (axis)
     {
-        case X_AXIS: primaryAxisDim = m_gvg.cellDimensions().x;
-                        tan0AxisDim = m_gvg.cellDimensions().y;
-                        tan1AxisDim = m_gvg.cellDimensions().z; break;
-        case Y_AXIS: primaryAxisDim = m_gvg.cellDimensions().y;
-                        tan0AxisDim = m_gvg.cellDimensions().x;
-                        tan1AxisDim = m_gvg.cellDimensions().z; break;
-        case Z_AXIS: primaryAxisDim = m_gvg.cellDimensions().z;
-                        tan0AxisDim = m_gvg.cellDimensions().x;
-                        tan1AxisDim = m_gvg.cellDimensions().y; break;
+        case X_AXIS: primaryAxisDim = m_gvg.curLayer()->size().x;
+                        tan0AxisDim = m_gvg.curLayer()->size().y;
+                        tan1AxisDim = m_gvg.curLayer()->size().z; break;
+        case Y_AXIS: primaryAxisDim = m_gvg.curLayer()->size().y;
+                        tan0AxisDim = m_gvg.curLayer()->size().x;
+                        tan1AxisDim = m_gvg.curLayer()->size().z; break;
+        case Z_AXIS: primaryAxisDim = m_gvg.curLayer()->size().z;
+                        tan0AxisDim = m_gvg.curLayer()->size().x;
+                        tan1AxisDim = m_gvg.curLayer()->size().y; break;
     }
 
     // Simplifiers for wrapping
@@ -1722,7 +1723,6 @@ void GLModelWidget::shiftVoxels(const SproxelAxis axis, const bool up, const boo
 
     m_undoManager.endMacro();
     updateGL();
-    */
 }
 
 
@@ -1780,6 +1780,7 @@ void GLModelWidget::rotateVoxels(const SproxelAxis axis, const int dir)
 void GLModelWidget::mirrorVoxels(const SproxelAxis axis)
 {
     //== FIXME: current implementation collapses all layers, should be per-layer operation
+    //==        Also, this macro undo feature is extremely heavy for large models - use changeEntireVoxelGrid
     SproxelGrid backup = m_gvg;
 
     m_undoManager.beginMacro("Mirror");
