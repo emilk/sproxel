@@ -236,8 +236,11 @@ public:
   {
     // expand grid to include target voxel
     Imath::Box3i box=bounds();
-    box.extendBy(at);
-    resize(box);
+    if (!box.intersects(at))
+    {
+        box.extendBy(at);
+        resize(box);
+    }
 
     if (m_ind)
     {

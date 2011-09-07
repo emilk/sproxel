@@ -1777,7 +1777,6 @@ void GLModelWidget::rotateVoxels(const SproxelAxis axis, const int dir)
 void GLModelWidget::mirrorVoxels(const SproxelAxis axis)
 {
     //== FIXME: current implementation collapses all layers, should be per-layer operation
-    //==        Also, this macro undo feature is extremely heavy for large models - use changeEntireVoxelGrid
     SproxelGrid backup = m_gvg;
 
     m_undoManager.beginMacro("Mirror");
