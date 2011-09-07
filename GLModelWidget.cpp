@@ -1728,13 +1728,11 @@ void GLModelWidget::shiftVoxels(const SproxelAxis axis, const bool up, const boo
 
 void GLModelWidget::rotateVoxels(const SproxelAxis axis, const int dir)
 {
-    //== FIXME: rewrite for layers
-    /*
-    SproxelGrid newGrid = m_gvg;
+    //== FIXME: current implementation flattens the layers
 
     // Set some new dimensions
     Imath::V3i newDim(0,0,0);
-    Imath::V3i oldDim = m_gvg.cellDimensions();
+    Imath::V3i oldDim = m_gvg.bounds().size()+Imath::V3i(1);
     switch (axis)
     {
         case X_AXIS: newDim.x = oldDim.x; newDim.y = oldDim.z; newDim.z = oldDim.y; break;
@@ -1742,14 +1740,14 @@ void GLModelWidget::rotateVoxels(const SproxelAxis axis, const int dir)
         case Z_AXIS: newDim.x = oldDim.y; newDim.y = oldDim.x; newDim.z = oldDim.z; break;
     }
 
-    newGrid.setCellDimensions(newDim);
+    SproxelGrid newGrid = SproxelGrid(newDim);
 
     // Do the rotation
-    for (int x = 0; x < newGrid.cellDimensions().x; x++)
+    for (int x = 0; x < newDim.x; x++)
     {
-        for (int y = 0; y < newGrid.cellDimensions().y; y++)
+        for (int y = 0; y < newDim.y; y++)
         {
-            for (int z = 0; z < newGrid.cellDimensions().z; z++)
+            for (int z = 0; z < newDim.z; z++)
             {
                 Imath::V3i oldLocation(0,0,0);
                 switch (axis)
@@ -1773,7 +1771,6 @@ void GLModelWidget::rotateVoxels(const SproxelAxis axis, const int dir)
 
     centerGrid();
     updateGL();
-    */
 }
 
 
