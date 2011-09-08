@@ -64,6 +64,8 @@ private:
 
     QAction* m_actExtendUp;
     QAction* m_actExtendDown;
+    QAction* m_actContractUp;
+    QAction* m_actContractDown;
     QAction* m_actUpRes;
     QAction* m_actDownRes;
 
@@ -112,6 +114,8 @@ public slots:
 
     void extendUp();
     void extendDown();
+    void contractUp();
+    void contractDown();
     void upRes();
     void downRes();
 

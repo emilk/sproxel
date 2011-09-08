@@ -99,43 +99,38 @@ void GLModelWidget::resizeAndShiftVoxelGrid(const Imath::V3i& sizeInc,
 }
 
 
-void GLModelWidget::reresVoxelGrid(const float /*scale*/)
+void GLModelWidget::reresVoxelGrid(const float scale)
 {
     //== FIXME: make it work with layers
-    /*
-    SproxelGrid newGrid = m_gvg;
 
-    Imath::V3i newDimensions;
-    newDimensions.x = (int)((float)newGrid.cellDimensions().x * scale);
-    newDimensions.y = (int)((float)newGrid.cellDimensions().y * scale);
-    newDimensions.z = (int)((float)newGrid.cellDimensions().z * scale);
-    if (newDimensions.x <= 0 && newDimensions.y <= 0 && newDimensions.z <= 0)
+    Imath::V3i newDims;
+    const Imath::V3i oldDims = m_gvg.bounds().size()+Imath::V3i(1);
+    newDims.x = (int)((float)oldDims.x * scale);
+    newDims.y = (int)((float)oldDims.y * scale);
+    newDims.z = (int)((float)oldDims.z * scale);
+    if (newDims.x <= 0 && newDims.y <= 0 && newDims.z <= 0)
         return;
-    newGrid.setCellDimensions(newDimensions);
 
-    Imath::V3d oldTranslation = newGrid.transform().translation();
+    SproxelGrid newGrid = SproxelGrid(newDims);
+
 
     Imath::M44d transform;
-    // TODO: Scaling the GVG is bad.  Maybe scaling the world around the new res would be better.
-    //transform.setScale(Imath::V3d(1.0f/scale, 1.0f/scale, 1.0f/scale));
-    //transform = newGrid.transform() * transform;
+    Imath::V3d oldTranslation = m_gvg.transform().translation();
     transform[3][0] = oldTranslation.x * scale;
     transform[3][1] = oldTranslation.y * scale;
     transform[3][2] = oldTranslation.z * scale;
     newGrid.setTransform(transform);
-
-    // Clear out the new voxel grid
-    newGrid.setAll(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
+    // TODO: Maybe scaling the world or the gvg would be fun
 
     // Move the stuff over, "changing resolution"
     // TODO: Make this less naieve.  Right now, when down-res'ing, you get a filled
     //       voxel if there is *anything* in its up-res'ed version.
     //       Could also take neighbors into account (round corners) when up-res'ing, etc.
-    for (int x = 0; x < m_gvg.cellDimensions().x; x++)
+    for (int x = 0; x < oldDims.x; x++)
     {
-        for (int y = 0; y < m_gvg.cellDimensions().y; y++)
+        for (int y = 0; y < oldDims.y; y++)
         {
-            for (int z = 0; z < m_gvg.cellDimensions().z; z++)
+            for (int z = 0; z < oldDims.z; z++)
             {
                 const Imath::Color4f curCol = m_gvg.get(Imath::V3i(x,y,z));
                 if (curCol.a != 0.0f)
@@ -160,7 +155,6 @@ void GLModelWidget::reresVoxelGrid(const float /*scale*/)
 
     m_undoManager.changeEntireVoxelGrid(m_gvg, newGrid);
     updateGL();
-    */
 }
 
 

@@ -176,6 +176,16 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     connect(m_actExtendDown, SIGNAL(triggered()),
             this, SLOT(extendDown()));
 
+    m_actContractUp = new QAction("Contract grid dimension from above", this);
+    m_menuGrid->addAction(m_actContractUp);
+    connect(m_actContractUp, SIGNAL(triggered()),
+            this, SLOT(contractUp()));
+
+    m_actContractDown = new QAction("Contract grid dimension from below", this);
+    m_menuGrid->addAction(m_actContractDown);
+    connect(m_actContractDown, SIGNAL(triggered()),
+            this, SLOT(contractDown()));
+
     m_menuGrid->addSeparator();
 
     m_actUpRes = new QAction("Double grid resolution", this);
@@ -643,6 +653,31 @@ void MainWindow::extendDown()
         case X_AXIS: sizeInc.x += 1; shift.x += 1; break;
         case Y_AXIS: sizeInc.y += 1; shift.y += 1; break;
         case Z_AXIS: sizeInc.z += 1; shift.z += 1; break;
+    }
+    m_glModelWidget->resizeAndShiftVoxelGrid(sizeInc, shift);
+}
+
+void MainWindow::contractUp()
+{
+    Imath::V3i sizeInc(0,0,0);
+    switch (m_glModelWidget->currentAxis())
+    {
+        case X_AXIS: sizeInc.x -= 1; break;
+        case Y_AXIS: sizeInc.y -= 1; break;
+        case Z_AXIS: sizeInc.z -= 1; break;
+    }
+    m_glModelWidget->resizeAndShiftVoxelGrid(sizeInc, Imath::V3i(0,0,0));
+}
+
+void MainWindow::contractDown()
+{
+    Imath::V3i shift(0,0,0);
+    Imath::V3i sizeInc(0,0,0);
+    switch (m_glModelWidget->currentAxis())
+    {
+        case X_AXIS: sizeInc.x -= 1; shift.x -= 1; break;
+        case Y_AXIS: sizeInc.y -= 1; shift.y -= 1; break;
+        case Z_AXIS: sizeInc.z -= 1; shift.z -= 1; break;
     }
     m_glModelWidget->resizeAndShiftVoxelGrid(sizeInc, shift);
 }
