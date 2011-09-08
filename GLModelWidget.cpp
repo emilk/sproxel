@@ -1336,25 +1336,9 @@ bool GLModelWidget::importImageIntoGrid(const std::string& filename)
     if (imageSizeX > oldDims.x) newDims.x = imageSizeX;
     if (imageSizeY > oldDims.y) newDims.y = imageSizeY;
 
-    //== FIXME: import as a new layer maybe?  (for sure!  -ajg)
-    /*
-    m_gvg.setCellDimensions(newDims);
-
-    // Clear out the uninitialized new region : TODO: FUnctionize
-    for (int x = 0; x < newDims.x; x++)
-    {
-        for (int y = 0; y < newDims.y; y++)
-        {
-            for (int z = 0; z < newDims.z; z++)
-            {
-                if (x < oldDims.x && y < oldDims.y && z < oldDims.z)
-                    continue;
-                m_gvg.set(Imath::V3i(x, y, z),
-                          Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
-            }
-        }
-    }
-
+    //== FIXME: import as a new layer
+    m_gvg.curLayer()->resize(newDims);
+            
     // Splat the data in
     for (int x = 0; x < imageSizeX; x++)
     {
@@ -1372,7 +1356,6 @@ bool GLModelWidget::importImageIntoGrid(const std::string& filename)
 
     centerGrid();
     updateGL();
-    */
     return true;
 }
 

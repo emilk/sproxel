@@ -46,8 +46,8 @@ private:
     QDockWidget* m_paletteDocker;
     PaletteWidget* m_paletteWidget;
 
-    QDockWidget* m_layersDocker;
-    LayersWidget* m_layersWidget;
+    //QDockWidget* m_layersDocker;
+    //LayersWidget* m_layersWidget;
 
     // Actions
     QAction* m_actQuit;
