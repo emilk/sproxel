@@ -88,6 +88,7 @@ private:
     QAction* m_actToolFlood;
     QAction* m_actToolEraser;
     QAction* m_actToolSlab;
+    QAction* m_actToolLine;
     QAction* m_actToolRay;
 
     // Locals
@@ -128,6 +129,7 @@ public slots:
     void setToolEraser(bool stat);
     void setToolReplace(bool stat);
     void setToolSlab(bool stat);
+    void setToolLine(bool stat);
 
     void reactToModified(bool value);
 };

@@ -182,6 +182,7 @@ void GLModelWidget::setActiveTool(const SproxelTool tool)
         case TOOL_ERASER: m_activeTool = new EraserToolState(&m_undoManager); break;
         case TOOL_REPLACE: m_activeTool = new ReplaceToolState(&m_undoManager); break;
         case TOOL_SLAB: m_activeTool = new SlabToolState(&m_undoManager); break;
+        case TOOL_LINE: m_activeTool = new LineToolState(&m_undoManager); break;
     }
 }
 
@@ -281,7 +282,7 @@ void GLModelWidget::paintGL()
 
                     CubeFaceMask mask = computeVoxelFaceMask(index);
 
-                    if (p_appSettings->value("GLModelWidget/drawVoxelOutlines", 1).toBool())
+                    if (p_appSettings->value("GLModelWidget/drawVoxelOutlines", 0).toBool())
                     {
                         // TODO: Make line width a setting
                         // TODO: Learn how to fix these polygon offset values to work properly.
@@ -957,12 +958,6 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
             }
         }
     }
-}
-
-
-void GLModelWidget::mouseReleaseEvent(QMouseEvent*)
-{
-    m_activeTool->decrementClicks();
 }
 
 

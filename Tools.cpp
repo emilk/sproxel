@@ -1,4 +1,5 @@
 #include "Tools.h"
+#include "RayWalk.h"
 #include "GLModelWidget.h"
 
 ////////////////////////////////////////
@@ -9,6 +10,7 @@ void SplatToolState::execute()
     {
         p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
     }
+    decrementClicks();
 }
 
 
@@ -66,6 +68,7 @@ void FloodToolState::execute()
     p_undoManager->setVoxelColor(*p_gvg, hit, m_color);
     setNeighborsRecurse(hit, repColor, m_color);
     p_undoManager->endMacro();
+    decrementClicks();
 }
 
 
@@ -131,6 +134,7 @@ void EraserToolState::execute()
         p_undoManager->setVoxelColor(*p_gvg, voxels[i],
                                      Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
     }
+    decrementClicks();
 }
 
 
@@ -168,6 +172,7 @@ void ReplaceToolState::execute()
         if (p_gvg->get(voxels[i]) != m_color)
             p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
     }
+    decrementClicks();
 }
 
 
@@ -206,6 +211,7 @@ void RayToolState::execute()
         p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
     }
     p_undoManager->endMacro();
+    decrementClicks();
 }
 
 
@@ -231,6 +237,7 @@ void SlabToolState::execute()
         p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
     }
     p_undoManager->endMacro();
+    decrementClicks();
 }
 
 
@@ -305,8 +312,102 @@ std::vector<Imath::V3i> SlabToolState::voxelsAffected()
 
 
 ////////////////////////////////////////
+void LineToolState::execute()
+{
+    std::vector<Imath::V3i> voxels = voxelsAffected();
+
+    // First click sets the start point
+    if (m_clicksRemain == 2)
+    {
+        if (voxels.size())
+        {
+            m_startPoint = voxels[0];
+            decrementClicks();
+        }
+    }
+
+    // Second click fills in the line
+    else if (m_clicksRemain == 1)
+    {
+        p_undoManager->beginMacro("Line");
+        for (size_t i = 0; i < voxels.size(); i++)
+        {
+            p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
+        }
+        p_undoManager->endMacro();
+        decrementClicks();
+    }
+}
+
+
+std::vector<Imath::V3i> LineToolState::voxelsAffected()
+{
+    std::vector<Imath::V3i> voxels;
+
+    // Intersect and check
+    std::vector<Imath::V3i> intersects =
+        p_gvg->rayIntersection(m_ray);
+    if (intersects.size() == 0)
+        return voxels;
+
+    Imath::V3i intersect;
+    for (size_t i = 0; i < intersects.size(); i++)
+    {
+        if (p_gvg->get(intersects[i]).a != 0.0f)
+        {
+            // Hit a voxel at the close edge of the grid?  Abort.
+            if (i == 0)
+                return voxels;
+
+            // Hit a voxel in the middle?  Return previous voxel.
+            intersect = intersects[i-1];
+            break;
+        }
+
+        // Didn't hit anything?  Just return the last voxel.
+        if (i == intersects.size()-1)
+        {
+            intersect = intersects[i];
+            break;
+        }
+    }
+
+    if (m_clicksRemain == 2)
+    {
+        voxels.push_back(intersect);
+    }
+    else if (m_clicksRemain == 1)
+    {
+        Imath::Line3d ray;
+        ray.pos = p_gvg->voxelTransform(m_startPoint).translation();
+        ray.dir = (p_gvg->voxelTransform(intersect).translation() - ray.pos).normalized();
+        
+        if (ray.pos == intersect)
+        {
+            // An infinitely small ray is bad
+            voxels.push_back(intersect);
+        }
+        else
+        {
+            // Trim off the end, making it a ray segment instead of an entire ray
+            std::vector<Imath::V3i> initialInts = p_gvg->rayIntersection(ray);
+            for (size_t i = 0; i < initialInts.size(); i++)
+            {
+                voxels.push_back(initialInts[i]);
+                if (initialInts[i] == intersect)
+                    break;
+            }
+        }
+    }
+
+    return voxels;
+}
+
+
+////////////////////////////////////////
 void DropperToolState::execute()
 {
+    decrementClicks();
 }
 
 

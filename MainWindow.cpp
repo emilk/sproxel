@@ -270,6 +270,11 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_actToolSlab->setCheckable(true);
     connect(m_actToolSlab, SIGNAL(toggled(bool)), this, SLOT(setToolSlab(bool)));
 
+    m_actToolLine = new QAction("Line", m_toolbarActionGroup);
+    m_actToolLine->setIcon(QIcon(QPixmap(":/icons/line.png")));
+    m_actToolLine->setCheckable(true);
+    connect(m_actToolLine, SIGNAL(toggled(bool)), this, SLOT(setToolLine(bool)));
+
     //m_actToolRay = new QAction("Ray", this);
 
     m_actToolSplat->setChecked(true);
@@ -401,6 +406,7 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     else if (event->key() == Qt::Key_R) m_actToolDropper->setChecked(true);
     else if (event->key() == Qt::Key_T) m_actToolEraser->setChecked(true);
     else if (event->key() == Qt::Key_Y) m_actToolSlab->setChecked(true);
+    else if (event->key() == Qt::Key_U) m_actToolLine->setChecked(true);
 
     else if (event->key() >= Qt::Key_Left && event->key() <= Qt::Key_PageDown)
     {
@@ -692,6 +698,7 @@ void MainWindow::setToolDropper(bool stat) { if (stat) m_glModelWidget->setActiv
 void MainWindow::setToolEraser(bool stat)  { if (stat) m_glModelWidget->setActiveTool(TOOL_ERASER); }
 void MainWindow::setToolReplace(bool stat) { if (stat) m_glModelWidget->setActiveTool(TOOL_REPLACE); }
 void MainWindow::setToolSlab(bool stat)    { if (stat) m_glModelWidget->setActiveTool(TOOL_SLAB); }
+void MainWindow::setToolLine(bool stat)    { if (stat) m_glModelWidget->setActiveTool(TOOL_LINE); }
 
 void MainWindow::reactToModified(bool clean)
 {
