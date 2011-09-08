@@ -112,6 +112,7 @@ void GLModelWidget::reresVoxelGrid(const float scale)
         return;
 
     SproxelGrid newGrid = SproxelGrid(newDims);
+    newGrid.setTransform(m_gvg.transform());
 
 
     Imath::M44d transform;
@@ -1713,6 +1714,7 @@ void GLModelWidget::rotateVoxels(const SproxelAxis axis, const int dir)
     }
 
     SproxelGrid newGrid = SproxelGrid(newDim);
+    newGrid.setTransform(m_gvg.transform());
 
     // Do the rotation
     for (int x = 0; x < newDim.x; x++)
