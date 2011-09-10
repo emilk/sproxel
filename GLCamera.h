@@ -101,6 +101,8 @@ public:
     void rotate( const Imath::V2d &point,
                  double rotateSpeed = 400.0 );
 
+    void rotateAngle( const Imath::V2d &angle );
+
     void frame( const Imath::Box3d &bounds );
 
     void lookAt( const Imath::V3d &eye, const Imath::V3d &at );

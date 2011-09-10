@@ -153,7 +153,6 @@ void GLCamera::autoSetClippingPlanes( const Box3d &bounds )
 	
     V3d v( 0.0, 0.0, -m_centerOfInterest );
     rotateVector( rotX, rotY, v );
-    const V3d view = eye + v;
     v.normalize();
     
     V3d points[8];
@@ -390,7 +389,33 @@ void GLCamera::rotate( const V2d &point,
     v[2] = m_centerOfInterest;
     rotateVector( rotX, rotY, v );
 
-    const V3d newEye = view + v;
+    // ALTER
+    setTranslation( view + v );
+    setRotation( V3d( rotX, rotY, rotZ ) );
+}
+
+//-*****************************************************************************
+void GLCamera::rotateAngle( const V2d &angle )
+{
+    // INIT
+    V3d eye = m_translation;
+    double rotX = m_rotation.x;
+    double rotY = m_rotation.y;
+    const double rotZ = m_rotation.z;
+
+    V3d v( 0.0, 0.0, -m_centerOfInterest );
+    rotateVector( rotX, rotY, v );
+
+    const V3d view = eye + v;
+
+    // ROTATE
+    rotY += angle[0];
+    rotX += angle[1];
+
+    v[0] = 0.0;
+    v[1] = 0.0;
+    v[2] = m_centerOfInterest;
+    rotateVector( rotX, rotY, v );
 
     // ALTER
     setTranslation( view + v );
