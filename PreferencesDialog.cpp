@@ -288,7 +288,7 @@ VoxelPage::VoxelPage(QWidget* parent, QSettings* appSettings) :
     setLayout(mainLayout);
 
     // Populate the settings
-    if (m_pAppSettings->value("GLModelWidget/drawVoxelOutlines", true).toBool())
+    if (m_pAppSettings->value("GLModelWidget/drawVoxelOutlines", false).toBool())
         drawOutlines->setCheckState(Qt::Checked);
     else
         drawOutlines->setCheckState(Qt::Unchecked);
