@@ -90,13 +90,17 @@ protected:
 
     virtual void mousePressEvent(QMouseEvent* event);
     virtual void mouseMoveEvent(QMouseEvent* event);
+    virtual void mouseReleaseEvent(QMouseEvent* event);
 
 private:
     GLCamera m_cam;
-    UndoManager m_undoManager;
+    double m_cameraSnapStep;
+    Imath::V2d m_cameraSnapDelta;
 
     SproxelGrid m_gvg;
     std::vector<Imath::V3i> m_previews;
+
+    UndoManager m_undoManager;
 
     Imath::V3i m_activeVoxel;
     Imath::Color4f m_activeColor;

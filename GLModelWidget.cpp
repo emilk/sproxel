@@ -19,9 +19,11 @@ Imath::Box3d fakeBounds(Imath::V3d(-50, -50, -50), Imath::V3d(50, 50, 50));
 GLModelWidget::GLModelWidget(QWidget* parent, const QSettings* appSettings)
     : QGLWidget(parent),
       m_cam(),
-      m_undoManager(),
+      m_cameraSnapStep(45.0),
+      m_cameraSnapDelta(m_cameraSnapStep/2.0, m_cameraSnapStep/2.0),
       m_gvg(Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ)),
       m_previews(),
+      m_undoManager(),
       m_activeVoxel(-1,-1,-1),
       m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_lastMouse(),
@@ -888,6 +890,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
 void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
 {
     const bool altDown = event->modifiers() & Qt::AltModifier;
+    const bool shiftDown = event->modifiers() & Qt::ShiftModifier;
 
     if (altDown)
     {
@@ -904,8 +907,67 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
         }
         else if (event->buttons() & Qt::LeftButton)
         {
-            m_cam.rotate(Imath::V2d(dx, dy));
-            m_cam.autoSetClippingPlanes(fakeBounds);
+            if (shiftDown)
+            {
+                // Camera snap
+                if (m_cameraSnapDelta.x <= 0)
+                {
+                    double fm = fmod(m_cam.rotation().y, m_cameraSnapStep);
+                    if (fm > 0.0)
+                        m_cam.rotateAngle(Imath::V2d(m_cameraSnapStep-fm, 0.0));
+                    else if (fm < 0.0)
+                        m_cam.rotateAngle(Imath::V2d(-fm, 0.0));
+                    else
+                        m_cam.rotateAngle(Imath::V2d(45.0, 0.0));
+                    m_cameraSnapDelta.x = m_cameraSnapStep/2.0;
+                }
+                else if (m_cameraSnapDelta.x >= 45.0)
+                {
+                    double fm = fmod(m_cam.rotation().y, m_cameraSnapStep);
+                    if (fm > 0.0)
+                        m_cam.rotateAngle(Imath::V2d(-fm, 0.0));
+                    else if (fm < 0.0)
+                        m_cam.rotateAngle(Imath::V2d(-(m_cameraSnapStep+fm), 0.0));
+                    else
+                        m_cam.rotateAngle(Imath::V2d(-45.0, 0.0));
+                    m_cameraSnapDelta.x = m_cameraSnapStep/2.0;
+                }
+
+                if (m_cameraSnapDelta.y <= 0)
+                {
+                    double fm = fmod(m_cam.rotation().x, m_cameraSnapStep);
+                    if (fm > 0.0)
+                        m_cam.rotateAngle(Imath::V2d(0.0, m_cameraSnapStep-fm));
+                    else if (fm < 0.0)
+                        m_cam.rotateAngle(Imath::V2d(0.0, -fm));
+                    else
+                        m_cam.rotateAngle(Imath::V2d(0.0, 45.0));
+                    m_cameraSnapDelta.y = m_cameraSnapStep/2.0;
+                }
+                else if (m_cameraSnapDelta.y >= 45.0)
+                {
+                    double fm = fmod(m_cam.rotation().x, m_cameraSnapStep);
+                    if (fm > 0.0)
+                        m_cam.rotateAngle(Imath::V2d(0.0, -fm));
+                    else if (fm < 0.0)
+                        m_cam.rotateAngle(Imath::V2d(0.0, -(m_cameraSnapStep+fm)));
+                    else
+                        m_cam.rotateAngle(Imath::V2d(0.0, -45.0));
+                    m_cameraSnapDelta.y = m_cameraSnapStep/2.0;
+                }
+
+                m_cameraSnapDelta.x += (double)dx / 4.0;
+                m_cameraSnapDelta.y += (double)dy / 4.0;
+            }
+            else
+            {
+                // Standard rotation
+                m_cam.rotate(Imath::V2d(dx, dy));
+                m_cam.autoSetClippingPlanes(fakeBounds);
+
+                // Reset the snap
+                m_cameraSnapDelta.x = m_cameraSnapDelta.y = m_cameraSnapStep/2.0;
+            }
         }
         else if (event->buttons() & Qt::MidButton)
         {
@@ -961,6 +1023,12 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
+
+void GLModelWidget::mouseReleaseEvent(QMouseEvent*)
+{
+    m_cameraSnapDelta.x = m_cameraSnapDelta.y = m_cameraSnapStep/2.0;
+    //toRight = 0.0;
+}
 
 Imath::Box3d GLModelWidget::dataBounds()
 {
