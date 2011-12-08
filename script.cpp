@@ -8,6 +8,9 @@
 #include "pyConsole.h"
 
 
+extern void init_sproxel_bindings();
+
+
 #define GLUE(a, b) a##b
 
 
@@ -67,6 +70,7 @@ void init_script(char *exe_path)
   qDebug() << "init py ok";
 
   init_python_console();
+  init_sproxel_bindings();
 
   pycon("Importing PySide.SproxelGlue...");
   glue=PyImport_ImportModule("PySide.SproxelGlue");

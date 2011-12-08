@@ -8,7 +8,7 @@
 #include "GLModelWidget.h"
 #include "PreferencesDialog.h"
 #include "ConsoleWidget.h"
-//#include "pyConsole.h"
+#include "pyConsole.h"
 
 #include <QFileDialog>
 #include <QColorDialog>
@@ -232,8 +232,8 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_menuWindow->addAction(m_toolbar->toggleViewAction());
     m_menuWindow->addAction(m_paletteDocker->toggleViewAction());
     //m_menuWindow->addAction(m_layersDocker->toggleViewAction());
-    //m_menuWindow->addAction(get_python_console_widget()->toggleViewAction());
-    //get_python_console_widget()->toggleViewAction()->setChecked(false);
+    m_menuWindow->addAction(get_python_console_widget()->toggleViewAction());
+    get_python_console_widget()->toggleViewAction()->setChecked(false);
 
 
     // ------ toolbar hookups
@@ -351,7 +351,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
         //m_appSettings.setValue("layersWindow/visibility", m_layersDocker->isVisible());
     }
 
-    //if (event->isAccepted()) close_python_console();
+    if (event->isAccepted()) close_python_console();
 }
 
 

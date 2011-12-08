@@ -9,8 +9,8 @@ QT       += core gui opengl
 TARGET = sproxel
 TEMPLATE = app
 
-#INCLUDEPATH += ../python/include
-#LIBS += -L../python/libs -lpython27
+INCLUDEPATH += ../python/include
+LIBS += -L../python/libs -lpython27
 
 unix:!macx {
   CONFIG += link_pkgconfig
@@ -44,9 +44,10 @@ SOURCES += \
     PaletteWidget.cpp \
     LayersWidget.cpp \
     Tools.cpp \
-    UndoManager.cpp
-#    script.cpp \
-#    pyConsole.cpp
+    UndoManager.cpp \
+    script.cpp \
+    pyConsole.cpp \
+    pyBindings.cpp
 
 HEADERS  += \
     Foundation.h \
@@ -60,11 +61,11 @@ HEADERS  += \
     PaletteWidget.h \
     LayersWidget.h \
     Tools.h \
-    UndoManager.h
-#    script.h \
-#    pyConsole.h \
-#    ConsoleWidget.h \
-#    glue/classGlue.h
+    UndoManager.h \
+    script.h \
+    pyConsole.h \
+    ConsoleWidget.h \
+    glue/classGlue.h
 
 FORMS += \
     NewGridDialog.ui
