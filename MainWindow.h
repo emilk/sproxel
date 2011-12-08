@@ -13,7 +13,7 @@
 #include "PaletteWidget.h"
 #include "GLModelWidget.h"
 
-#define SPROXEL_VERSION "0.5"
+#define SPROXEL_VERSION "0.6dev"
 #define BASE_WINDOW_TITLE (tr("Sproxel " SPROXEL_VERSION))
 
 class MainWindow : public QMainWindow
