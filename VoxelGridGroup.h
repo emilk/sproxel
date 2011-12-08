@@ -195,6 +195,8 @@ public:
 
   void resize(const Imath::Box3i &new_box)
   {
+    Q_ASSERT(!new_box.isEmpty());
+
     // expand grid and adjust offset to match new box
     Imath::Box3i curBox=bounds();
 
@@ -382,14 +384,22 @@ public:
     return layer;
   }
 
-  void deleteLayer(int i)
+  VoxelGridLayer* removeLayer(int i)
   {
-    if (i<0 || i>=(int)m_layers.size()) return;
-    if (m_layers[i]) delete(m_layers[i]);
+    if (i<0 || i>=(int)m_layers.size()) return NULL;
+    VoxelGridLayer *layer=m_layers[i];
     m_layers.erase(m_layers.begin()+i);
 
     if (m_curLayer>i) --m_curLayer;
     if (m_curLayer>=(int)m_layers.size()) m_curLayer=m_layers.size()-1;
+
+    return layer;
+  }
+
+  void deleteLayer(int i)
+  {
+    VoxelGridLayer *layer=removeLayer(i);
+    if (layer) delete layer;
   }
 
   bool layerVisible(int i)
@@ -431,6 +441,20 @@ public:
   }
 
 
+  int getInd(const Imath::V3i &at)
+  {
+    int result=0;
+
+    for (size_t i=0; i<m_layers.size(); ++i)
+    {
+      int ind=m_layers[i]->getInd(at);
+      if (ind>0) { result=ind; break; }
+    }
+
+    return result;
+  }
+
+
   SproxelColor get(const Imath::V3i &at)
   {
     SproxelColor result(0, 0, 0, 0);
@@ -443,6 +467,7 @@ public:
 
     return result;
   }
+
 
   void set(const Imath::V3i &at, const SproxelColor &color, int index=-1)
   {
