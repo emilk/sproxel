@@ -19,10 +19,10 @@ public:
     UndoManager();
     virtual ~UndoManager() {}
 
-    void changeEntireVoxelGrid(SproxelGrid& origGrid,
-                               const SproxelGrid& newGrid);
+    void changeEntireVoxelGrid(VoxelGridGroupPtr origGrid,
+                               const VoxelGridGroupPtr newGrid);
 
-    void setVoxelColor(SproxelGrid& origGrid,
+    void setVoxelColor(VoxelGridGroupPtr origGrid,
                        const Imath::V3i& index,
                        const Imath::Color4f& color);
 
@@ -50,28 +50,28 @@ private:
 class CmdChangeEntireVoxelGrid : public QUndoCommand
 {
 public:
-    CmdChangeEntireVoxelGrid(SproxelGrid* gvg, const SproxelGrid& newGrid) :
+    CmdChangeEntireVoxelGrid(VoxelGridGroupPtr gvg, const VoxelGridGroupPtr newGrid) :
         m_pGvg(gvg)
     {
-        m_newGrid = newGrid;
-        m_oldGrid = *gvg;
+        m_newGrid = new VoxelGridGroup(*newGrid);
+        m_oldGrid = new VoxelGridGroup(*gvg);
         setText("Change grid");
     }
 
     virtual void redo()
     {
-        *m_pGvg = m_newGrid;
+        *m_pGvg = *m_newGrid;
     }
 
     virtual void undo()
     {
-        *m_pGvg = m_oldGrid;
+        *m_pGvg = *m_oldGrid;
     }
 
 private:
-    SproxelGrid* m_pGvg;
-    SproxelGrid  m_newGrid;
-    SproxelGrid  m_oldGrid;
+    VoxelGridGroupPtr m_pGvg;
+    VoxelGridGroupPtr m_newGrid;
+    VoxelGridGroupPtr m_oldGrid;
 };
 
 
@@ -79,7 +79,7 @@ private:
 class CmdSetVoxelColor : public QUndoCommand
 {
 public:
-    CmdSetVoxelColor(SproxelGrid* gvg, const Imath::V3i& index, const Imath::Color4f color) :
+    CmdSetVoxelColor(VoxelGridGroupPtr gvg, const Imath::V3i& index, const Imath::Color4f color) :
         m_pGvg(gvg),
         m_layerId(gvg->curLayerIndex()),
         m_index(),
@@ -94,7 +94,7 @@ public:
 
     virtual void redo()
     {
-        VoxelGridLayer *layer=m_pGvg->layer(m_layerId);
+        VoxelGridLayerPtr layer=m_pGvg->layer(m_layerId);
         if (!layer) return;
 
         for (size_t i = 0; i < m_index.size(); i++)
@@ -103,7 +103,7 @@ public:
 
     virtual void undo()
     {
-        VoxelGridLayer *layer=m_pGvg->layer(m_layerId);
+        VoxelGridLayerPtr layer=m_pGvg->layer(m_layerId);
         if (!layer) return;
 
         for (size_t i = 0; i < m_index.size(); i++)
@@ -127,7 +127,7 @@ protected:
     }
 
 private:
-    SproxelGrid* m_pGvg;
+    VoxelGridGroupPtr m_pGvg;
     int m_layerId;
     std::vector<Imath::V3i> m_index;
     std::vector<Imath::Color4f> m_newColor;

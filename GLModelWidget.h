@@ -97,7 +97,7 @@ private:
     double m_cameraSnapStep;
     Imath::V2d m_cameraSnapDelta;
 
-    SproxelGrid m_gvg;
+    VoxelGridGroupPtr m_gvg;
     std::vector<Imath::V3i> m_previews;
 
     UndoManager m_undoManager;

@@ -7,14 +7,14 @@ UndoManager::UndoManager()
 }
 
 
-void UndoManager::changeEntireVoxelGrid(SproxelGrid& origGrid,
-                                        const SproxelGrid& newGrid)
+void UndoManager::changeEntireVoxelGrid(VoxelGridGroupPtr origGrid,
+                                        const VoxelGridGroupPtr newGrid)
 {
-    m_undoStack.push(new CmdChangeEntireVoxelGrid(&origGrid, newGrid));
+    m_undoStack.push(new CmdChangeEntireVoxelGrid(origGrid, newGrid));
 }
 
 
-void UndoManager::setVoxelColor(SproxelGrid& origGrid,
+void UndoManager::setVoxelColor(VoxelGridGroupPtr origGrid,
                                 const Imath::V3i& index,
                                 const Imath::Color4f& color)
 {
@@ -26,7 +26,7 @@ void UndoManager::setVoxelColor(SproxelGrid& origGrid,
         return;
     */
 
-    m_undoStack.push(new CmdSetVoxelColor(&origGrid, index, color));
+    m_undoStack.push(new CmdSetVoxelColor(origGrid, index, color));
 }
 
 

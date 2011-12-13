@@ -64,20 +64,13 @@ extern PyTypeObject sproxelPyLayerType;
 struct PyLayer
 {
   PyObject_HEAD
-  VoxelGridLayer *layer;
-  bool owned;
+  VoxelGridLayerPtr layer;
 };
 
 
 static void PyLayer_dtor(PyLayer *self)
 {
-  if (self->layer)
-  {
-    VoxelGridLayer *p=self->layer;
-    self->layer=NULL;
-    if (self->owned) delete p;
-  }
-
+  self->layer=NULL;
   self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -91,7 +84,7 @@ static int PyLayer_init(PyLayer *self, PyObject *args, PyObject *kwds)
   }
 
   // process args
-  VoxelGridLayer *newLayer=NULL;
+  VoxelGridLayerPtr newLayer;
 
   static char* fromPar[]={"layer", NULL};
   static char* defPar[]={"size", "offset", "name", NULL};
@@ -122,7 +115,6 @@ static int PyLayer_init(PyLayer *self, PyObject *args, PyObject *kwds)
     return -1;
 
   self->layer=newLayer;
-  self->owned=true;
 
   return 0;
 }
@@ -366,13 +358,13 @@ PyTypeObject sproxelPyLayerType=
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
-static PyObject* layer_to_py(VoxelGridLayer *layer, bool own)
+static PyObject* layer_to_py(VoxelGridLayerPtr layer)
 {
   if (!layer) Py_RETURN_NONE;
   PyLayer *pyl=PyObject_New(PyLayer, &sproxelPyLayerType);
   if (!pyl) return PyErr_NoMemory();
+  *((void**)&pyl->layer)=NULL; // reset memory
   pyl->layer=layer;
-  pyl->owned=own;
   return (PyObject*)pyl;
 }
 
@@ -386,20 +378,13 @@ extern PyTypeObject sproxelPySpriteType;
 struct PySprite
 {
   PyObject_HEAD
-  VoxelGridGroup *spr;
-  bool owned;
+  VoxelGridGroupPtr spr;
 };
 
 
 static void PySprite_dtor(PySprite *self)
 {
-  if (self->spr)
-  {
-    VoxelGridGroup *p=self->spr;
-    self->spr=NULL;
-    if (self->owned) delete p;
-  }
-
+  self->spr=NULL;
   self->ob_type->tp_free((PyObject*)self);
 }
 
@@ -413,7 +398,7 @@ static int PySprite_init(PySprite *self, PyObject *args, PyObject *kwds)
   }
 
   // process args
-  VoxelGridGroup *newSpr=NULL;
+  VoxelGridGroupPtr newSpr;
 
   static char *par[]={"from", NULL};
   PyObject *o=NULL;
@@ -432,8 +417,7 @@ static int PySprite_init(PySprite *self, PyObject *args, PyObject *kwds)
     else if (PyObject_TypeCheck(o, &sproxelPyLayerType))
     {
       PyLayer *pyl=(PyLayer*)o;
-      pyl->owned=false; // the layer ownership is moved to the sprite
-      newSpr=new VoxelGridGroup(pyl->layer);
+      newSpr=new VoxelGridGroup(pyl->layer.data());
     }
     else
     {
@@ -445,7 +429,6 @@ static int PySprite_init(PySprite *self, PyObject *args, PyObject *kwds)
     newSpr=new VoxelGridGroup();
 
   self->spr=newSpr;
-  self->owned=true;
 
   return 0;
 }
@@ -478,7 +461,7 @@ static int PySprite_setCurLayerIndex(PySprite *self, PyObject *value, void*)
 static PyObject* PySprite_getCurLayer(PySprite *self, void*)
 {
   CHECK_PYSPR
-  return layer_to_py(self->spr->curLayer(), false);
+  return layer_to_py(self->spr->curLayer());
 }
 
 
@@ -544,7 +527,7 @@ static PyObject* PySprite_layer(PySprite *self, PyObject *arg)
   CHECK_PYSPR
   int i=py_to_layer_index(arg, *self->spr);
   if (PyErr_Occurred()) return NULL;
-  return layer_to_py(self->spr->layer(i), false);
+  return layer_to_py(self->spr->layer(i));
 }
 
 
@@ -558,8 +541,7 @@ static PyObject* PySprite_insertLayerAbove(PySprite *self, PyObject *args)
   int i=py_to_layer_index(iobj, *self->spr);
   if (PyErr_Occurred()) return NULL;
 
-  if (pyl) pyl->owned=false; // ownership is moved to the sprite
-  return layer_to_py(self->spr->insertLayerAbove(i, pyl?pyl->layer:NULL), false);
+  return layer_to_py(self->spr->insertLayerAbove(i, pyl?pyl->layer.data():NULL));
 }
 
 
@@ -568,7 +550,7 @@ static PyObject* PySprite_removeLayer(PySprite *self, PyObject *arg)
   CHECK_PYSPR
   int i=py_to_layer_index(arg, *self->spr);
   if (PyErr_Occurred()) return NULL;
-  return layer_to_py(self->spr->removeLayer(i), true); // removed layer is now owned by python
+  return layer_to_py(self->spr->removeLayer(i));
 }
 
 

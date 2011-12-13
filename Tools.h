@@ -14,30 +14,30 @@ class ToolState
 {
 public:
     ToolState(UndoManager* um) : m_clicksRemain(0),
-                                 p_undoManager(um), 
-                                 m_ray(Imath::Line3d()), 
-                                 m_color(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f)), 
+                                 p_undoManager(um),
+                                 m_ray(Imath::Line3d()),
+                                 m_color(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f)),
                                  p_gvg(NULL),
                                  m_supportsDrag(false) {}
 
     virtual ~ToolState() {}
-    
+
     virtual void execute() = 0;
     virtual SproxelTool type() = 0;
     virtual std::vector<Imath::V3i> voxelsAffected() = 0;
-    
+
     const Imath::Line3d& ray() const { return m_ray; }
-    
-    void set(SproxelGrid* gvg, const Imath::Line3d& ray, const Imath::Color4f& color)
+
+    void set(VoxelGridGroupPtr gvg, const Imath::Line3d& ray, const Imath::Color4f& color)
     {
         m_ray = ray;
         m_color = color;
         p_gvg = gvg;
     }
-    
+
     int clicksRemaining() { return m_clicksRemain; }
     void decrementClicks()
-    { 
+    {
         m_clicksRemain--;
         if (m_clicksRemain == 0)
             m_clicksRemain = m_totalClicks;
@@ -49,11 +49,11 @@ public:
 protected:
     int m_totalClicks;
     int m_clicksRemain;
-        
+
     UndoManager* p_undoManager;
     Imath::Line3d m_ray;
     Imath::Color4f m_color;
-    SproxelGrid* p_gvg;
+    VoxelGridGroupPtr p_gvg;
     bool m_supportsDrag;
 };
 
@@ -69,7 +69,7 @@ public:
         m_totalClicks = m_clicksRemain = 1;
     }
     ~SplatToolState() {}
-    
+
     void execute();
     SproxelTool type() { return TOOL_SPLAT; }
     std::vector<Imath::V3i> voxelsAffected();
@@ -87,7 +87,7 @@ public:
         m_totalClicks = m_clicksRemain = 1;
     }
     ~FloodToolState() {}
-    
+
     void execute();
     SproxelTool type() { return TOOL_FLOOD; }
     std::vector<Imath::V3i> voxelsAffected();
@@ -110,7 +110,7 @@ public:
         m_totalClicks = m_clicksRemain = 1;
     }
     ~EraserToolState() {}
-    
+
     void execute();
     SproxelTool type() { return TOOL_ERASER; }
     std::vector<Imath::V3i> voxelsAffected();
@@ -127,9 +127,9 @@ public:
     {
         m_totalClicks = m_clicksRemain = 1;
     }
-    
+
     ~ReplaceToolState() {}
-    
+
     void execute();
     SproxelTool type() { return TOOL_REPLACE; }
     std::vector<Imath::V3i> voxelsAffected();
@@ -147,7 +147,7 @@ public:
         m_totalClicks = m_clicksRemain = 1;
     }
     ~RayToolState() {}
-    
+
     void execute();
     SproxelTool type() { return TOOL_RAY; }
     std::vector<Imath::V3i> voxelsAffected();
@@ -171,7 +171,7 @@ public:
     {
         m_workingAxis = axis;
     }
-    
+
     void execute();
     SproxelTool type() { return TOOL_SLAB; }
     std::vector<Imath::V3i> voxelsAffected();
@@ -212,9 +212,9 @@ public:
     {
         m_totalClicks = m_clicksRemain = 1;
     }
-    
+
     ~DropperToolState() {}
-    
+
     void execute();
     SproxelTool type() { return TOOL_DROPPER; }
     std::vector<Imath::V3i> voxelsAffected();

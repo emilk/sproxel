@@ -15,6 +15,4 @@ enum SproxelTool { TOOL_SPLAT,
                    TOOL_SLAB,
                    TOOL_LINE };
 
-typedef VoxelGridGroup SproxelGrid;
-
 #endif

@@ -8,7 +8,7 @@ void SplatToolState::execute()
     std::vector<Imath::V3i> voxels = voxelsAffected();
     for (size_t i = 0; i < voxels.size(); i++)
     {
-        p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
+        p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color);
     }
     decrementClicks();
 }
@@ -65,7 +65,7 @@ void FloodToolState::execute()
 
     // Recurse
     p_undoManager->beginMacro("Flood Fill");
-    p_undoManager->setVoxelColor(*p_gvg, hit, m_color);
+    p_undoManager->setVoxelColor(p_gvg, hit, m_color);
     setNeighborsRecurse(hit, repColor, m_color);
     p_undoManager->endMacro();
     decrementClicks();
@@ -93,7 +93,7 @@ void FloodToolState::setNeighborsRecurse(const Imath::V3i& alreadySet,
         // Recurse
         if (p_gvg->get(doUs[i]) == repColor)
         {
-            p_undoManager->setVoxelColor(*p_gvg, doUs[i], newColor);
+            p_undoManager->setVoxelColor(p_gvg, doUs[i], newColor);
             setNeighborsRecurse(doUs[i], repColor, newColor);
         }
     }
@@ -131,7 +131,7 @@ void EraserToolState::execute()
     std::vector<Imath::V3i> voxels = voxelsAffected();
     for (size_t i = 0; i < voxels.size(); i++)
     {
-        p_undoManager->setVoxelColor(*p_gvg, voxels[i],
+        p_undoManager->setVoxelColor(p_gvg, voxels[i],
                                      Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
     }
     decrementClicks();
@@ -170,7 +170,7 @@ void ReplaceToolState::execute()
     {
         // Don't replace if you're already identical
         if (p_gvg->get(voxels[i]) != m_color)
-            p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
+            p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color);
     }
     decrementClicks();
 }
@@ -208,7 +208,7 @@ void RayToolState::execute()
     p_undoManager->beginMacro("Ray Blast");
     for (size_t i = 0; i < voxels.size(); i++)
     {
-        p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
+        p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color);
     }
     p_undoManager->endMacro();
     decrementClicks();
@@ -234,7 +234,7 @@ void SlabToolState::execute()
     }
     for (size_t i = 0; i < voxels.size(); i++)
     {
-        p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
+        p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color);
     }
     p_undoManager->endMacro();
     decrementClicks();
@@ -332,7 +332,7 @@ void LineToolState::execute()
         p_undoManager->beginMacro("Line");
         for (size_t i = 0; i < voxels.size(); i++)
         {
-            p_undoManager->setVoxelColor(*p_gvg, voxels[i], m_color);
+            p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color);
         }
         p_undoManager->endMacro();
         decrementClicks();
@@ -381,7 +381,7 @@ std::vector<Imath::V3i> LineToolState::voxelsAffected()
         Imath::Line3d ray;
         ray.pos = p_gvg->voxelTransform(m_startPoint).translation();
         ray.dir = (p_gvg->voxelTransform(intersect).translation() - ray.pos).normalized();
-        
+
         if (ray.pos == intersect)
         {
             // An infinitely small ray is bad

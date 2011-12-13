@@ -6,6 +6,9 @@
 #include <ImathVec.h>
 #include <ImathColor.h>
 #include <QString>
+#include <QVector>
+#include <QSharedData>
+#include <QExplicitlySharedDataPointer>
 
 #include "GameVoxelGrid.h"
 #include "RayWalk.h"
@@ -32,7 +35,7 @@ inline float color_diff(const SproxelColor &a, const SproxelColor &b)
 }
 
 
-class ColorPalette
+class ColorPalette : public QSharedData
 {
 protected:
   std::vector<SproxelColor> m_colors;
@@ -83,15 +86,18 @@ public:
 };
 
 
+typedef QExplicitlySharedDataPointer<ColorPalette> ColorPalettePtr;
+
+
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
-class VoxelGridLayer
+class VoxelGridLayer : public QSharedData
 {
 protected:
   RgbVoxelGrid *m_rgb;
   IndVoxelGrid *m_ind;
-  ColorPalette *m_palette;
+  ColorPalettePtr m_palette;
 
   Imath::V3i m_offset;
   QString m_name;
@@ -178,7 +184,7 @@ public:
   const QString& name() const { return m_name; }
   void setName(const QString &n) { m_name=n; }
 
-  ColorPalette* palette() const { return m_palette; }
+  const ColorPalettePtr& palette() const { return m_palette; }
   void setPalette(ColorPalette *p) { m_palette=p; }
 
   Imath::V3i size() const
@@ -271,14 +277,17 @@ public:
 };
 
 
+typedef QExplicitlySharedDataPointer<VoxelGridLayer> VoxelGridLayerPtr;
+
+
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
-class VoxelGridGroup
+class VoxelGridGroup : public QSharedData
 {
 private:
   Imath::M44d m_transform;
-  std::vector<VoxelGridLayer*> m_layers;
+  QVector<VoxelGridLayerPtr> m_layers;
   int m_curLayer;
 
 public:
@@ -287,14 +296,14 @@ public:
   {
     if (layer)
     {
-      m_layers.push_back(layer);
+      m_layers.push_back(VoxelGridLayerPtr(layer));
       m_curLayer=0;
     }
   }
 
   VoxelGridGroup(const Imath::V3i &size) : m_transform()
   {
-    VoxelGridLayer *layer=new VoxelGridLayer();
+    VoxelGridLayerPtr layer(new VoxelGridLayer());
     layer->resize(Imath::Box3i(Imath::V3i(0), size-Imath::V3i(1)));
     layer->setName("main layer");
 
@@ -309,7 +318,7 @@ public:
 
     m_layers.reserve(from.m_layers.size());
     for (size_t i=0; i<from.m_layers.size(); ++i)
-      m_layers.push_back(new VoxelGridLayer(*from.m_layers[i]));
+      m_layers.push_back(VoxelGridLayerPtr(new VoxelGridLayer(*from.m_layers[i])));
   }
 
   VoxelGridGroup& operator = (const VoxelGridGroup &from)
@@ -323,7 +332,7 @@ public:
 
     m_layers.reserve(from.m_layers.size());
     for (size_t i=0; i<from.m_layers.size(); ++i)
-      m_layers.push_back(new VoxelGridLayer(*from.m_layers[i]));
+      m_layers.push_back(VoxelGridLayerPtr(new VoxelGridLayer(*from.m_layers[i])));
 
     return *this;
   }
@@ -332,8 +341,6 @@ public:
   {
     m_transform.makeIdentity();
     m_curLayer=-1;
-
-    for (size_t i=0; i<m_layers.size(); ++i) if (m_layers[i]) delete(m_layers[i]);
     m_layers.clear();
   }
 
@@ -346,9 +353,9 @@ public:
 
   int curLayerIndex() const { return m_curLayer; }
 
-  VoxelGridLayer* curLayer() const
+  VoxelGridLayerPtr curLayer() const
   {
-    if (m_curLayer<0) return NULL;
+    if (m_curLayer<0) return VoxelGridLayerPtr(NULL);
     return m_layers[m_curLayer];
   }
 
@@ -370,24 +377,24 @@ public:
   // Layer accessors
   int numLayers() const { return m_layers.size(); }
 
-  VoxelGridLayer* layer(int i) const
+  VoxelGridLayerPtr layer(int i) const
   {
-    if (i<0 || i>=(int)m_layers.size()) return NULL;
+    if (i<0 || i>=(int)m_layers.size()) return VoxelGridLayerPtr(NULL);
     return m_layers[i];
   }
 
-  VoxelGridLayer* insertLayerAbove(int i, VoxelGridLayer *layer=NULL)
+  VoxelGridLayerPtr insertLayerAbove(int i, VoxelGridLayer *layer=NULL)
   {
     if (!layer) layer=new VoxelGridLayer();
-    m_layers.insert(m_layers.begin()+i, layer);
+    m_layers.insert(m_layers.begin()+i, VoxelGridLayerPtr(layer));
     if (m_curLayer>=i) ++m_curLayer;
-    return layer;
+    return VoxelGridLayerPtr(layer);
   }
 
-  VoxelGridLayer* removeLayer(int i)
+  VoxelGridLayerPtr removeLayer(int i)
   {
-    if (i<0 || i>=(int)m_layers.size()) return NULL;
-    VoxelGridLayer *layer=m_layers[i];
+    if (i<0 || i>=(int)m_layers.size()) return VoxelGridLayerPtr(NULL);
+    VoxelGridLayerPtr layer=m_layers[i];
     m_layers.erase(m_layers.begin()+i);
 
     if (m_curLayer>i) --m_curLayer;
@@ -398,8 +405,7 @@ public:
 
   void deleteLayer(int i)
   {
-    VoxelGridLayer *layer=removeLayer(i);
-    if (layer) delete layer;
+    removeLayer(i);
   }
 
   bool layerVisible(int i)
@@ -471,7 +477,7 @@ public:
 
   void set(const Imath::V3i &at, const SproxelColor &color, int index=-1)
   {
-    VoxelGridLayer *layer=curLayer();
+    VoxelGridLayerPtr layer=curLayer();
     if (layer) layer->set(at, color, index);
   }
 
@@ -485,6 +491,9 @@ public:
   }
 
 };
+
+
+typedef QExplicitlySharedDataPointer<VoxelGridGroup> VoxelGridGroupPtr;
 
 
 #endif
