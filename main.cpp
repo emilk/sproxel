@@ -6,6 +6,10 @@
 #include <QtGui>
 #include <QApplication>
 
+
+MainWindow *main_window=NULL;
+
+
 int main(int argc, char *argv[])
 {
     QString filename = "";
@@ -17,6 +21,7 @@ int main(int argc, char *argv[])
     init_script(argc>=1 ? argv[0] : "sproxel.exe");
 
     MainWindow window(filename);
+    main_window=&window;
     window.show();
 
     script_set_main_window(&window);
@@ -25,5 +30,6 @@ int main(int argc, char *argv[])
 
     int r=a.exec();
     close_script();
+    main_window=NULL;
     return r;
 }

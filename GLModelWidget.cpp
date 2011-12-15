@@ -12,16 +12,15 @@
 #include "GLModelWidget.h"
 
 #define DEBUG_ME (0)
-#define DEFAULT_VOXGRID_SZ (8)
 
 Imath::Box3d fakeBounds(Imath::V3d(-50, -50, -50), Imath::V3d(50, 50, 50));
 
-GLModelWidget::GLModelWidget(QWidget* parent, const QSettings* appSettings)
+GLModelWidget::GLModelWidget(QWidget* parent, const QSettings* appSettings, VoxelGridGroupPtr sprite)
     : QGLWidget(parent),
       m_cam(),
       m_cameraSnapStep(45.0),
       m_cameraSnapDelta(m_cameraSnapStep/2.0, m_cameraSnapStep/2.0),
-      m_gvg(new VoxelGridGroup(Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ))),
+      m_gvg(sprite),
       m_previews(),
       m_undoManager(),
       m_activeVoxel(-1,-1,-1),
@@ -58,7 +57,12 @@ GLModelWidget::~GLModelWidget()
 
 void GLModelWidget::resizeAndClearVoxelGrid(const Imath::V3i& size)
 {
-    m_gvg = new VoxelGridGroup(size);
+    VoxelGridLayerPtr layer(new VoxelGridLayer());
+    layer->resize(Imath::Box3i(Imath::V3i(0), size-Imath::V3i(1)));
+    layer->setName("main layer");
+
+    m_gvg->clear();
+    m_gvg->insertLayerAbove(0, layer);
 
     centerGrid();
     updateGL();

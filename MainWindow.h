@@ -12,6 +12,7 @@
 #include "NewGridDialog.h"
 #include "PaletteWidget.h"
 #include "GLModelWidget.h"
+#include "SproxelProject.h"
 
 #define SPROXEL_VERSION "0.6dev"
 #define BASE_WINDOW_TITLE (tr("Sproxel " SPROXEL_VERSION))
@@ -24,12 +25,16 @@ public:
     MainWindow(const QString& initialFilename, QWidget* parent=NULL);
     QSettings& appSettings() { return m_appSettings; }
 
+    SproxelProjectPtr project() { return m_project; }
+
 protected:
     void closeEvent(QCloseEvent* event);
     void keyPressEvent(QKeyEvent* event);
 
 private:
     QSettings m_appSettings;
+
+    SproxelProjectPtr m_project;
 
     GLModelWidget* m_glModelWidget;
 
@@ -133,5 +138,7 @@ public slots:
 
     void reactToModified(bool value);
 };
+
+extern MainWindow *main_window;
 
 #endif

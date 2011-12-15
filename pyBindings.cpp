@@ -1,6 +1,8 @@
 #include <Python.h>
 #include "pyConsole.h"
 #include "VoxelGridGroup.h"
+#include "SproxelProject.h"
+#include "MainWindow.h"
 
 
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
@@ -311,6 +313,13 @@ static PyMethodDef pyLayer_methods[]=
 };
 
 
+static PyObject* PyLayer_repr(PyLayer *self)
+{
+  CHECK_PYLAYER
+  return PyString_FromFormat("Layer(\"%s\")", self->layer->name().toUtf8().data());
+}
+
+
 PyTypeObject sproxelPyLayerType=
 {
   PyObject_HEAD_INIT(NULL)
@@ -323,7 +332,7 @@ PyTypeObject sproxelPyLayerType=
   0,                         /*tp_getattr*/
   0,                         /*tp_setattr*/
   0,                         /*tp_compare*/
-  0,                         /*tp_repr*/
+  (reprfunc)PyLayer_repr,    /*tp_repr*/
   0,                         /*tp_as_number*/
   0,                         /*tp_as_sequence*/
   0,                         /*tp_as_mapping*/
@@ -480,6 +489,25 @@ static PyObject* PySprite_getNumLayers(PySprite *self, void*)
 }
 
 
+static PyObject* PySprite_getName(PySprite *self, void*)
+{
+  CHECK_PYSPR
+  return qstr_to_py(self->spr->name());
+}
+
+
+static int PySprite_setName(PySprite *self, PyObject *value, void*)
+{
+  CHECK_PYSPR_S
+
+  QString str;
+  if (!py_to_qstr(value, str)) return -1;
+
+  self->spr->setName(str);
+  return 0;
+}
+
+
 static PyGetSetDef pySprite_getsets[]=
 {
   //== TODO: transform
@@ -487,7 +515,7 @@ static PyGetSetDef pySprite_getsets[]=
   {"curLayer", (getter)PySprite_getCurLayer, NULL, "Sprite's current layer", NULL},
   {"bounds", (getter)PySprite_getBounds, NULL, "Common bounds of all sprite layers", NULL},
   {"numLayers", (getter)PySprite_getNumLayers, NULL, "Number of layers in the sprite", NULL},
-  //{"name", (getter)PySprite_getName, (setter)PySprite_setName, "Sprite name", NULL},
+  {"name", (getter)PySprite_getName, (setter)PySprite_setName, "Sprite name", NULL},
   {NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -541,7 +569,7 @@ static PyObject* PySprite_insertLayerAbove(PySprite *self, PyObject *args)
   int i=py_to_layer_index(iobj, *self->spr);
   if (PyErr_Occurred()) return NULL;
 
-  return layer_to_py(self->spr->insertLayerAbove(i, pyl?pyl->layer.data():NULL));
+  return layer_to_py(self->spr->insertLayerAbove(i, pyl?pyl->layer:VoxelGridLayerPtr()));
 }
 
 
@@ -656,6 +684,15 @@ static PyMethodDef pySprite_methods[]=
 };
 
 
+static PyObject* PySprite_repr(PySprite *self)
+{
+  CHECK_PYSPR
+  Imath::V3i s=self->spr->bounds().size()+Imath::V3i(1);
+  return PyString_FromFormat("Sprite(\"%s\" %dx%dx%d)", self->spr->name().toUtf8().data(),
+    s.x, s.y, s.z);
+}
+
+
 PyTypeObject sproxelPySpriteType=
 {
   PyObject_HEAD_INIT(NULL)
@@ -668,7 +705,7 @@ PyTypeObject sproxelPySpriteType=
   0,                         /*tp_getattr*/
   0,                         /*tp_setattr*/
   0,                         /*tp_compare*/
-  0,                         /*tp_repr*/
+  (reprfunc)PySprite_repr,   /*tp_repr*/
   0,                         /*tp_as_number*/
   0,                         /*tp_as_sequence*/
   0,                         /*tp_as_mapping*/
@@ -703,8 +740,199 @@ PyTypeObject sproxelPySpriteType=
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
+static PyObject* sprite_to_py(VoxelGridGroupPtr sprite)
+{
+  if (!sprite) Py_RETURN_NONE;
+  PySprite *pys=PyObject_New(PySprite, &sproxelPySpriteType);
+  if (!pys) return PyErr_NoMemory();
+  *((void**)&pys->spr)=NULL; // reset memory
+  pys->spr=sprite;
+  return (PyObject*)pys;
+}
+
+
+//  SproxelProject  ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
+extern PyTypeObject sproxelPyProjectType;
+
+
+struct PyProject
+{
+  PyObject_HEAD
+  SproxelProjectPtr proj;
+};
+
+
+static void PyProject_dtor(PyProject *self)
+{
+  self->proj=NULL;
+  self->ob_type->tp_free((PyObject*)self);
+}
+
+
+static int PyProject_init(PyProject *self, PyObject *args, PyObject *kwds)
+{
+  if (self->proj)
+  {
+    PyErr_SetString(PyExc_TypeError, "Project is already initialized");
+    return -1;
+  }
+
+  // process args
+  SproxelProjectPtr newProj;
+
+  static char *par[]={"from", NULL};
+  PyProject *o=NULL;
+  if (!PyArg_ParseTupleAndKeywords(args, kwds, "|O!", par, &sproxelPyProjectType, &o)) return -1;
+
+  if (o && o->proj)
+    newProj=new SproxelProject(*o->proj);
+  else
+    newProj=new SproxelProject();
+
+  self->proj=newProj;
+
+  return 0;
+}
+
+
+#define CHECK_PYPROJ \
+  if (!self->proj) { PyErr_SetString(PyExc_TypeError, "NULL Project"); return NULL; }
+
+#define CHECK_PYPROJ_S \
+  if (!self->proj) { PyErr_SetString(PyExc_TypeError, "NULL Project"); return -1; }
+
+
+static PyObject* PyProject_getSprites(PyProject *self, void*)
+{
+  CHECK_PYPROJ
+  PyObject *list=PyList_New(self->proj->sprites.size());
+  if (!list) return PyErr_NoMemory();
+
+  for (size_t i=0; i<self->proj->sprites.size(); ++i)
+    PyList_SetItem(list, i, sprite_to_py(self->proj->sprites[i]));
+
+  return list;
+}
+
+
+static int PyProject_setSprites(PyProject *self, PyObject *value, void*)
+{
+  CHECK_PYPROJ_S
+
+  if (!PySequence_Check(value))
+  {
+    PyErr_SetString(PyExc_TypeError, "Expected sequence of sprites");
+    return -1;
+  }
+
+  size_t num=PySequence_Size(value);
+  if (num==size_t(-1))
+  {
+    PyErr_SetString(PyExc_TypeError, "Expected sequence of sprites");
+    return -1;
+  }
+
+  self->proj->sprites.clear();
+  self->proj->sprites.reserve(num);
+
+  for (size_t i=0; i<num; ++i)
+  {
+    PyObject *o=PySequence_GetItem(value, i);
+    if (!o) continue;
+    if (!PyObject_TypeCheck(o, &sproxelPySpriteType)) continue;
+    self->proj->sprites.push_back(((PySprite*)o)->spr);
+  }
+
+  return 0;
+}
+
+
+static PyGetSetDef pyProject_getsets[]=
+{
+  {"sprites", (getter)PyProject_getSprites, (setter)PyProject_setSprites, "Sprites list", NULL},
+  {NULL, NULL, NULL, NULL, NULL}
+};
+
+
+static PyMethodDef pyProject_methods[]=
+{
+  //{ "reset", (PyCFunction)PyProject_reset, METH_NOARGS, "Reset sprite to the default empty state." },
+  { NULL, NULL, 0, NULL }
+};
+
+
+PyTypeObject sproxelPyProjectType=
+{
+  PyObject_HEAD_INIT(NULL)
+  0,                         /*ob_size*/
+  "sproxel.Project",         /*tp_name*/
+  sizeof(PyProject),         /*tp_basicsize*/
+  0,                         /*tp_itemsize*/
+  (destructor)PyProject_dtor,/*tp_dealloc*/
+  0,                         /*tp_print*/
+  0,                         /*tp_getattr*/
+  0,                         /*tp_setattr*/
+  0,                         /*tp_compare*/
+  0,                         /*tp_repr*/
+  0,                         /*tp_as_number*/
+  0,                         /*tp_as_sequence*/
+  0,                         /*tp_as_mapping*/
+  0,                         /*tp_hash */
+  0,                         /*tp_call*/
+  0,                         /*tp_str*/
+  0,                         /*tp_getattro*/
+  0,                         /*tp_setattro*/
+  0,                         /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT,        /*tp_flags*/
+  "Sproxel project",         /* tp_doc */
+  0,                           /* tp_traverse */
+  0,                           /* tp_clear */
+  0,                           /* tp_richcompare */
+  0,                           /* tp_weaklistoffset */
+  0,                           /* tp_iter */
+  0,                           /* tp_iternext */
+  pyProject_methods,         /* tp_methods */
+  0,                         /* tp_members */
+  pyProject_getsets,         /* tp_getset */
+  0,                         /* tp_base */
+  0,                         /* tp_dict */
+  0,                         /* tp_descr_get */
+  0,                         /* tp_descr_set */
+  0,                         /* tp_dictoffset */
+  (initproc)PyProject_init,  /* tp_init */
+  0,                         /* tp_alloc */
+  0,                         /* tp_new */
+};
+
+
+//ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
+static PyObject* project_to_py(SproxelProjectPtr proj)
+{
+  if (!proj) Py_RETURN_NONE;
+  PyProject *pyp=PyObject_New(PyProject, &sproxelPyProjectType);
+  if (!pyp) return PyErr_NoMemory();
+  *((void**)&pyp->proj)=NULL; // reset memory
+  pyp->proj=proj;
+  return (PyObject*)pyp;
+}
+
+
+//ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
+static PyObject* PySproxel_getProject(PyObject *)
+{
+  return project_to_py(main_window->project());
+}
+
+
 static PyMethodDef moduleMethods[]=
 {
+  { "get_project", (PyCFunction)PySproxel_getProject, METH_NOARGS, "Get current Sproxel project." },
   { NULL, NULL, 0, NULL }
 };
 
@@ -718,10 +946,14 @@ void init_sproxel_bindings()
   sproxelPySpriteType.tp_new=PyType_GenericNew;
   if (PyType_Ready(&sproxelPySpriteType)<0) return;
 
+  sproxelPyProjectType.tp_new=PyType_GenericNew;
+  if (PyType_Ready(&sproxelPyProjectType)<0) return;
+
   // create module
   PyObject *mod=Py_InitModule3("sproxel", moduleMethods, "Sproxel data types.");
 
   // add types
   Py_INCREF(&sproxelPyLayerType); PyModule_AddObject(mod, "Layer", (PyObject*)&sproxelPyLayerType);
   Py_INCREF(&sproxelPySpriteType); PyModule_AddObject(mod, "Sprite", (PyObject*)&sproxelPySpriteType);
+  Py_INCREF(&sproxelPyProjectType); PyModule_AddObject(mod, "Project", (PyObject*)&sproxelPyProjectType);
 }

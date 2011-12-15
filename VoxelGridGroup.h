@@ -48,8 +48,8 @@ public:
   template<class I> ColorPalette(I first, I last) : m_colors(first, last) {}
 
 
-  const QString& name() const { return m_name; }
-  void setName(const QString &n) { m_name=n; }
+  QString name() const { return m_name; }
+  void setName(const QString n) { m_name=n; }
 
   void resize(int new_size)
   {
@@ -181,8 +181,8 @@ public:
   bool isVisible() const { return m_visible; }
   void setVisible(bool v) { m_visible=v; }
 
-  const QString& name() const { return m_name; }
-  void setName(const QString &n) { m_name=n; }
+  QString name() const { return m_name; }
+  void setName(const QString n) { m_name=n; }
 
   const ColorPalettePtr& palette() const { return m_palette; }
   void setPalette(ColorPalette *p) { m_palette=p; }
@@ -289,6 +289,7 @@ private:
   Imath::M44d m_transform;
   QVector<VoxelGridLayerPtr> m_layers;
   int m_curLayer;
+  QString m_name;
 
 public:
 
@@ -350,6 +351,9 @@ public:
   const Imath::M44d& transform() const { return m_transform; }
   void setTransform(const Imath::M44d& m) { m_transform = m; }
 
+  QString name() const { return m_name; }
+  void setName(QString n) { m_name=n; }
+
 
   int curLayerIndex() const { return m_curLayer; }
 
@@ -383,7 +387,7 @@ public:
     return m_layers[i];
   }
 
-  VoxelGridLayerPtr insertLayerAbove(int i, VoxelGridLayer *layer=NULL)
+  VoxelGridLayerPtr insertLayerAbove(int i, VoxelGridLayerPtr layer=VoxelGridLayerPtr())
   {
     if (!layer) layer=new VoxelGridLayer();
     m_layers.insert(m_layers.begin()+i, VoxelGridLayerPtr(layer));

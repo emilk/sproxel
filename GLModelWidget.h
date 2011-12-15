@@ -27,7 +27,7 @@ public:
                         FACE_NONE = 0x00, FACE_ALL  = 0x3f };
 
 public:
-    GLModelWidget(QWidget* parent, const QSettings* appSettings);
+    GLModelWidget(QWidget* parent, const QSettings* appSettings, VoxelGridGroupPtr sprite);
     ~GLModelWidget();
 
     QSize minimumSizeHint() const;

@@ -13,13 +13,21 @@
 #include <QFileDialog>
 #include <QColorDialog>
 
+#define DEFAULT_VOXGRID_SZ (8)
+
 MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     QMainWindow(parent),
     m_appSettings("OpenSource", "Sproxel"),
-    m_activeFilename("")
+    m_activeFilename(""),
+    m_project(new SproxelProject())
 {
+    // Project
+    VoxelGridGroupPtr sprite(new VoxelGridGroup(Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ)));
+    sprite->setName("unnamed");
+    m_project->sprites.push_back(sprite);
+
     // Windows
-    m_glModelWidget = new GLModelWidget(this, &m_appSettings);
+    m_glModelWidget = new GLModelWidget(this, &m_appSettings, sprite);
     setCentralWidget(m_glModelWidget);
 
     // The docking palette widget
