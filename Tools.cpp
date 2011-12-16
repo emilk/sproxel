@@ -8,7 +8,7 @@ void SplatToolState::execute()
     std::vector<Imath::V3i> voxels = voxelsAffected();
     for (size_t i = 0; i < voxels.size(); i++)
     {
-        p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color);
+        p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color, m_index);
     }
     decrementClicks();
 }
@@ -65,8 +65,8 @@ void FloodToolState::execute()
 
     // Recurse
     p_undoManager->beginMacro("Flood Fill");
-    p_undoManager->setVoxelColor(p_gvg, hit, m_color);
-    setNeighborsRecurse(hit, repColor, m_color);
+    p_undoManager->setVoxelColor(p_gvg, hit, m_color, m_index);
+    setNeighborsRecurse(hit, repColor, m_color, m_index);
     p_undoManager->endMacro();
     decrementClicks();
 }
@@ -74,7 +74,8 @@ void FloodToolState::execute()
 
 void FloodToolState::setNeighborsRecurse(const Imath::V3i& alreadySet,
                                          const Imath::Color4f& repColor,
-                                         const Imath::Color4f& newColor)
+                                         const Imath::Color4f& newColor,
+                                         int newIndex)
 {
     // Directions
     Imath::V3i doUs[6];
@@ -93,8 +94,8 @@ void FloodToolState::setNeighborsRecurse(const Imath::V3i& alreadySet,
         // Recurse
         if (p_gvg->get(doUs[i]) == repColor)
         {
-            p_undoManager->setVoxelColor(p_gvg, doUs[i], newColor);
-            setNeighborsRecurse(doUs[i], repColor, newColor);
+            p_undoManager->setVoxelColor(p_gvg, doUs[i], newColor, newIndex);
+            setNeighborsRecurse(doUs[i], repColor, newColor, newIndex);
         }
     }
 }
@@ -132,7 +133,7 @@ void EraserToolState::execute()
     for (size_t i = 0; i < voxels.size(); i++)
     {
         p_undoManager->setVoxelColor(p_gvg, voxels[i],
-                                     Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
+                                     Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f), 0);
     }
     decrementClicks();
 }
@@ -170,7 +171,7 @@ void ReplaceToolState::execute()
     {
         // Don't replace if you're already identical
         if (p_gvg->get(voxels[i]) != m_color)
-            p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color);
+            p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color, m_index);
     }
     decrementClicks();
 }
@@ -208,7 +209,7 @@ void RayToolState::execute()
     p_undoManager->beginMacro("Ray Blast");
     for (size_t i = 0; i < voxels.size(); i++)
     {
-        p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color);
+        p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color, m_index);
     }
     p_undoManager->endMacro();
     decrementClicks();
@@ -234,7 +235,7 @@ void SlabToolState::execute()
     }
     for (size_t i = 0; i < voxels.size(); i++)
     {
-        p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color);
+        p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color, m_index);
     }
     p_undoManager->endMacro();
     decrementClicks();
@@ -332,7 +333,7 @@ void LineToolState::execute()
         p_undoManager->beginMacro("Line");
         for (size_t i = 0; i < voxels.size(); i++)
         {
-            p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color);
+            p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color, m_index);
         }
         p_undoManager->endMacro();
         decrementClicks();

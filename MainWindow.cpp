@@ -46,10 +46,10 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     //addDockWidget(Qt::RightDockWidgetArea, m_layersDocker);
 
     // Connect some window signals together
-    QObject::connect(m_paletteWidget, SIGNAL(activeColorChanged(Imath::Color4f)),
-                     m_glModelWidget, SLOT(setActiveColor(Imath::Color4f)));
-    QObject::connect(m_glModelWidget, SIGNAL(colorSampled(Imath::Color4f)),
-                     m_paletteWidget, SLOT(setActiveColor(Imath::Color4f)));
+    QObject::connect(m_paletteWidget, SIGNAL(activeColorChanged(Imath::Color4f, int)),
+                     m_glModelWidget, SLOT(setActiveColor(Imath::Color4f, int)));
+    QObject::connect(m_glModelWidget, SIGNAL(colorSampled(Imath::Color4f, int)),
+                     m_paletteWidget, SLOT(setActiveColor(Imath::Color4f, int)));
 
 
     // Toolbar
@@ -390,7 +390,8 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
         m_paletteWidget->setActiveColor(Imath::Color4f((float)color.red()/255.0f,
                                                        (float)color.green()/255.0f,
                                                        (float)color.blue()/255.0f,
-                                                       (float)color.alpha()/255.0f));
+                                                       (float)color.alpha()/255.0f),
+                                                       -1);
     }
     else if (ctrlDown && event->key() == Qt::Key_F)
     {
@@ -427,14 +428,16 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     {
         // It's okay to call setVoxelColor once on the model widget, but any more requires an internal wrapper
         m_glModelWidget->setVoxelColor(m_glModelWidget->activeVoxel(),
-                                       m_glModelWidget->activeColor());
+                                       m_glModelWidget->activeColor(),
+                                       m_glModelWidget->activeIndex());
         m_glModelWidget->updateGL();
     }
     else if (event->key() == Qt::Key_Delete)
     {
         // It's okay to call setVoxelColor once on the model widget, but any more requires an internal wrapper
         m_glModelWidget->setVoxelColor(m_glModelWidget->activeVoxel(),
-                                       Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
+                                       Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f),
+                                       0);
         m_glModelWidget->updateGL();
     }
 }

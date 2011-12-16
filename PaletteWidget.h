@@ -17,6 +17,8 @@ public:
         QWidget(parent),
         m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
         m_passiveColor(0.0f, 0.0f, 0.0f, 1.0f),
+        m_activeIndex(255),
+        m_passiveIndex(0),
         m_hilightIndex(HIT_NONE)
         {
             setMouseTracking(true);
@@ -35,11 +37,11 @@ public:
     void setPalette(ColorPalettePtr pal);
 
 signals:
-    void activeColorChanged(const Imath::Color4f& color);
+    void activeColorChanged(const Imath::Color4f& color, int index);
 
 public slots:
-    void setActiveColor(const Imath::Color4f& color);
-    void setPassiveColor(const Imath::Color4f& color);
+    void setActiveColor (const Imath::Color4f& color, int index);
+    void setPassiveColor(const Imath::Color4f& color, int index);
     void swapColors();
 
 protected:
@@ -53,6 +55,8 @@ private:
     Imath::Color4f m_activeColor;
     Imath::Color4f m_passiveColor;
     Imath::Color4f m_backgroundColor;
+    int m_activeIndex;
+    int m_passiveIndex;
 
     ColorPalettePtr m_palette;
 

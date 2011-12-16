@@ -16,7 +16,8 @@ void UndoManager::changeEntireVoxelGrid(VoxelGridGroupPtr origGrid,
 
 void UndoManager::setVoxelColor(VoxelGridGroupPtr origGrid,
                                 const Imath::V3i& index,
-                                const Imath::Color4f& color)
+                                const Imath::Color4f& color,
+                                int ind)
 {
     // Validity check
     /*
@@ -26,7 +27,7 @@ void UndoManager::setVoxelColor(VoxelGridGroupPtr origGrid,
         return;
     */
 
-    m_undoStack.push(new CmdSetVoxelColor(origGrid, index, color));
+    m_undoStack.push(new CmdSetVoxelColor(origGrid, index, color, ind));
 }
 
 

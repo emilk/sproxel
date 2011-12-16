@@ -25,6 +25,7 @@ GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, VoxelGridG
       m_undoManager(),
       m_activeVoxel(-1,-1,-1),
       m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
+      m_activeIndex(255),
       m_lastMouse(),
       m_drawGrid(true),
       m_drawVoxelGrid(true),
@@ -845,7 +846,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
             // CTRL+LMB is always replace - switch tools and execute
             SproxelTool currentTool = m_activeTool->type();
             setActiveTool(TOOL_REPLACE);
-            m_activeTool->set(m_gvg, localLine, m_activeColor);
+            m_activeTool->set(m_gvg, localLine, m_activeColor, m_activeIndex);
             m_activeTool->execute();
             setActiveTool(currentTool);
             updateGL();
@@ -860,7 +861,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
         {
             bool draggingEnabled = p_appSettings->value("GLModelWidget/dragEnabled", 1).toBool();
             m_activeTool->setDragSupport(draggingEnabled);
-            m_activeTool->set(m_gvg, localLine, m_activeColor);
+            m_activeTool->set(m_gvg, localLine, m_activeColor, m_activeIndex);
 
             if (m_activeTool->type() == TOOL_SLAB)
                 dynamic_cast<SlabToolState*>(m_activeTool)->setAxis(currentAxis());
@@ -872,7 +873,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
                 if (ints.size() != 0)
                 {
                     Imath::Color4f result = m_gvg->get(ints[0]);
-                    emit colorSampled(result);
+                    emit colorSampled(result, m_gvg->getInd(ints[0]));
                 }
                 return;
             }
@@ -886,14 +887,14 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
             // TODO: Restore old tool properly in ReleaseEvent
             SproxelTool currentTool = m_activeTool->type();
             setActiveTool(TOOL_DROPPER);
-            m_activeTool->set(m_gvg, localLine, m_activeColor);
+            m_activeTool->set(m_gvg, localLine, m_activeColor, m_activeIndex);
 
             // TODO: Coalesce this dropper code so i don't repeat it everywhere
             std::vector<Imath::V3i> ints = m_activeTool->voxelsAffected();
             if (ints.size() != 0)
             {
                 Imath::Color4f result = m_gvg->get(ints[0]);
-                emit colorSampled(result);
+                emit colorSampled(result, m_gvg->getInd(ints[0]));
             }
             setActiveTool(currentTool);
             m_activeTool->setDragSupport(p_appSettings->value("GLModelWidget/dragEnabled", 1).toInt());
@@ -904,7 +905,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
             // TODO: Restore old tool properly in ReleaseEvent
             SproxelTool currentTool = m_activeTool->type();
             setActiveTool(TOOL_ERASER);
-            m_activeTool->set(m_gvg, localLine, m_activeColor);
+            m_activeTool->set(m_gvg, localLine, m_activeColor, m_activeIndex);
             m_activeTool->execute();
             setActiveTool(currentTool);
             m_activeTool->setDragSupport(p_appSettings->value("GLModelWidget/dragEnabled", 1).toInt());
@@ -1009,7 +1010,7 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
         const Imath::Line3d localLine =
                 m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
 
-        m_activeTool->set(m_gvg, localLine, m_activeColor);
+        m_activeTool->set(m_gvg, localLine, m_activeColor, m_activeIndex);
 
         // Left click means you're tooling.
         if (event->buttons() & Qt::LeftButton)
@@ -1030,7 +1031,7 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
                     if (ints.size() != 0)
                     {
                         Imath::Color4f result = m_gvg->get(ints[0]);
-                        emit colorSampled(result);
+                        emit colorSampled(result, m_gvg->getInd(ints[0]));
                     }
                 }
                 updateGL();
@@ -1709,9 +1710,11 @@ void GLModelWidget::shiftVoxels(const SproxelAxis axis, const bool up, const boo
 
     // Backup the necessary slice
     Imath::Color4f* sliceBackup = NULL;
+    int* sliceBackupInd = NULL;
     if (wrap)
     {
-        sliceBackup = new Imath::Color4f[tan0AxisDim * tan1AxisDim];
+        sliceBackup    = new Imath::Color4f[tan0AxisDim * tan1AxisDim];
+        sliceBackupInd = new            int[tan0AxisDim * tan1AxisDim];
         for (size_t a = 0; a < tan0AxisDim; a++)
         {
             for (size_t b = 0; b < tan1AxisDim; b++)
@@ -1723,7 +1726,8 @@ void GLModelWidget::shiftVoxels(const SproxelAxis axis, const bool up, const boo
                     case Y_AXIS: index = Imath::V3i(a, backupIndex, b); break;
                     case Z_AXIS: index = Imath::V3i(a, b, backupIndex); break;
                 }
-                sliceBackup[a + (b * tan0AxisDim)] = m_gvg->get(index);
+                sliceBackup   [a + (b * tan0AxisDim)] = m_gvg->get   (index);
+                sliceBackupInd[a + (b * tan0AxisDim)] = m_gvg->getInd(index);
             }
         }
     }
@@ -1740,9 +1744,9 @@ void GLModelWidget::shiftVoxels(const SproxelAxis axis, const bool up, const boo
                     Imath::V3i nextIndex(-1, -1, -1);
                     switch (axis)
                     {
-                        case X_AXIS: setVoxelColor(Imath::V3i(a, b, c), m_gvg->get(Imath::V3i(a-1, b, c))); break;
-                        case Y_AXIS: setVoxelColor(Imath::V3i(b, a, c), m_gvg->get(Imath::V3i(b, a-1, c))); break;
-                        case Z_AXIS: setVoxelColor(Imath::V3i(b, c, a), m_gvg->get(Imath::V3i(b, c, a-1))); break;
+                        case X_AXIS: setVoxelColor(Imath::V3i(a, b, c), m_gvg->get(Imath::V3i(a-1, b, c)), m_gvg->getInd(Imath::V3i(a-1, b, c))); break;
+                        case Y_AXIS: setVoxelColor(Imath::V3i(b, a, c), m_gvg->get(Imath::V3i(b, a-1, c)), m_gvg->getInd(Imath::V3i(b, a-1, c))); break;
+                        case Z_AXIS: setVoxelColor(Imath::V3i(b, c, a), m_gvg->get(Imath::V3i(b, c, a-1)), m_gvg->getInd(Imath::V3i(b, c, a-1))); break;
                     }
 
                 }
@@ -1760,9 +1764,9 @@ void GLModelWidget::shiftVoxels(const SproxelAxis axis, const bool up, const boo
                     Imath::V3i nextIndex(-1, -1, -1);
                     switch (axis)
                     {
-                        case X_AXIS: setVoxelColor(Imath::V3i(a, b, c), m_gvg->get(Imath::V3i(a+1, b, c))); break;
-                        case Y_AXIS: setVoxelColor(Imath::V3i(b, a, c), m_gvg->get(Imath::V3i(b, a+1, c))); break;
-                        case Z_AXIS: setVoxelColor(Imath::V3i(b, c, a), m_gvg->get(Imath::V3i(b, c, a+1))); break;
+                        case X_AXIS: setVoxelColor(Imath::V3i(a, b, c), m_gvg->get(Imath::V3i(a+1, b, c)), m_gvg->getInd(Imath::V3i(a+1, b, c))); break;
+                        case Y_AXIS: setVoxelColor(Imath::V3i(b, a, c), m_gvg->get(Imath::V3i(b, a+1, c)), m_gvg->getInd(Imath::V3i(b, a+1, c))); break;
+                        case Z_AXIS: setVoxelColor(Imath::V3i(b, c, a), m_gvg->get(Imath::V3i(b, c, a+1)), m_gvg->getInd(Imath::V3i(b, c, a+1))); break;
                     }
                 }
             }
@@ -1783,12 +1787,14 @@ void GLModelWidget::shiftVoxels(const SproxelAxis axis, const bool up, const boo
             }
 
             if (wrap)
-                setVoxelColor(workIndex, sliceBackup[a + (b * tan0AxisDim)]);
+                setVoxelColor(workIndex, sliceBackup[a + (b * tan0AxisDim)], sliceBackupInd[a + (b * tan0AxisDim)]);
             else
-                setVoxelColor(workIndex, Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f));
+                setVoxelColor(workIndex, Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f), 0);
         }
     }
-    delete[] sliceBackup;
+
+    if (sliceBackup   ) delete[] sliceBackup   ;
+    if (sliceBackupInd) delete[] sliceBackupInd;
 
     m_undoManager.endMacro();
     updateGL();
@@ -1867,7 +1873,7 @@ void GLModelWidget::mirrorVoxels(const SproxelAxis axis)
                     case Y_AXIS: oldLocation = Imath::V3i(x, dim.max.y+dim.min.y-y, z); break;
                     case Z_AXIS: oldLocation = Imath::V3i(x, y, dim.max.z+dim.min.z-z); break;
                 }
-                setVoxelColor(Imath::V3i(x,y,z), backup->get(oldLocation));
+                setVoxelColor(Imath::V3i(x,y,z), backup->get(oldLocation), backup->getInd(oldLocation));
             }
         }
     }
@@ -1878,7 +1884,7 @@ void GLModelWidget::mirrorVoxels(const SproxelAxis axis)
 
 
 // This is only here for the MainWindow now.  Should be changed.
-void GLModelWidget::setVoxelColor(const Imath::V3i& index, const Imath::Color4f color)
+void GLModelWidget::setVoxelColor(const Imath::V3i& index, const Imath::Color4f color, int ind)
 {
     // Validity check
     /*
@@ -1888,5 +1894,5 @@ void GLModelWidget::setVoxelColor(const Imath::V3i& index, const Imath::Color4f 
         return;
     */
 
-    m_undoManager.setVoxelColor(m_gvg, index, color);
+    m_undoManager.setVoxelColor(m_gvg, index, color, ind);
 }

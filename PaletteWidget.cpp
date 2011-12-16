@@ -135,20 +135,20 @@ void PaletteWidget::mousePressEvent(QMouseEvent* event)
       color = QColorDialog::getColor(toQColor(m_activeColor), this,
         "Select active color", QColorDialog::ShowAlphaChannel);
 
-      if (color.isValid()) setActiveColor(toColor4f(color));
+      if (color.isValid()) setActiveColor(toColor4f(color), -1);
       break;
 
     case HIT_PASSIVE_COLOR_BOX:
       color = QColorDialog::getColor(toQColor(m_passiveColor), this,
         "Select passive color", QColorDialog::ShowAlphaChannel);
 
-      if (color.isValid()) setPassiveColor(toColor4f(color));
+      if (color.isValid()) setPassiveColor(toColor4f(color), -1);
       break;
 
     default:
       if (event->button()==Qt::LeftButton)
       {
-        if (m_palette) setActiveColor(m_palette->color(ci));
+        if (m_palette) setActiveColor(m_palette->color(ci), ci);
       }
       else if (event->button()==Qt::RightButton)
       {
@@ -212,27 +212,28 @@ int PaletteWidget::clickHit(const QPoint& p)
 }
 
 
-void PaletteWidget::setActiveColor(const Imath::Color4f& color)
+void PaletteWidget::setActiveColor(const Imath::Color4f& color, int index)
 {
     m_activeColor = color;
-    emit activeColorChanged(m_activeColor);
+    m_activeIndex = index;
+    emit activeColorChanged(m_activeColor, m_activeIndex);
     repaint(0, 0, width(), HR_Y);
 }
 
 
-void PaletteWidget::setPassiveColor(const Imath::Color4f& color)
+void PaletteWidget::setPassiveColor(const Imath::Color4f& color, int index)
 {
     m_passiveColor = color;
-    emit activeColorChanged(m_activeColor);
+    m_passiveIndex = index;
+    //emit activeColorChanged(m_activeColor);
     repaint(0, 0, width(), HR_Y);
 }
 
 
 void PaletteWidget::swapColors()
 {
-    Imath::Color4f copy = m_activeColor;
-    m_activeColor = m_passiveColor;
-    m_passiveColor = copy;
-    emit activeColorChanged(m_activeColor);
+    Imath::Color4f copy = m_activeColor; m_activeColor = m_passiveColor; m_passiveColor = copy;
+    int            icpy = m_activeIndex; m_activeIndex = m_passiveIndex; m_passiveIndex = icpy;
+    emit activeColorChanged(m_activeColor, m_activeIndex);
     repaint(0, 0, width(), HR_Y);
 }

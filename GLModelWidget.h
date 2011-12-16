@@ -58,7 +58,7 @@ public:
     void shiftVoxels(const SproxelAxis axis, const bool up, const bool wrap);
     void mirrorVoxels(const SproxelAxis axis);
     void rotateVoxels(const SproxelAxis axis, const int dir);
-    void setVoxelColor(const Imath::V3i& index, const Imath::Color4f color);
+    void setVoxelColor(const Imath::V3i& index, const Imath::Color4f color, int ind);
 
     void clearUndoStack() { m_undoManager.clear(); }
     void cleanUndoStack() { m_undoManager.setClean(); }
@@ -66,6 +66,7 @@ public:
     // Accessors
     const Imath::V3i& activeVoxel() const { return m_activeVoxel; }
     const Imath::Color4f& activeColor() const { return m_activeColor; }
+    int activeIndex() const { return m_activeIndex; }
     bool modified() const { return !(m_undoManager.isClean()); }
     bool drawGrid() const { return m_drawGrid; }
     bool drawVoxelGrid() const { return m_drawVoxelGrid; }
@@ -74,7 +75,7 @@ public:
     SproxelAxis currentAxis() const { return m_currAxis; }
 
 signals:
-    void colorSampled(const Imath::Color4f& color);
+    void colorSampled(const Imath::Color4f& color, int index);
 
 public slots:
     void setActiveTool(const SproxelTool tool);
@@ -83,7 +84,7 @@ public slots:
     void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
     void setShiftWrap(const bool value) { m_shiftWrap = value; }
     void setCurrentAxis(const SproxelAxis val) { m_currAxis = val; updateGL(); }    // TODO: Change tool as well.
-    void setActiveColor(const Imath::Color4f& c) { m_activeColor = c; }
+    void setActiveColor(const Imath::Color4f& c, int i) { m_activeColor = c; m_activeIndex=i; }
 
     void undo() { m_undoManager.undo(); updateGL(); }
     void redo() { m_undoManager.redo(); updateGL(); }
@@ -109,6 +110,7 @@ private:
 
     Imath::V3i m_activeVoxel;
     Imath::Color4f m_activeColor;
+    int m_activeIndex;
 
     QPoint m_lastMouse;
     bool m_drawGrid;

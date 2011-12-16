@@ -17,6 +17,7 @@ public:
                                  p_undoManager(um),
                                  m_ray(Imath::Line3d()),
                                  m_color(Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f)),
+                                 m_index(0),
                                  p_gvg(NULL),
                                  m_supportsDrag(false) {}
 
@@ -28,10 +29,11 @@ public:
 
     const Imath::Line3d& ray() const { return m_ray; }
 
-    void set(VoxelGridGroupPtr gvg, const Imath::Line3d& ray, const Imath::Color4f& color)
+    void set(VoxelGridGroupPtr gvg, const Imath::Line3d& ray, const Imath::Color4f& color, int index)
     {
         m_ray = ray;
         m_color = color;
+        m_index = index;
         p_gvg = gvg;
     }
 
@@ -53,6 +55,7 @@ protected:
     UndoManager* p_undoManager;
     Imath::Line3d m_ray;
     Imath::Color4f m_color;
+    int m_index;
     VoxelGridGroupPtr p_gvg;
     bool m_supportsDrag;
 };
@@ -95,7 +98,8 @@ public:
 private:
     void setNeighborsRecurse(const Imath::V3i& alreadySet,
                              const Imath::Color4f& repColor,
-                             const Imath::Color4f& newColor);
+                             const Imath::Color4f& newColor,
+                             int newIndex);
 };
 
 
