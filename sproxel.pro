@@ -45,6 +45,7 @@ SOURCES += \
     LayersWidget.cpp \
     Tools.cpp \
     UndoManager.cpp \
+    SproxelProject.cpp \
     script.cpp \
     pyConsole.cpp \
     pyBindings.cpp
@@ -55,6 +56,7 @@ HEADERS  += \
     GLModelWidget.h \
     GameVoxelGrid.h \
     VoxelGridGroup.h \
+    SproxelProject.h \
     MainWindow.h \
     NewGridDialog.h \
     PreferencesDialog.h \

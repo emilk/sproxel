@@ -22,5 +22,7 @@ bool run_script(const class QString &filename);
 
 extern class QDir exe_dir;
 
+extern PyObject *py_save_project, *py_load_project;
+
 
 #endif

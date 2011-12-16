@@ -55,6 +55,16 @@ GLModelWidget::~GLModelWidget()
 }
 
 
+void GLModelWidget::setSprite(VoxelGridGroupPtr sprite)
+{
+  cleanUndoStack();
+  clearUndoStack();
+  m_gvg=sprite;
+  centerGrid();
+  updateGL();
+}
+
+
 void GLModelWidget::resizeAndClearVoxelGrid(const Imath::V3i& size)
 {
     VoxelGridLayerPtr layer(new VoxelGridLayer());

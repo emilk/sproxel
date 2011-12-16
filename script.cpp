@@ -21,6 +21,8 @@ QDir exe_dir;
 
 static PyObject *glue=NULL;
 
+PyObject *py_save_project=NULL, *py_load_project=NULL;
+
 
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
@@ -98,12 +100,38 @@ void init_script(char *exe_path)
     pycon("Glue methods: %s", gotErrors ? "some missing" : "all OK");
     if (gotErrors) QMessageBox::critical(NULL, "Sproxel Error", "Some PySide.SproxelGlue methods are missing.");
   }
+
+  PyObject *mod=PyImport_ImportModule("sproxel_utils");
+  if (!mod)
+  {
+    PyErr_Print();
+    QMessageBox::critical(NULL, "Sproxel Error", "Failed to import sproxel.utils");
+  }
+  else
+  {
+    // check required methods
+    bool gotErrors=false;
+
+    py_save_project=PyObject_GetAttrString(mod, "save_project");
+    if (PyErr_Occurred()) { PyErr_Print(); gotErrors=true; }
+
+    py_load_project=PyObject_GetAttrString(mod, "load_project");
+    if (PyErr_Occurred()) { PyErr_Print(); gotErrors=true; }
+
+    pycon("Scripted methods: %s", gotErrors ? "some missing" : "all OK");
+    if (gotErrors) QMessageBox::critical(NULL, "Sproxel Error", "Some scripted methods are missing.");
+
+    Py_DECREF(mod); mod=NULL;
+  }
 }
 
 
 void close_script()
 {
   close_python_console();
+
+  Py_XDECREF(py_save_project); py_save_project=NULL;
+  Py_XDECREF(py_load_project); py_load_project=NULL;
 
   #define TOPYT(cls) Py_XDECREF(GLUE(cls, _toPy_py )); GLUE(cls, _toPy_py ) = NULL;
   #define TOCPP(cls) Py_XDECREF(GLUE(cls, _toCpp_py)); GLUE(cls, _toCpp_py) = NULL;

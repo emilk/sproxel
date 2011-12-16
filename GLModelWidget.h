@@ -33,6 +33,9 @@ public:
     QSize minimumSizeHint() const;
     QSize sizeHint() const;
 
+    VoxelGridGroupPtr getSprite() const { return m_gvg; }
+    void setSprite(VoxelGridGroupPtr sprite);
+
 public:
     void frame(bool fullExtents);
     void handleArrows(QKeyEvent *event);

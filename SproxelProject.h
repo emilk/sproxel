@@ -26,4 +26,8 @@ public:
 typedef QExplicitlySharedDataPointer<SproxelProject> SproxelProjectPtr;
 
 
+bool save_project(QString filename, SproxelProjectPtr project);
+SproxelProjectPtr load_project(QString filename);
+
+
 #endif

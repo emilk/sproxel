@@ -1,5 +1,8 @@
 #include <Python.h>
+#include <QImage>
+#include <QBuffer>
 #include "pyConsole.h"
+#include "script.h"
 #include "VoxelGridGroup.h"
 #include "SproxelProject.h"
 #include "MainWindow.h"
@@ -301,6 +304,20 @@ static PyObject* PyLayer_set(PyLayer *self, PyObject *args, PyObject *kwds)
 }
 
 
+static PyObject* PyLayer_toPNG(PyLayer *self)
+{
+  CHECK_PYLAYER
+  QImage image=self->layer->makeQImage();
+  QBuffer buf;
+  buf.open(QIODevice::WriteOnly);
+  if (!image.save(&buf, "PNG")) Py_RETURN_NONE;
+
+  PyObject *str=PyString_FromStringAndSize(buf.buffer().data(), buf.buffer().size());
+  if (!str) return PyErr_NoMemory();
+  return str;
+}
+
+
 static PyMethodDef pyLayer_methods[]=
 {
   { "reset", (PyCFunction)PyLayer_reset, METH_NOARGS, "Reset layer to the default blank state." },
@@ -309,6 +326,7 @@ static PyMethodDef pyLayer_methods[]=
   { "getColor", (PyCFunction)PyLayer_getColor, METH_VARARGS, "Get color value of the specified voxel." },
   { "set", (PyCFunction)PyLayer_set, METH_VARARGS|METH_KEYWORDS,
       "Set color and/or index value of the specified voxel. Will expand grid if necessary." },
+  { "toPNG", (PyCFunction)PyLayer_toPNG, METH_NOARGS, "Save layer as PNG with text fields and return PNG data as string." },
   { NULL, NULL, 0, NULL }
 };
 
@@ -317,6 +335,17 @@ static PyObject* PyLayer_repr(PyLayer *self)
 {
   CHECK_PYLAYER
   return PyString_FromFormat("Layer(\"%s\")", self->layer->name().toUtf8().data());
+}
+
+
+static int PyLayer_cmp(PyLayer *self, PyObject *o)
+{
+  if (o==Py_None && !self->layer) return 0;
+  if (!PyObject_TypeCheck(o, &sproxelPyLayerType)) return -1;
+  PyLayer *other=(PyLayer*)o;
+  if (self->layer==other->layer) return 0;
+  if (self->layer.constData()<other->layer.constData()) return -1;
+  return 1;
 }
 
 
@@ -331,7 +360,7 @@ PyTypeObject sproxelPyLayerType=
   0,                         /*tp_print*/
   0,                         /*tp_getattr*/
   0,                         /*tp_setattr*/
-  0,                         /*tp_compare*/
+  (cmpfunc)PyLayer_cmp,      /*tp_compare*/
   (reprfunc)PyLayer_repr,    /*tp_repr*/
   0,                         /*tp_as_number*/
   0,                         /*tp_as_sequence*/
@@ -482,6 +511,19 @@ static PyObject* PySprite_getBounds(PySprite *self, void*)
 }
 
 
+static PyObject* PySprite_getLayers(PySprite *self, void*)
+{
+  CHECK_PYSPR
+  PyObject *list=PyList_New(self->spr->numLayers());
+  if (!list) return PyErr_NoMemory();
+
+  for (int i=0; i<self->spr->numLayers(); ++i)
+    PyList_SetItem(list, i, layer_to_py(self->spr->layer(i)));
+
+  return list;
+}
+
+
 static PyObject* PySprite_getNumLayers(PySprite *self, void*)
 {
   CHECK_PYSPR
@@ -513,6 +555,7 @@ static PyGetSetDef pySprite_getsets[]=
   //== TODO: transform
   {"curLayerIndex", (getter)PySprite_getCurLayerIndex, (setter)PySprite_setCurLayerIndex, "Sprite's current layer index", NULL},
   {"curLayer", (getter)PySprite_getCurLayer, NULL, "Sprite's current layer", NULL},
+  {"layers", (getter)PySprite_getLayers, NULL, "List of all sprite's layers", NULL},
   {"bounds", (getter)PySprite_getBounds, NULL, "Common bounds of all sprite layers", NULL},
   {"numLayers", (getter)PySprite_getNumLayers, NULL, "Number of layers in the sprite", NULL},
   {"name", (getter)PySprite_getName, (setter)PySprite_setName, "Sprite name", NULL},
@@ -693,6 +736,17 @@ static PyObject* PySprite_repr(PySprite *self)
 }
 
 
+static int PySprite_cmp(PySprite *self, PyObject *o)
+{
+  if (o==Py_None && !self->spr) return 0;
+  if (!PyObject_TypeCheck(o, &sproxelPySpriteType)) return -1;
+  PySprite *other=(PySprite*)o;
+  if (self->spr==other->spr) return 0;
+  if (self->spr.constData()<other->spr.constData()) return -1;
+  return 1;
+}
+
+
 PyTypeObject sproxelPySpriteType=
 {
   PyObject_HEAD_INIT(NULL)
@@ -704,7 +758,7 @@ PyTypeObject sproxelPySpriteType=
   0,                         /*tp_print*/
   0,                         /*tp_getattr*/
   0,                         /*tp_setattr*/
-  0,                         /*tp_compare*/
+  (cmpfunc)PySprite_cmp,     /*tp_compare*/
   (reprfunc)PySprite_repr,   /*tp_repr*/
   0,                         /*tp_as_number*/
   0,                         /*tp_as_sequence*/
@@ -863,6 +917,17 @@ static PyMethodDef pyProject_methods[]=
 };
 
 
+static int PyProject_cmp(PyProject *self, PyObject *o)
+{
+  if (o==Py_None && !self->proj) return 0;
+  if (!PyObject_TypeCheck(o, &sproxelPyProjectType)) return -1;
+  PyProject *other=(PyProject*)o;
+  if (self->proj==other->proj) return 0;
+  if (self->proj.constData()<other->proj.constData()) return -1;
+  return 1;
+}
+
+
 PyTypeObject sproxelPyProjectType=
 {
   PyObject_HEAD_INIT(NULL)
@@ -874,7 +939,7 @@ PyTypeObject sproxelPyProjectType=
   0,                         /*tp_print*/
   0,                         /*tp_getattr*/
   0,                         /*tp_setattr*/
-  0,                         /*tp_compare*/
+  (cmpfunc)PyProject_cmp,    /*tp_compare*/
   0,                         /*tp_repr*/
   0,                         /*tp_as_number*/
   0,                         /*tp_as_sequence*/
@@ -930,11 +995,90 @@ static PyObject* PySproxel_getProject(PyObject *)
 }
 
 
+static PyObject* PySproxel_layerFromPng(PyObject *, PyObject *arg)
+{
+  uchar *buf=NULL;
+  Py_ssize_t len=0;
+
+  if (PyString_AsStringAndSize(arg, (char**)&buf, &len)!=0) return NULL;
+
+  QImage image;
+  if (!image.loadFromData(buf, len, "PNG"))
+  {
+    PyErr_SetString(PyExc_RuntimeError, "error loading PNG image");
+    return NULL;
+  }
+
+  VoxelGridLayerPtr layer(VoxelGridLayer::fromQImage(image));
+  return layer_to_py(layer);
+}
+
+
 static PyMethodDef moduleMethods[]=
 {
   { "get_project", (PyCFunction)PySproxel_getProject, METH_NOARGS, "Get current Sproxel project." },
+  { "layer_from_png", (PyCFunction)PySproxel_layerFromPng, METH_O, "Create layer from PNG data." },
   { NULL, NULL, 0, NULL }
 };
+
+
+//ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
+bool save_project(QString filename, SproxelProjectPtr project)
+{
+  if (!py_save_project) return false;
+  PyObject *fn=qstr_to_py(filename);
+  PyObject *pr=project_to_py(project);
+  if (!fn || !pr)
+  {
+    PyErr_Print();
+    Py_XDECREF(fn);
+    Py_XDECREF(pr);
+    return false;
+  }
+
+  PyObject *res=PyObject_CallFunctionObjArgs(py_save_project, fn, pr, NULL);
+  Py_XDECREF(fn);
+  Py_XDECREF(pr);
+
+  if (!res)
+  {
+    PyErr_Print();
+    return false;
+  }
+
+  bool result=PyObject_IsTrue(res);
+  Py_DECREF(res);
+
+  return result;
+}
+
+
+SproxelProjectPtr load_project(QString filename)
+{
+  if (!py_load_project) return SproxelProjectPtr();
+
+  PyObject *fn=qstr_to_py(filename);
+  if (!fn) { PyErr_Print(); return SproxelProjectPtr(); }
+
+  PyObject *res=PyObject_CallFunctionObjArgs(py_load_project, fn, NULL);
+  Py_XDECREF(fn);
+
+  if (!res || !PyObject_TypeCheck(res, &sproxelPyProjectType))
+  {
+    PyErr_Print();
+    Py_XDECREF(res);
+    return SproxelProjectPtr();
+  }
+
+  SproxelProjectPtr result=((PyProject*)res)->proj;
+  Py_DECREF(res);
+  return result;
+}
+
+
+//ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
 void init_sproxel_bindings()

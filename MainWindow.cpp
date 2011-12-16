@@ -483,20 +483,24 @@ void MainWindow::saveFile()
         return saveFileAs();
 
     bool success = false;
-    if (m_activeFilename.endsWith(".PNG", Qt::CaseInsensitive))
+    if (m_activeFilename.endsWith(".sxl", Qt::CaseInsensitive))
+        success = save_project(m_activeFilename, m_project);
+    else if (m_activeFilename.endsWith(".PNG", Qt::CaseInsensitive))
         success = m_glModelWidget->saveGridPNG(m_activeFilename.toStdString());
     else if (m_activeFilename.endsWith(".CSV", Qt::CaseInsensitive))
         success = m_glModelWidget->saveGridCSV(m_activeFilename.toStdString());
 
     if (success)
         m_glModelWidget->cleanUndoStack();
+    else
+      QMessageBox::critical(this, "Sproxel Error", QString("Error saving project to file ")+m_activeFilename);
 }
 
 
 void MainWindow::saveFileAs()
 {
     QFileDialog fd(this, "Save voxel file as...");
-    fd.setFilter(tr("PNG Files (*.png);;CSV Files (*.csv)"));
+    fd.setFilter(tr("Sproxel project (*.sxl);;PNG Files (*.png);;CSV Files (*.csv)"));
     fd.setAcceptMode(QFileDialog::AcceptSave);
     fd.exec();
     QStringList qsl = fd.selectedFiles();
@@ -508,7 +512,13 @@ void MainWindow::saveFileAs()
 
     // Switch on save type
     bool success = false;
-    if (activeFilter.startsWith("PNG"))
+    if (activeFilter.startsWith("Sproxel"))
+    {
+        if (!filename.endsWith(".sxl", Qt::CaseInsensitive))
+            filename.append(".sxl");
+        success = save_project(filename, m_project);
+    }
+    else if (activeFilter.startsWith("PNG"))
     {
         if (!filename.endsWith(".PNG", Qt::CaseInsensitive))
             filename.append(".png");
@@ -527,6 +537,8 @@ void MainWindow::saveFileAs()
         m_activeFilename = filename;
         setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
     }
+    else
+      QMessageBox::critical(this, "Sproxel Error", QString("Error saving project to file ")+filename);
 }
 
 
@@ -535,7 +547,7 @@ void MainWindow::openFile()
     QString filename = QFileDialog::getOpenFileName(this,
         tr("Select file to Open..."),
         QString(),
-        tr("Sproxel Save Files (*.png *.csv)"));
+        tr("Sproxel projects (*.sxl);;Sproxel Save Files (*.png *.csv)"));
     if (filename.isEmpty())
         return;
 
@@ -551,7 +563,12 @@ void MainWindow::openFile()
     }
 
     bool success = false;
-    if (filename.endsWith(".PNG", Qt::CaseInsensitive))
+    if (filename.endsWith(".sxl", Qt::CaseInsensitive))
+    {
+        SproxelProjectPtr project=load_project(filename);
+        if (project) { m_project=project; success=true; }
+    }
+    else if (filename.endsWith(".PNG", Qt::CaseInsensitive))
         success = m_glModelWidget->loadGridPNG(filename.toStdString());
     else if (filename.endsWith(".CSV", Qt::CaseInsensitive))
         success = m_glModelWidget->loadGridCSV(filename.toStdString());
@@ -560,12 +577,25 @@ void MainWindow::openFile()
     {
         m_glModelWidget->cleanUndoStack();
         m_glModelWidget->clearUndoStack();
+
+        if (m_project->sprites.empty())
+        {
+          VoxelGridGroupPtr sprite(new VoxelGridGroup(Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ)));
+          sprite->setName("unnamed");
+          m_project->sprites.push_back(sprite);
+        }
+
+        m_glModelWidget->setSprite(m_project->sprites[0]);
+
         m_activeFilename = filename;
         setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
         if (m_appSettings.value("frameOnOpen", false).toBool())
             m_glModelWidget->frame(true);
     }
+    else
+      QMessageBox::critical(this, "Sproxel Error", QString("Error loading project from file ")+filename);
 }
+
 
 void MainWindow::import()
 {

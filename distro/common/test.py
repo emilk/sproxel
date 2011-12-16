@@ -17,6 +17,8 @@ print "main window: ", repr(main_window)
 main_window.statusBar().showMessage("Python was here!")
 
 import sproxel
+
+
 l=sproxel.Layer((10, 20, 30), name='My Layer')
 l.name="Changed name"
 l.offset=(1, 2, 3)
@@ -34,6 +36,16 @@ print 'curLayerIndex:', s.curLayerIndex
 print 'curLayer:', s.curLayer, s.curLayer.name, s.curLayer.bounds
 print 'layer(0):', s.layer(0), s.layer(0).name
 print 'layer("Changed name"):', s.layer('Changed name')
+
+prj=sproxel.Project()
+print 'project:', repr(prj)
+prj.sprites=(s,)
+print 'sprites:', prj.sprites
+
+prj=sproxel.get_project()
+print 'project:', repr(prj)
+print 'sprites:', prj.sprites
+#save_project('test.zip', prj)
 
 # Create a Label and show it
 #label = QLabel("Hello World")

@@ -92,6 +92,9 @@ typedef QExplicitlySharedDataPointer<ColorPalette> ColorPalettePtr;
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
+typedef QExplicitlySharedDataPointer<class VoxelGridLayer> VoxelGridLayerPtr;
+
+
 class VoxelGridLayer : public QSharedData
 {
 protected:
@@ -274,10 +277,11 @@ public:
   }
 
   DataType dataType() const { return m_ind ? TYPE_IND : TYPE_RGB; }
+
+  class QImage makeQImage() const;
+
+  static VoxelGridLayerPtr fromQImage(class QImage);
 };
-
-
-typedef QExplicitlySharedDataPointer<VoxelGridLayer> VoxelGridLayerPtr;
 
 
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
