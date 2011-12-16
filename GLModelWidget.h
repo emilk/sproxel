@@ -27,7 +27,7 @@ public:
                         FACE_NONE = 0x00, FACE_ALL  = 0x3f };
 
 public:
-    GLModelWidget(QWidget* parent, const QSettings* appSettings, VoxelGridGroupPtr sprite);
+    GLModelWidget(QWidget* parent, QSettings* appSettings, VoxelGridGroupPtr sprite);
     ~GLModelWidget();
 
     QSize minimumSizeHint() const;
@@ -35,6 +35,8 @@ public:
 
     VoxelGridGroupPtr getSprite() const { return m_gvg; }
     void setSprite(VoxelGridGroupPtr sprite);
+
+    void saveSettings();
 
 public:
     void frame(bool fullExtents);
@@ -140,7 +142,7 @@ private:
     void glDrawPreviewVoxels();
     void glDrawVoxelCenter(const size_t sx, const size_t sy, const size_t sz);
 
-    const QSettings* p_appSettings;
+    QSettings* p_appSettings;
 };
 
 

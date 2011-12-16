@@ -18,6 +18,14 @@ public:
     mainPalette=new ColorPalette();
     mainPalette->resize(256);
     mainPalette->setName("main");
+    for (int i=0; i<64; ++i)
+    {
+      mainPalette->setColor(i+64*0, SproxelColor(i/63.0f, i/63.0f, i/63.0f, 1.0f));
+      mainPalette->setColor(i+64*1, SproxelColor(i/63.0f,    0.0f,    0.0f, 1.0f));
+      mainPalette->setColor(i+64*2, SproxelColor(   0.0f, i/63.0f,    0.0f, 1.0f));
+      mainPalette->setColor(i+64*3, SproxelColor(   0.0f,    0.0f, i/63.0f, 1.0f));
+    }
+    mainPalette->setColor(0, SproxelColor(0, 0, 0, 0));
     palettes.push_back(mainPalette);
   }
 };

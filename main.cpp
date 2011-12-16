@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 
     script_set_main_window(&window);
     run_script("test.py");
-    get_python_console_widget()->toggleViewAction()->setChecked(true);
+    //get_python_console_widget()->toggleViewAction()->setChecked(true);
 
     int r=a.exec();
     close_script();

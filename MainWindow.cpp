@@ -35,6 +35,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_paletteDocker->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     m_paletteWidget = new PaletteWidget(this);
     m_paletteDocker->setWidget(m_paletteWidget);
+    m_paletteWidget->setPalette(m_project->mainPalette);
     addDockWidget(Qt::RightDockWidgetArea, m_paletteDocker);
 
     // The docking layers widget
@@ -349,6 +350,8 @@ void MainWindow::closeEvent(QCloseEvent* event)
         event->accept();
     }
 
+    m_glModelWidget->saveSettings();
+
     // Save some window settings on exit (if requested)
     if (m_appSettings.value("saveUILayout", true).toBool())
     {
@@ -586,6 +589,7 @@ void MainWindow::openFile()
         }
 
         m_glModelWidget->setSprite(m_project->sprites[0]);
+        m_paletteWidget->setPalette(m_project->mainPalette);
 
         m_activeFilename = filename;
         setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)

@@ -15,7 +15,7 @@
 
 Imath::Box3d fakeBounds(Imath::V3d(-50, -50, -50), Imath::V3d(50, 50, 50));
 
-GLModelWidget::GLModelWidget(QWidget* parent, const QSettings* appSettings, VoxelGridGroupPtr sprite)
+GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, VoxelGridGroupPtr sprite)
     : QGLWidget(parent),
       m_cam(),
       m_cameraSnapStep(45.0),
@@ -34,6 +34,10 @@ GLModelWidget::GLModelWidget(QWidget* parent, const QSettings* appSettings, Voxe
       m_activeTool(NULL),
       p_appSettings(appSettings)
 {
+    m_drawGrid=p_appSettings->value("GLModelWidget/drawGrid", true).toBool();
+    m_drawVoxelGrid=p_appSettings->value("GLModelWidget/drawVoxelGrid", true).toBool();
+    m_drawBoundingBox=p_appSettings->value("GLModelWidget/drawBoundingBox", false).toBool();
+
     // Default empty grid
     centerGrid();
 
@@ -52,6 +56,14 @@ GLModelWidget::~GLModelWidget()
     //glDeleteLists(object, 1);
 
     delete m_activeTool;
+}
+
+
+void GLModelWidget::saveSettings()
+{
+  p_appSettings->setValue("GLModelWidget/drawGrid", m_drawGrid);
+  p_appSettings->setValue("GLModelWidget/drawVoxelGrid", m_drawVoxelGrid);
+  p_appSettings->setValue("GLModelWidget/drawBoundingBox", m_drawBoundingBox);
 }
 
 
