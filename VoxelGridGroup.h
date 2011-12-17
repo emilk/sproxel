@@ -51,6 +51,8 @@ public:
   QString name() const { return m_name; }
   void setName(const QString n) { m_name=n; }
 
+  int numColors() const { return m_colors.size(); }
+
   void resize(int new_size)
   {
     if (new_size<0) new_size=0;
@@ -322,7 +324,7 @@ public:
     m_curLayer =from.m_curLayer ;
 
     m_layers.reserve(from.m_layers.size());
-    for (size_t i=0; i<from.m_layers.size(); ++i)
+    for (int i=0; i<from.m_layers.size(); ++i)
       m_layers.push_back(VoxelGridLayerPtr(new VoxelGridLayer(*from.m_layers[i])));
   }
 
@@ -336,7 +338,7 @@ public:
     m_curLayer =from.m_curLayer ;
 
     m_layers.reserve(from.m_layers.size());
-    for (size_t i=0; i<from.m_layers.size(); ++i)
+    for (int i=0; i<from.m_layers.size(); ++i)
       m_layers.push_back(VoxelGridLayerPtr(new VoxelGridLayer(*from.m_layers[i])));
 
     return *this;
@@ -377,7 +379,7 @@ public:
   Imath::Box3i bounds() const
   {
     Imath::Box3i bbox;
-    for (size_t i=0; i<m_layers.size(); ++i) bbox.extendBy(m_layers[i]->bounds());
+    for (int i=0; i<m_layers.size(); ++i) bbox.extendBy(m_layers[i]->bounds());
     return bbox;
   }
 
@@ -459,7 +461,7 @@ public:
   {
     int result=0;
 
-    for (size_t i=0; i<m_layers.size(); ++i)
+    for (int i=0; i<m_layers.size(); ++i)
     {
       int ind=m_layers[i]->getInd(at);
       if (ind>0) { result=ind; break; }
@@ -473,7 +475,7 @@ public:
   {
     SproxelColor result(0, 0, 0, 0);
 
-    for (size_t i=0; i<m_layers.size(); ++i)
+    for (int i=0; i<m_layers.size(); ++i)
     {
       SproxelColor c=m_layers[i]->getColor(at);
       if (c.a!=0) { result=c; break; }

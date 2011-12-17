@@ -864,7 +864,7 @@ static PyObject* PyProject_getSprites(PyProject *self, void*)
   PyObject *list=PyList_New(self->proj->sprites.size());
   if (!list) return PyErr_NoMemory();
 
-  for (size_t i=0; i<self->proj->sprites.size(); ++i)
+  for (int i=0; i<self->proj->sprites.size(); ++i)
     PyList_SetItem(list, i, sprite_to_py(self->proj->sprites[i]));
 
   return list;

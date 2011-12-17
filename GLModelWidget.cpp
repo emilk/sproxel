@@ -291,7 +291,7 @@ void GLModelWidget::paintGL()
 
     glLightfv(GL_LIGHT0, GL_POSITION, lightDir);
 
-    GLfloat diffuse[] = {0.8, 0.8, 0.8, 1.0};
+    GLfloat diffuse[] = {0.8f, 0.8f, 0.8f, 1.0f};
     glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
 
     const Imath::Box3i dim = m_gvg->bounds();
@@ -461,7 +461,7 @@ void GLModelWidget::glDrawGrid(const int size,
     glDisable(GL_DEPTH_TEST);
 
     // Lighter grid lines
-    const Imath::Color4f lightColor = ((bgColor - gridColor) * 0.80) + gridColor;
+    const Imath::Color4f lightColor = ((bgColor - gridColor) * 0.80f) + gridColor;
 
     glBegin(GL_LINES);
     glColor4f(lightColor.r, lightColor.g, lightColor.b, 1.0f);

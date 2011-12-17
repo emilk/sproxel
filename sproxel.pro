@@ -31,7 +31,7 @@ win32 {
   }
   LIBS += -lImath -lIex
   DEFINES += NOMINMAX
-  QMAKE_CXXFLAGS += -wd4996 -wd4305 -wd4018 -wd4244
+  QMAKE_CXXFLAGS += -wd4996
 }
 
 SOURCES += \
