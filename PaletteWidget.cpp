@@ -193,6 +193,18 @@ void PaletteWidget::mouseDoubleClickEvent(QMouseEvent* /*event*/)
 }
 
 
+void PaletteWidget::leaveEvent(QEvent *)
+{
+  if (m_hilightIndex!=HIT_NONE)
+  {
+    int x=PAL_X+(m_hilightIndex%PAL_NX)*PBOX_W;
+    int y=PAL_Y+(m_hilightIndex/PAL_NX)*PBOX_H;
+    m_hilightIndex=HIT_NONE;
+    repaint(x, y, PBOX_W, PBOX_H);
+  }
+}
+
+
 int PaletteWidget::clickHit(const QPoint& p)
 {
   if (p.x() >= CBOX_AX && p.y() >= CBOX_AY && p.x() < CBOX_AX+CBOX_W && p.y() < CBOX_AY+CBOX_H)
