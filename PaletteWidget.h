@@ -17,8 +17,8 @@ public:
         QWidget(parent),
         m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
         m_passiveColor(0.0f, 0.0f, 0.0f, 1.0f),
-        m_activeIndex(255),
-        m_passiveIndex(0),
+        m_activeIndex(-1),
+        m_passiveIndex(-1),
         m_hilightIndex(HIT_NONE)
         {
             setMouseTracking(true);

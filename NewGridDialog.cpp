@@ -19,3 +19,8 @@ Imath::V3i NewGridDialog::getVoxelSize()
                       ui->height->value(),
                       ui->depth->value());
 }
+
+bool NewGridDialog::isIndexed()
+{
+  return ui->dataIndexed->isChecked();
+}

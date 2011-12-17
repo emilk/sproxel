@@ -22,7 +22,8 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_project(new SproxelProject())
 {
     // Project
-    VoxelGridGroupPtr sprite(new VoxelGridGroup(Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ)));
+    VoxelGridGroupPtr sprite(new VoxelGridGroup(Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ),
+      ColorPalettePtr()));
     sprite->setName("unnamed");
     m_project->sprites.push_back(sprite);
 
@@ -475,7 +476,16 @@ void MainWindow::newGrid()
         m_glModelWidget->cleanUndoStack();
         m_glModelWidget->clearUndoStack();
         setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
-        m_glModelWidget->resizeAndClearVoxelGrid(dlg.getVoxelSize());
+
+        // create new project
+        m_project=new SproxelProject();
+        VoxelGridGroupPtr sprite(new VoxelGridGroup(dlg.getVoxelSize(),
+          dlg.isIndexed()?m_project->mainPalette:ColorPalettePtr()));
+        sprite->setName("unnamed");
+        m_project->sprites.push_back(sprite);
+
+        m_glModelWidget->setSprite(sprite);
+        m_paletteWidget->setPalette(m_project->mainPalette);
     }
 }
 
@@ -586,7 +596,9 @@ void MainWindow::openFile()
 
         if (m_project->sprites.empty())
         {
-          VoxelGridGroupPtr sprite(new VoxelGridGroup(Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ)));
+          VoxelGridGroupPtr sprite(new VoxelGridGroup(
+            Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ),
+            ColorPalettePtr()));
           sprite->setName("unnamed");
           m_project->sprites.push_back(sprite);
         }

@@ -18,6 +18,7 @@ public:
     ~NewGridDialog();
 
     Imath::V3i getVoxelSize();
+    bool isIndexed();
 
 private:
     Ui::NewGridDialog *ui;

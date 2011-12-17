@@ -223,9 +223,17 @@ public:
     }
     else if (!new_box.isEmpty())
     {
-      // no grids yet - create a default RGB one
-      m_rgb=new RgbVoxelGrid(new_box.size()+Imath::V3i(1));
-      m_rgb->setAll(SproxelColor(0, 0, 0, 0));
+      // no grids yet - create a new one
+      if (m_palette)
+      {
+        m_ind=new IndVoxelGrid(new_box.size()+Imath::V3i(1));
+        m_ind->setAll(0);
+      }
+      else
+      {
+        m_rgb=new RgbVoxelGrid(new_box.size()+Imath::V3i(1));
+        m_rgb->setAll(SproxelColor(0, 0, 0, 0));
+      }
       m_offset=new_box.min;
     }
   }
@@ -308,9 +316,10 @@ public:
     }
   }
 
-  VoxelGridGroup(const Imath::V3i &size) : m_transform()
+  VoxelGridGroup(const Imath::V3i &size, ColorPalettePtr palette) : m_transform()
   {
     VoxelGridLayerPtr layer(new VoxelGridLayer());
+    layer->setPalette(palette);
     layer->resize(Imath::Box3i(Imath::V3i(0), size-Imath::V3i(1)));
     layer->setName("main layer");
 

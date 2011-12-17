@@ -25,7 +25,7 @@ GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, VoxelGridG
       m_undoManager(),
       m_activeVoxel(-1,-1,-1),
       m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
-      m_activeIndex(255),
+      m_activeIndex(-1),
       m_lastMouse(),
       m_drawGrid(true),
       m_drawVoxelGrid(true),
@@ -100,7 +100,7 @@ void GLModelWidget::resizeAndShiftVoxelGrid(const Imath::V3i& sizeInc,
 
     //== FIXME: current implementation collapses all layers, should be per-layer operation
 
-    VoxelGridGroupPtr newGridPtr(new VoxelGridGroup(newSize));
+    VoxelGridGroupPtr newGridPtr(new VoxelGridGroup(newSize, ColorPalettePtr()));
     VoxelGridGroup &newGrid = *newGridPtr;
 
     for (int x = box.min.x; x <= box.max.x; x++)
@@ -141,7 +141,7 @@ void GLModelWidget::reresVoxelGrid(const float scale)
     if (newDims.x <= 0 && newDims.y <= 0 && newDims.z <= 0)
         return;
 
-    VoxelGridGroupPtr newGridPtr(new VoxelGridGroup(newDims));
+    VoxelGridGroupPtr newGridPtr(new VoxelGridGroup(newDims, ColorPalettePtr()));
     VoxelGridGroup &newGrid = *newGridPtr;
     newGrid.setTransform(m_gvg->transform());
 
@@ -1254,7 +1254,7 @@ bool GLModelWidget::loadGridCSV(const std::string& filename)
     // Read the dimensions
     Imath::V3i size(0);
     fscanfStatus = fscanf(fp, "%d,%d,%d\n", &size.x, &size.y, &size.z);
-    m_gvg=new VoxelGridGroup(size);
+    m_gvg=new VoxelGridGroup(size, ColorPalettePtr());
 
     // Read the data
     Imath::Color4f color;
@@ -1344,7 +1344,7 @@ bool GLModelWidget::loadGridPNG(const std::string& filename)
     readMe = readMe.mirrored();
 
     // Clear and load
-    m_gvg=new VoxelGridGroup(Imath::V3i(sizeX, sizeY, sizeZ));
+    m_gvg=new VoxelGridGroup(Imath::V3i(sizeX, sizeY, sizeZ), ColorPalettePtr());
 
     for (int slice = 0; slice < sizeZ; slice++)
     {
@@ -1815,7 +1815,7 @@ void GLModelWidget::rotateVoxels(const SproxelAxis axis, const int dir)
         case Z_AXIS: newDim.x = oldDim.y; newDim.y = oldDim.x; newDim.z = oldDim.z; break;
     }
 
-    VoxelGridGroupPtr newGridPtr(new VoxelGridGroup(newDim));
+    VoxelGridGroupPtr newGridPtr(new VoxelGridGroup(newDim, ColorPalettePtr()));
     VoxelGridGroup &newGrid = *newGridPtr;
     newGrid.setTransform(m_gvg->transform());
 
