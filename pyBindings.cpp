@@ -60,6 +60,292 @@ bool py_to_color(PyObject *o, SproxelColor &c)
 }
 
 
+//  Palette  ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
+extern PyTypeObject sproxelPyPaletteType;
+
+
+struct PyPalette
+{
+  PyObject_HEAD
+  ColorPalettePtr pal;
+};
+
+
+static void PyPalette_dtor(PyPalette *self)
+{
+  self->pal=NULL;
+  self->ob_type->tp_free((PyObject*)self);
+}
+
+
+static int PyPalette_init(PyPalette *self, PyObject *args, PyObject *kwds)
+{
+  if (self->pal)
+  {
+    PyErr_SetString(PyExc_TypeError, "Palette is already initialized");
+    return -1;
+  }
+
+  ColorPalettePtr newPal;
+
+  static char* fromPar[]={"palette", NULL};
+  static char* defPar[]={"size", "offset", "name", NULL};
+
+  PyPalette *fromPal=NULL;
+  int size=0;
+  const char *name=NULL;
+
+  if (PyArg_ParseTupleAndKeywords(args, kwds, "O!", fromPar, &sproxelPyPaletteType, &fromPal))
+  {
+    if (fromPal->pal)
+      newPal=new ColorPalette(*fromPal->pal);
+    else
+      newPal=new ColorPalette();
+  }
+  else if (PyErr_Clear(), PyArg_ParseTupleAndKeywords(args, kwds, "|is", defPar, &size, &name))
+  {
+    newPal=new ColorPalette();
+    if (size>0) newPal->resize(size);
+    if (name) newPal->setName(name);
+  }
+  else
+    return -1;
+
+  self->pal=newPal;
+
+  return 0;
+}
+
+
+#define CHECK_PYPAL \
+  if (!self->pal) { PyErr_SetString(PyExc_TypeError, "NULL Palette"); return NULL; }
+
+#define CHECK_PYPAL_S \
+  if (!self->pal) { PyErr_SetString(PyExc_TypeError, "NULL Palette"); return -1; }
+
+
+static PyObject* PyPalette_getName(PyPalette *self, void*)
+{
+  CHECK_PYPAL
+  return qstr_to_py(self->pal->name());
+}
+
+
+static int PyPalette_setName(PyPalette *self, PyObject *value, void*)
+{
+  CHECK_PYPAL_S
+
+  QString str;
+  if (!py_to_qstr(value, str)) return -1;
+
+  self->pal->setName(str);
+  return 0;
+}
+
+
+static PyObject* PyPalette_numColors(PyPalette *self, void*)
+{
+  CHECK_PYPAL
+  return PyInt_FromLong(self->pal->numColors());
+}
+
+
+static PyObject* PyPalette_getColors(PyPalette *self, void*)
+{
+  CHECK_PYPAL
+
+  PyObject *list=PyList_New(self->pal->numColors());
+  if (!list) return PyErr_NoMemory();
+
+  for (int i=0; i<self->pal->numColors(); ++i)
+  {
+    SproxelColor c=self->pal->color(i);
+    PyList_SetItem(list, i, Py_BuildValue("(ffff)", c.r, c.g, c.b, c.a));
+  }
+
+  return list;
+}
+
+
+static int PyPalette_setColors(PyPalette *self, PyObject *value, void*)
+{
+  CHECK_PYPAL_S
+
+  if (!PySequence_Check(value))
+  {
+    PyErr_SetString(PyExc_TypeError, "Expected sequence of colors");
+    return -1;
+  }
+
+  size_t num=PySequence_Size(value);
+  if (num==size_t(-1))
+  {
+    PyErr_SetString(PyExc_TypeError, "Expected sequence of colors");
+    return -1;
+  }
+
+  self->pal->resize(0);
+  self->pal->resize(num);
+
+  for (size_t i=0; i<num; ++i)
+  {
+    PyObject *o=PySequence_GetItem(value, i);
+    if (!o) continue;
+    SproxelColor c;
+    bool ok=py_to_color(o, c);
+    Py_DECREF(o);
+    if (ok) self->pal->setColor(i, c);
+  }
+
+  return 0;
+}
+
+
+static PyGetSetDef pyPalette_getsets[]=
+{
+  {"name", (getter)PyPalette_getName, (setter)PyPalette_setName, "Palette name", NULL},
+  {"numColors", (getter)PyPalette_numColors, NULL, "Number of colors", NULL},
+  {"colors", (getter)PyPalette_getColors, (setter)PyPalette_setColors, "List of all colors", NULL},
+  {NULL, NULL, NULL, NULL, NULL}
+};
+
+
+//ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
+static PyObject* PyPalette_resize(PyPalette *self, PyObject *args)
+{
+  CHECK_PYPAL
+  int size;
+  if (!PyArg_ParseTuple(args, "i", &size)) return NULL;
+  self->pal->resize(size);
+  Py_RETURN_NONE;
+}
+
+
+static PyObject* PyPalette_color(PyPalette *self, PyObject *args)
+{
+  CHECK_PYPAL
+  int i;
+  if (!PyArg_ParseTuple(args, "i", &i)) return NULL;
+  SproxelColor c=self->pal->color(i);
+  return Py_BuildValue("(ffff)", c.r, c.g, c.b, c.a);
+}
+
+
+static PyObject* PyPalette_setColor(PyPalette *self, PyObject *args)
+{
+  CHECK_PYPAL
+  int i;
+  PyObject *o;
+  if (!PyArg_ParseTuple(args, "iO", &i, &o)) return NULL;
+
+  SproxelColor c;
+  if (py_to_color(o, c)) self->pal->setColor(i, c);
+
+  Py_RETURN_NONE;
+}
+
+
+static PyObject* PyPalette_bestMatch(PyPalette *self, PyObject *arg)
+{
+  CHECK_PYPAL
+
+  SproxelColor c;
+  if (!py_to_color(arg, c)) return NULL;
+
+  return PyInt_FromLong(self->pal->bestMatch(c));
+}
+
+
+static PyMethodDef pyPalette_methods[]=
+{
+  { "resize", (PyCFunction)PyPalette_resize, METH_VARARGS, "Resize palette." },
+  { "color", (PyCFunction)PyPalette_color, METH_VARARGS, "Get color by index." },
+  { "setColor", (PyCFunction)PyPalette_setColor, METH_VARARGS, "Set color by index." },
+  { "bestMatch", (PyCFunction)PyPalette_bestMatch, METH_O, "Returns index of the best matching color." },
+  { NULL, NULL, 0, NULL }
+};
+
+
+static PyObject* PyPalette_repr(PyPalette *self)
+{
+  CHECK_PYPAL
+  return PyString_FromFormat("Palette(\"%s\")", self->pal->name().toUtf8().data());
+}
+
+
+static int PyPalette_cmp(PyPalette *self, PyObject *o)
+{
+  if (o==Py_None && !self->pal) return 0;
+  if (!PyObject_TypeCheck(o, &sproxelPyPaletteType)) return -1;
+  PyPalette *other=(PyPalette*)o;
+  if (self->pal==other->pal) return 0;
+  if (self->pal.constData()<other->pal.constData()) return -1;
+  return 1;
+}
+
+
+PyTypeObject sproxelPyPaletteType=
+{
+  PyObject_HEAD_INIT(NULL)
+  0,                         /*ob_size*/
+  "sproxel.Palette",         /*tp_name*/
+  sizeof(PyPalette),         /*tp_basicsize*/
+  0,                         /*tp_itemsize*/
+  (destructor)PyPalette_dtor,/*tp_dealloc*/
+  0,                         /*tp_print*/
+  0,                         /*tp_getattr*/
+  0,                         /*tp_setattr*/
+  (cmpfunc)PyPalette_cmp,    /*tp_compare*/
+  (reprfunc)PyPalette_repr,  /*tp_repr*/
+  0,                         /*tp_as_number*/
+  0,                         /*tp_as_sequence*/
+  0,                         /*tp_as_mapping*/
+  0,                         /*tp_hash */
+  0,                         /*tp_call*/
+  0,                         /*tp_str*/
+  0,                         /*tp_getattro*/
+  0,                         /*tp_setattro*/
+  0,                         /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT,        /*tp_flags*/
+  "Sproxel palette",         /* tp_doc */
+  0,                           /* tp_traverse */
+  0,                           /* tp_clear */
+  0,                           /* tp_richcompare */
+  0,                           /* tp_weaklistoffset */
+  0,                           /* tp_iter */
+  0,                           /* tp_iternext */
+  pyPalette_methods,         /* tp_methods */
+  0,                         /* tp_members */
+  pyPalette_getsets,         /* tp_getset */
+  0,                         /* tp_base */
+  0,                         /* tp_dict */
+  0,                         /* tp_descr_get */
+  0,                         /* tp_descr_set */
+  0,                         /* tp_dictoffset */
+  (initproc)PyPalette_init,  /* tp_init */
+  0,                         /* tp_alloc */
+  0,                         /* tp_new */
+};
+
+
+//ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
+static PyObject* palette_to_py(ColorPalettePtr pal)
+{
+  if (!pal) Py_RETURN_NONE;
+  PyPalette *pyp=PyObject_New(PyPalette, &sproxelPyPaletteType);
+  if (!pyp) return PyErr_NoMemory();
+  *((void**)&pyp->pal)=NULL; // reset memory
+  pyp->pal=pal;
+  return (PyObject*)pyp;
+}
+
+
 //  Layer  ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
@@ -184,6 +470,25 @@ static int PyLayer_setName(PyLayer *self, PyObject *value, void*)
 }
 
 
+static PyObject* PyLayer_getPalette(PyLayer *self, void*)
+{
+  CHECK_PYLAYER
+  return palette_to_py(self->layer->palette());
+}
+
+
+static int PyLayer_setPalette(PyLayer *self, PyObject *value, void*)
+{
+  CHECK_PYLAYER_S
+
+  ColorPalettePtr pal;
+  if (PyObject_TypeCheck(value, &sproxelPyPaletteType)) pal=((PyPalette*)value)->pal;
+
+  self->layer->setPalette(pal);
+  return 0;
+}
+
+
 static PyObject* PyLayer_getSize(PyLayer *self, void*)
 {
   CHECK_PYLAYER
@@ -219,7 +524,7 @@ static PyGetSetDef pyLayer_getsets[]=
   {"offset", (getter)PyLayer_getOffset, (setter)PyLayer_setOffset, "Grid offset", NULL},
   {"visible", (getter)PyLayer_getVisible, (setter)PyLayer_setVisible, "Visibility", NULL},
   {"name", (getter)PyLayer_getName, (setter)PyLayer_setName, "Layer name", NULL},
-  //== palette
+  {"palette", (getter)PyLayer_getPalette, (setter)PyLayer_setPalette, "Layer palette", NULL},
   {"size", (getter)PyLayer_getSize, NULL, "Grid size", NULL},
   {"bounds", (getter)PyLayer_getBounds, NULL, "Grid bounds", NULL},
   {"dataType", (getter)PyLayer_getDataType, NULL, "Grid data type", NULL},
@@ -895,9 +1200,81 @@ static int PyProject_setSprites(PyProject *self, PyObject *value, void*)
   {
     PyObject *o=PySequence_GetItem(value, i);
     if (!o) continue;
-    if (!PyObject_TypeCheck(o, &sproxelPySpriteType)) continue;
+    if (!PyObject_TypeCheck(o, &sproxelPySpriteType)) { Py_DECREF(o); continue; }
     self->proj->sprites.push_back(((PySprite*)o)->spr);
+    Py_DECREF(o);
   }
+
+  return 0;
+}
+
+
+static PyObject* PyProject_getPalettes(PyProject *self, void*)
+{
+  CHECK_PYPROJ
+  PyObject *list=PyList_New(self->proj->palettes.size());
+  if (!list) return PyErr_NoMemory();
+
+  for (int i=0; i<self->proj->palettes.size(); ++i)
+    PyList_SetItem(list, i, palette_to_py(self->proj->palettes[i]));
+
+  return list;
+}
+
+
+static int PyProject_setPalettes(PyProject *self, PyObject *value, void*)
+{
+  CHECK_PYPROJ_S
+
+  if (!PySequence_Check(value))
+  {
+    PyErr_SetString(PyExc_TypeError, "Expected sequence of palettes");
+    return -1;
+  }
+
+  size_t num=PySequence_Size(value);
+  if (num==size_t(-1))
+  {
+    PyErr_SetString(PyExc_TypeError, "Expected sequence of palettes");
+    return -1;
+  }
+
+  self->proj->palettes.clear();
+  self->proj->palettes.reserve(num);
+
+  for (size_t i=0; i<num; ++i)
+  {
+    PyObject *o=PySequence_GetItem(value, i);
+    if (!o) continue;
+    if (!PyObject_TypeCheck(o, &sproxelPyPaletteType)) { Py_DECREF(o); continue; }
+    self->proj->palettes.push_back(((PyPalette*)o)->pal);
+    Py_DECREF(o);
+  }
+
+  return 0;
+}
+
+
+static PyObject* PyProject_getMainPalette(PyProject *self, void*)
+{
+  CHECK_PYPROJ
+  return palette_to_py(self->proj->mainPalette);
+}
+
+
+static int PyProject_setMainPalette(PyProject *self, PyObject *value, void*)
+{
+  CHECK_PYPROJ_S
+
+  if (value==Py_None) { self->proj->mainPalette=NULL; return 0; }
+
+  if (!PyObject_TypeCheck(value, &sproxelPyPaletteType))
+  {
+    PyErr_SetString(PyExc_TypeError, "Expected sproxel.Palette or None");
+    return -1;
+  }
+
+  self->proj->mainPalette=((PyPalette*)value)->pal;
 
   return 0;
 }
@@ -906,6 +1283,8 @@ static int PyProject_setSprites(PyProject *self, PyObject *value, void*)
 static PyGetSetDef pyProject_getsets[]=
 {
   {"sprites", (getter)PyProject_getSprites, (setter)PyProject_setSprites, "Sprites list", NULL},
+  {"palettes", (getter)PyProject_getPalettes, (setter)PyProject_setPalettes, "Palettes list", NULL},
+  {"mainPalette", (getter)PyProject_getMainPalette, (setter)PyProject_setMainPalette, "Main palette", NULL},
   {NULL, NULL, NULL, NULL, NULL}
 };
 
@@ -1084,6 +1463,9 @@ SproxelProjectPtr load_project(QString filename)
 void init_sproxel_bindings()
 {
   // init types
+  sproxelPyPaletteType.tp_new=PyType_GenericNew;
+  if (PyType_Ready(&sproxelPyPaletteType)<0) return;
+
   sproxelPyLayerType.tp_new=PyType_GenericNew;
   if (PyType_Ready(&sproxelPyLayerType)<0) return;
 
@@ -1097,6 +1479,7 @@ void init_sproxel_bindings()
   PyObject *mod=Py_InitModule3("sproxel", moduleMethods, "Sproxel data types.");
 
   // add types
+  Py_INCREF(&sproxelPyPaletteType); PyModule_AddObject(mod, "Palette", (PyObject*)&sproxelPyPaletteType);
   Py_INCREF(&sproxelPyLayerType); PyModule_AddObject(mod, "Layer", (PyObject*)&sproxelPyLayerType);
   Py_INCREF(&sproxelPySpriteType); PyModule_AddObject(mod, "Sprite", (PyObject*)&sproxelPySpriteType);
   Py_INCREF(&sproxelPyProjectType); PyModule_AddObject(mod, "Project", (PyObject*)&sproxelPyProjectType);

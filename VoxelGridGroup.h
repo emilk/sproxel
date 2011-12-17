@@ -189,8 +189,8 @@ public:
   QString name() const { return m_name; }
   void setName(const QString n) { m_name=n; }
 
-  const ColorPalettePtr& palette() const { return m_palette; }
-  void setPalette(ColorPalette *p) { m_palette=p; }
+  ColorPalettePtr palette() const { return m_palette; }
+  void setPalette(ColorPalettePtr p) { m_palette=p; }
 
   Imath::V3i size() const
   {

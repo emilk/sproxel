@@ -25,13 +25,16 @@ def save_project(filename, proj):
     dict(name=s.name, layers=[layers.index(l) for l in s.layers], curLayer=s.curLayerIndex)
     for s in proj.sprites]
 
-  #== palettes metadata
+  meta['palettes']=[
+    dict(name=p.name, colors=p.colors)
+    for p in proj.palettes]
+
+  meta['mainPalette']=proj.palettes.index(proj.mainPalette)
 
   # write zip file
   with ZipFile(filename, 'w', ZIP_DEFLATED) as zf:
     zf.writestr('metadata.json', json.dumps(meta, sort_keys=True, indent=2))
     for i, l in enumerate(layers): zf.writestr('%04d.png' % i, l.toPNG())
-    #== write palettes
 
   return True
 
@@ -64,7 +67,23 @@ def load_project(filename):
 
     prj.sprites=sprites
 
-    #== load palettes
+    # load palettes
+    palettes=[]
+    for mp in meta['palettes']:
+      p=sproxel.Palette()
+      p.name=mp['name']
+      p.colors=[tuple(c) for c in mp['colors']]
+      palettes.append(p)
+
+    prj.palettes=palettes
+
+    try:
+      prj.mainPalette=palettes[meta['mainPalette']]
+    except KeyError:
+      try:
+        prj.mainPalette=palettes[0]
+      except KeyError:
+        prj.mainPalette=sproxel.Palette()
 
   #print prj.sprites
   return prj
