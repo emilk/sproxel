@@ -1374,12 +1374,18 @@ static PyObject* PySproxel_getProject(PyObject *)
 }
 
 
-static PyObject* PySproxel_layerFromPng(PyObject *, PyObject *arg)
+static PyObject* PySproxel_layerFromPng(PyObject *, PyObject *args)
 {
   uchar *buf=NULL;
   Py_ssize_t len=0;
 
-  if (PyString_AsStringAndSize(arg, (char**)&buf, &len)!=0) return NULL;
+  PyObject *so, *po=NULL;
+  if (!PyArg_UnpackTuple(args, "layer_from_png", 1, 2, &so, &po)) return NULL;
+
+  if (PyString_AsStringAndSize(so, (char**)&buf, &len)!=0) return NULL;
+
+  ColorPalettePtr pal;
+  if (po && PyObject_TypeCheck(po, &sproxelPyPaletteType)) pal=((PyPalette*)po)->pal;
 
   QImage image;
   if (!image.loadFromData(buf, len, "PNG"))
@@ -1388,7 +1394,7 @@ static PyObject* PySproxel_layerFromPng(PyObject *, PyObject *arg)
     return NULL;
   }
 
-  VoxelGridLayerPtr layer(VoxelGridLayer::fromQImage(image));
+  VoxelGridLayerPtr layer(VoxelGridLayer::fromQImage(image, pal));
   return layer_to_py(layer);
 }
 
@@ -1396,7 +1402,7 @@ static PyObject* PySproxel_layerFromPng(PyObject *, PyObject *arg)
 static PyMethodDef moduleMethods[]=
 {
   { "get_project", (PyCFunction)PySproxel_getProject, METH_NOARGS, "Get current Sproxel project." },
-  { "layer_from_png", (PyCFunction)PySproxel_layerFromPng, METH_O, "Create layer from PNG data." },
+  { "layer_from_png", (PyCFunction)PySproxel_layerFromPng, METH_VARARGS, "Create layer from PNG data." },
   { NULL, NULL, 0, NULL }
 };
 

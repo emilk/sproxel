@@ -18,7 +18,8 @@ def save_project(filename, proj):
   meta['version']=CUR_VERSION
 
   meta['layers']=[
-    dict(name=l.name, offset=l.offset, visible=l.visible) #== palette ref
+    dict(name=l.name, offset=l.offset, visible=l.visible,
+      palette = proj.palettes.index(l.palette) if l.palette!=None else -1)
     for l in layers]
 
   meta['sprites']=[
@@ -45,13 +46,33 @@ def load_project(filename):
   with ZipFile(filename, 'r') as zf:
     meta=json.loads(zf.read('metadata.json'))
 
+    # load palettes
+    palettes=[]
+    for mp in meta['palettes']:
+      p=sproxel.Palette()
+      p.name=mp['name']
+      p.colors=[tuple(c) for c in mp['colors']]
+      palettes.append(p)
+
+    prj.palettes=palettes
+
+    try:
+      prj.mainPalette=palettes[meta['mainPalette']]
+    except IndexError:
+      try:
+        prj.mainPalette=palettes[0]
+      except IndexError:
+        prj.mainPalette=sproxel.Palette()
+
     # load layers
     layers=[]
     for i, ml in enumerate(meta['layers']):
-      l=sproxel.layer_from_png(zf.read('%04d.png' % i))
+      l=sproxel.layer_from_png(zf.read('%04d.png' % i),
+        prj.palettes[ml['palette']] if ml['palette']>=0 else None)
       l.name   =ml['name'   ]
       l.offset =tuple(ml['offset'])
       l.visible=ml['visible']
+      print 'layer', i, 'type', l.dataType
       layers.append(l)
 
     # load sprites
@@ -66,24 +87,6 @@ def load_project(filename):
       sprites.append(s)
 
     prj.sprites=sprites
-
-    # load palettes
-    palettes=[]
-    for mp in meta['palettes']:
-      p=sproxel.Palette()
-      p.name=mp['name']
-      p.colors=[tuple(c) for c in mp['colors']]
-      palettes.append(p)
-
-    prj.palettes=palettes
-
-    try:
-      prj.mainPalette=palettes[meta['mainPalette']]
-    except KeyError:
-      try:
-        prj.mainPalette=palettes[0]
-      except KeyError:
-        prj.mainPalette=sproxel.Palette()
 
   #print prj.sprites
   return prj

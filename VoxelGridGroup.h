@@ -287,10 +287,11 @@ public:
   }
 
   DataType dataType() const { return m_ind ? TYPE_IND : TYPE_RGB; }
+  bool isIndexed() const { return m_ind!=NULL; }
 
   class QImage makeQImage() const;
 
-  static VoxelGridLayerPtr fromQImage(class QImage);
+  static VoxelGridLayerPtr fromQImage(class QImage, ColorPalettePtr);
 };
 
 

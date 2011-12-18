@@ -2,7 +2,7 @@
 #include "SproxelProject.h"
 
 
-VoxelGridLayerPtr VoxelGridLayer::fromQImage(QImage readMe)
+VoxelGridLayerPtr VoxelGridLayer::fromQImage(QImage readMe, ColorPalettePtr pal)
 {
   QString tempStr;
   tempStr = readMe.text("VoxelGridDimX");
@@ -17,6 +17,14 @@ VoxelGridLayerPtr VoxelGridLayer::fromQImage(QImage readMe)
   readMe = readMe.mirrored();
 
   VoxelGridLayerPtr layer(new VoxelGridLayer());
+
+  bool indexed=false;
+  if (readMe.colorCount()>0)
+  {
+    indexed=true;
+    layer->setPalette(pal);
+  }
+
   layer->resize(Imath::Box3i(Imath::V3i(0), Imath::V3i(sizeX, sizeY, sizeZ)-Imath::V3i(1)));
 
   for (int slice = 0; slice < sizeZ; slice++)
@@ -26,13 +34,15 @@ VoxelGridLayerPtr VoxelGridLayer::fromQImage(QImage readMe)
     {
       for (int x = 0; x < sizeX; x++)
       {
+        int index=-1;
+        if (indexed) index=readMe.pixelIndex(x+sliceOffset, y);
         QRgb pixelValue = readMe.pixel(x+sliceOffset, y);
         Imath::Color4f color(
           (float)qRed  (pixelValue) / 255.0f,
           (float)qGreen(pixelValue) / 255.0f,
           (float)qBlue (pixelValue) / 255.0f,
           (float)qAlpha(pixelValue) / 255.0f);
-        layer->set(Imath::V3i(x, y, slice), color);
+        layer->set(Imath::V3i(x, y, slice), color, index);
       }
     }
   }
@@ -49,24 +59,50 @@ QImage VoxelGridLayer::makeQImage() const
   // TODO: Offer other options besides XY slices?  Directionality?  Ordering?
   const int height = cellDim.y;
   const int width = cellDim.x * cellDim.z;
-  QImage writeMe(QSize(width, height), QImage::Format_ARGB32);
+  QImage writeMe(QSize(width, height), m_ind?QImage::Format_Indexed8:QImage::Format_ARGB32);
 
-  for (int slice = 0; slice < cellDim.z; slice++)
+  if (m_ind)
   {
-    const int sliceOffset = slice * cellDim.x;
-    for (int y = 0; y < cellDim.y; y++)
+    if (m_palette)
     {
-      for (int x = 0; x < cellDim.x; x++)
+      writeMe.setColorCount(m_palette->numColors());
+      for (int i=0; i<m_palette->numColors(); ++i)
       {
-        const Imath::Color4f colorScaled = getColor(Imath::V3i(x, y, slice)+dim.min) * 255.0f;
-        writeMe.setPixel(x+sliceOffset, y, qRgba(
-          (int)colorScaled.r,
-          (int)colorScaled.g,
-          (int)colorScaled.b,
-          (int)colorScaled.a));
+        SproxelColor c=m_palette->color(i)*255.0f;
+        writeMe.setColor(i, qRgba(int(c.r), int(c.g), int(c.b), int(c.a)));
+      }
+    }
+
+    for (int slice = 0; slice < cellDim.z; slice++)
+    {
+      const int sliceOffset = slice * cellDim.x;
+      for (int y = 0; y < cellDim.y; y++)
+      {
+        for (int x = 0; x < cellDim.x; x++)
+          writeMe.setPixel(x+sliceOffset, y, getInd(Imath::V3i(x, y, slice)+dim.min));
       }
     }
   }
+  else
+  {
+    for (int slice = 0; slice < cellDim.z; slice++)
+    {
+      const int sliceOffset = slice * cellDim.x;
+      for (int y = 0; y < cellDim.y; y++)
+      {
+        for (int x = 0; x < cellDim.x; x++)
+        {
+          const Imath::Color4f colorScaled = getColor(Imath::V3i(x, y, slice)+dim.min) * 255.0f;
+          writeMe.setPixel(x+sliceOffset, y, qRgba(
+            (int)colorScaled.r,
+            (int)colorScaled.g,
+            (int)colorScaled.b,
+            (int)colorScaled.a));
+        }
+      }
+    }
+  }
+
   writeMe = writeMe.mirrored();   // QT Bug: mirrored() doesn't preserve text.
 
   QString tempStr;
