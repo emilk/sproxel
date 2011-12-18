@@ -5,6 +5,7 @@
 
 #include <QString>
 #include <QWidget>
+#include <QVector>
 #include <QUndoStack>
 #include <QUndoCommand>
 
@@ -16,6 +17,9 @@ class UndoManager : public QWidget
     Q_OBJECT
 
 public:
+
+    enum { ID_SETVOXEL=1, };
+
     UndoManager();
     virtual ~UndoManager() {}
 
@@ -80,65 +84,65 @@ private:
 class CmdSetVoxelColor : public QUndoCommand
 {
 public:
-    CmdSetVoxelColor(VoxelGridGroupPtr gvg, const Imath::V3i& index, const Imath::Color4f color, int ind) :
-        m_pGvg(gvg),
-        m_layerId(gvg->curLayerIndex()),
-        m_index(),
-        m_newColor(),
-        m_oldColor()
+
+  CmdSetVoxelColor(VoxelGridGroupPtr spr, VoxelGridLayerPtr layer,
+    const Imath::V3i& pos, const Imath::Color4f &color, int index)
+    : m_sprite(spr), m_layer(layer)
+  {
+    m_changes.push_back(Change(pos, m_layer->getColor(pos), m_layer->getInd(pos), color, index));
+    setText("Set voxel");
+  }
+
+  virtual void redo()
+  {
+    if (!m_layer) return;
+
+    for (int i=0; i<m_changes.size(); ++i)
     {
-        m_index.push_back(index);
-        m_newColor.push_back(color);
-        m_oldColor.push_back(gvg->get(index));
-        m_newIndex.push_back(ind);
-        m_oldIndex.push_back(gvg->getInd(index));
-        setText("Set voxel");
+      const Change &c=m_changes[i];
+      m_layer->set(c.pos, c.newColor, c.newIndex);
     }
+  }
 
-    virtual void redo()
+  virtual void undo()
+  {
+    for (int i=m_changes.size()-1; i>=0; --i)
     {
-        VoxelGridLayerPtr layer=m_pGvg->layer(m_layerId);
-        if (!layer) return;
-
-        for (size_t i = 0; i < m_index.size(); i++)
-            layer->set(m_index[i], m_newColor[i], m_newIndex[i]);
+      const Change &c=m_changes[i];
+      m_layer->set(c.pos, c.oldColor, c.oldIndex);
     }
+  }
 
-    virtual void undo()
-    {
-        VoxelGridLayerPtr layer=m_pGvg->layer(m_layerId);
-        if (!layer) return;
-
-        for (size_t i = 0; i < m_index.size(); i++)
-            layer->set(m_index[i], m_oldColor[i], m_oldIndex[i]);
-    }
+  virtual int id() const { return UndoManager::ID_SETVOXEL; }
 
 protected:
-    virtual bool mergeMeWith(QUndoCommand* other)
-    {
-        if (other->id() != id())
-            return false;
 
-        const CmdSetVoxelColor* otherSet = static_cast<const CmdSetVoxelColor*>(other);
-        if (otherSet->m_pGvg!=m_pGvg || otherSet->m_layerId!=m_layerId) return false;
+  struct Change
+  {
+    Imath::V3i pos;
+    SproxelColor oldColor, newColor;
+    int oldIndex, newIndex;
 
-        // TODO: shouldn't it push _all_ elements of otherSet?
-        m_index.push_back(otherSet->m_index[0]);
-        m_newColor.push_back(otherSet->m_newColor[0]);
-        m_newIndex.push_back(otherSet->m_newIndex[0]);
-        m_oldColor.push_back(otherSet->m_oldColor[0]);
-        m_oldIndex.push_back(otherSet->m_oldIndex[0]);
-        return true;
-    }
+    Change() {}
+    Change(const Imath::V3i& p, const Imath::Color4f &oc, int oi, const Imath::Color4f &nc, int ni)
+      : pos(p), oldColor(oc), oldIndex(oi), newColor(nc), newIndex(ni) {}
+  };
+
+  virtual bool mergeWith(const QUndoCommand* other)
+  {
+    if (other->id() != id()) return false;
+
+    const CmdSetVoxelColor* otherSet = static_cast<const CmdSetVoxelColor*>(other);
+    if (otherSet->m_layer!=m_layer || otherSet->m_sprite!=m_sprite) return false;
+
+    m_changes+=otherSet->m_changes;
+    return true;
+  }
 
 private:
-    VoxelGridGroupPtr m_pGvg;
-    int m_layerId;
-    std::vector<Imath::V3i> m_index;
-    std::vector<Imath::Color4f> m_newColor;
-    std::vector<Imath::Color4f> m_oldColor;
-    std::vector<int> m_newIndex;
-    std::vector<int> m_oldIndex;
+  VoxelGridGroupPtr m_sprite;
+  VoxelGridLayerPtr m_layer;
+  QVector<Change> m_changes;
 };
 
 #endif

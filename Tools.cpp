@@ -5,11 +5,13 @@
 ////////////////////////////////////////
 void SplatToolState::execute()
 {
+    p_undoManager->beginMacro("Splat");
     std::vector<Imath::V3i> voxels = voxelsAffected();
     for (size_t i = 0; i < voxels.size(); i++)
     {
         p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color, m_index);
     }
+    p_undoManager->endMacro();
     decrementClicks();
 }
 
@@ -129,12 +131,14 @@ std::vector<Imath::V3i> FloodToolState::voxelsAffected()
 ////////////////////////////////////////
 void EraserToolState::execute()
 {
+    p_undoManager->beginMacro("Eraser");
     std::vector<Imath::V3i> voxels = voxelsAffected();
     for (size_t i = 0; i < voxels.size(); i++)
     {
         p_undoManager->setVoxelColor(p_gvg, voxels[i],
                                      Imath::Color4f(0.0f, 0.0f, 0.0f, 0.0f), 0);
     }
+    p_undoManager->endMacro();
     decrementClicks();
 }
 
@@ -166,6 +170,7 @@ std::vector<Imath::V3i> EraserToolState::voxelsAffected()
 ////////////////////////////////////////
 void ReplaceToolState::execute()
 {
+    p_undoManager->beginMacro("Replace");
     std::vector<Imath::V3i> voxels = voxelsAffected();
     for (size_t i = 0; i < voxels.size(); i++)
     {
@@ -173,6 +178,7 @@ void ReplaceToolState::execute()
         if (p_gvg->get(voxels[i]) != m_color)
             p_undoManager->setVoxelColor(p_gvg, voxels[i], m_color, m_index);
     }
+    p_undoManager->endMacro();
     decrementClicks();
 }
 

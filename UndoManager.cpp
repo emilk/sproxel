@@ -14,20 +14,18 @@ void UndoManager::changeEntireVoxelGrid(VoxelGridGroupPtr origGrid,
 }
 
 
-void UndoManager::setVoxelColor(VoxelGridGroupPtr origGrid,
-                                const Imath::V3i& index,
+void UndoManager::setVoxelColor(VoxelGridGroupPtr sprite,
+                                const Imath::V3i& pos,
                                 const Imath::Color4f& color,
-                                int ind)
+                                int index)
 {
     // Validity check
-    /*
-    const Imath::V3i& cd = origGrid.cellDimensions();
-    if (index.x < 0     || index.y < 0     || index.z < 0 ||
-        index.x >= cd.x || index.y >= cd.y || index.z >= cd.z)
-        return;
-    */
+    if (!sprite) return;
 
-    m_undoStack.push(new CmdSetVoxelColor(origGrid, index, color, ind));
+    VoxelGridLayerPtr layer=sprite->curLayer();
+    if (!layer) return;
+
+    m_undoStack.push(new CmdSetVoxelColor(sprite, layer, pos, color, index));
 }
 
 
