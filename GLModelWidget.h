@@ -27,7 +27,7 @@ public:
                         FACE_NONE = 0x00, FACE_ALL  = 0x3f };
 
 public:
-    GLModelWidget(QWidget* parent, QSettings* appSettings, VoxelGridGroupPtr sprite);
+    GLModelWidget(QWidget* parent, QSettings* appSettings, UndoManager *undoManager, VoxelGridGroupPtr sprite);
     ~GLModelWidget();
 
     QSize minimumSizeHint() const;
@@ -60,14 +60,10 @@ public:
     void rotateVoxels(const SproxelAxis axis, const int dir);
     void setVoxelColor(const Imath::V3i& index, const Imath::Color4f color, int ind);
 
-    void clearUndoStack() { m_undoManager.clear(); }
-    void cleanUndoStack() { m_undoManager.setClean(); }
-
     // Accessors
     const Imath::V3i& activeVoxel() const { return m_activeVoxel; }
     const Imath::Color4f& activeColor() const { return m_activeColor; }
     int activeIndex() const { return m_activeIndex; }
-    bool modified() const { return !(m_undoManager.isClean()); }
     bool drawGrid() const { return m_drawGrid; }
     bool drawVoxelGrid() const { return m_drawVoxelGrid; }
     bool drawBoundingBox() const { return m_drawBoundingBox; }
@@ -86,9 +82,6 @@ public slots:
     void setCurrentAxis(const SproxelAxis val) { m_currAxis = val; updateGL(); }    // TODO: Change tool as well.
     void setActiveColor(const Imath::Color4f& c, int i) { m_activeColor = c; m_activeIndex=i; }
 
-    void undo() { m_undoManager.undo(); updateGL(); }
-    void redo() { m_undoManager.redo(); updateGL(); }
-
 protected:
     void initializeGL();
     void paintGL();
@@ -106,7 +99,7 @@ private:
     VoxelGridGroupPtr m_gvg;
     std::vector<Imath::V3i> m_previews;
 
-    UndoManager m_undoManager;
+    UndoManager *p_undoManager;
 
     Imath::V3i m_activeVoxel;
     Imath::Color4f m_activeColor;

@@ -29,6 +29,14 @@ void UndoManager::setVoxelColor(VoxelGridGroupPtr sprite,
 }
 
 
+void UndoManager::setPaletteColor(ColorPalettePtr pal, int index, const SproxelColor &color)
+{
+  if (!pal) return;
+
+  m_undoStack.push(new CmdSetPaletteColor(pal, index, color));
+}
+
+
 void UndoManager::beginMacro(const QString& macroName)
 {
     m_undoStack.beginMacro(macroName);

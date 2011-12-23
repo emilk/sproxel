@@ -28,13 +28,13 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_project->sprites.push_back(sprite);
 
     // Windows
-    m_glModelWidget = new GLModelWidget(this, &m_appSettings, sprite);
+    m_glModelWidget = new GLModelWidget(this, &m_appSettings, &m_undoManager, sprite);
     setCentralWidget(m_glModelWidget);
 
     // The docking palette widget
     m_paletteDocker = new QDockWidget(tr("Palette"), this);
     m_paletteDocker->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-    m_paletteWidget = new PaletteWidget(this);
+    m_paletteWidget = new PaletteWidget(this, &m_undoManager);
     m_paletteDocker->setWidget(m_paletteWidget);
     m_paletteWidget->setPalette(m_project->mainPalette);
     addDockWidget(Qt::RightDockWidgetArea, m_paletteDocker);
@@ -51,6 +51,8 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
                      m_glModelWidget, SLOT(setActiveColor(Imath::Color4f, int)));
     QObject::connect(m_glModelWidget, SIGNAL(colorSampled(Imath::Color4f, int)),
                      m_paletteWidget, SLOT(setActiveColor(Imath::Color4f, int)));
+    QObject::connect(&m_undoManager, SIGNAL(cleanChanged(bool)),
+                     this, SLOT(reactToModified(bool)));
 
 
     // Toolbar
@@ -112,17 +114,21 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     // ------ edit menu
     m_menuEdit = menuBar()->addMenu("&Edit");
 
-    m_actUndo = new QAction("Undo", this);
+    m_actUndo=m_undoManager.createUndoAction(this, "Undo");
     m_actUndo->setShortcut(Qt::CTRL + Qt::Key_Z);
     m_menuEdit->addAction(m_actUndo);
     connect(m_actUndo, SIGNAL(triggered()),
-            m_glModelWidget, SLOT(undo()));
+            m_glModelWidget, SLOT(updateGL()));
+    connect(m_actUndo, SIGNAL(triggered()),
+            m_paletteWidget, SLOT(repaint()));
 
-    m_actRedo = new QAction("Redo", this);
+    m_actRedo=m_undoManager.createRedoAction(this, "Redo");
     m_actRedo->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_Z);
     m_menuEdit->addAction(m_actRedo);
     connect(m_actRedo, SIGNAL(triggered()),
-            m_glModelWidget, SLOT(redo()));
+            m_glModelWidget, SLOT(updateGL()));
+    connect(m_actRedo, SIGNAL(triggered()),
+            m_paletteWidget, SLOT(repaint()));
 
     m_menuEdit->addSeparator();
 
@@ -336,7 +342,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
 void MainWindow::closeEvent(QCloseEvent* event)
 {
     // Confirmation dialog
-    if (m_glModelWidget->modified() == true)
+    if (!m_undoManager.isClean())
     {
         switch (fileModifiedDialog())
         {
@@ -458,7 +464,7 @@ int MainWindow::fileModifiedDialog()
 void MainWindow::newGrid()
 {
     // Confirmation dialog
-    if (m_glModelWidget->modified() == true)
+    if (!m_undoManager.isClean())
     {
         switch (fileModifiedDialog())
         {
@@ -473,8 +479,7 @@ void MainWindow::newGrid()
     if (dlg.exec())
     {
         m_activeFilename = "";
-        m_glModelWidget->cleanUndoStack();
-        m_glModelWidget->clearUndoStack();
+        m_undoManager.clear();
         setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
 
         // create new project
@@ -492,7 +497,7 @@ void MainWindow::newGrid()
 
 void MainWindow::saveFile()
 {
-    if (m_glModelWidget->modified() == false)
+    if (m_undoManager.isClean())
         return;
 
     if (m_activeFilename == "")
@@ -507,7 +512,7 @@ void MainWindow::saveFile()
         success = m_glModelWidget->saveGridCSV(m_activeFilename.toStdString());
 
     if (success)
-        m_glModelWidget->cleanUndoStack();
+      m_undoManager.setClean();
     else
       QMessageBox::critical(this, "Sproxel Error", QString("Error saving project to file ")+m_activeFilename);
 }
@@ -549,7 +554,7 @@ void MainWindow::saveFileAs()
 
     if (success)
     {
-        m_glModelWidget->cleanUndoStack();
+        m_undoManager.setClean();
         m_activeFilename = filename;
         setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
     }
@@ -568,7 +573,7 @@ void MainWindow::openFile()
         return;
 
     // Confirmation dialog
-    if (m_glModelWidget->modified() == true)
+    if (!m_undoManager.isClean())
     {
         switch (fileModifiedDialog())
         {
@@ -591,8 +596,7 @@ void MainWindow::openFile()
 
     if (success)
     {
-        m_glModelWidget->cleanUndoStack();
-        m_glModelWidget->clearUndoStack();
+        m_undoManager.clear();
 
         if (m_project->sprites.empty())
         {

@@ -158,7 +158,7 @@ void PaletteWidget::mousePressEvent(QMouseEvent* event)
           color = QColorDialog::getColor(toQColor(m_palette->color(ci)), this,
             "Select palette color #"+tmpStr, QColorDialog::ShowAlphaChannel);
 
-          if (color.isValid()) m_palette->setColor(ci, toColor4f(color));
+          if (color.isValid()) p_undoManager->setPaletteColor(m_palette, ci, toColor4f(color));
         }
       }
       break;

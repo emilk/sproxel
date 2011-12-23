@@ -15,14 +15,14 @@
 
 Imath::Box3d fakeBounds(Imath::V3d(-50, -50, -50), Imath::V3d(50, 50, 50));
 
-GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, VoxelGridGroupPtr sprite)
+GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, UndoManager *undoManager, VoxelGridGroupPtr sprite)
     : QGLWidget(parent),
       m_cam(),
       m_cameraSnapStep(45.0),
       m_cameraSnapDelta(m_cameraSnapStep/2.0, m_cameraSnapStep/2.0),
       m_gvg(sprite),
       m_previews(),
-      m_undoManager(),
+      p_undoManager(undoManager),
       m_activeVoxel(-1,-1,-1),
       m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_activeIndex(-1),
@@ -44,10 +44,6 @@ GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, VoxelGridG
 
     // Always shoot rays through the scene - even when a mouse button isn't pressed
     setMouseTracking(true);
-
-    // Be sure to tell the parent window every time we muck with the scene
-    QObject::connect(&m_undoManager, SIGNAL(cleanChanged(bool)),
-                     parent, SLOT(reactToModified(bool)));
 }
 
 
@@ -70,8 +66,6 @@ void GLModelWidget::saveSettings()
 
 void GLModelWidget::setSprite(VoxelGridGroupPtr sprite)
 {
-  cleanUndoStack();
-  clearUndoStack();
   m_gvg=sprite;
   centerGrid();
   updateGL();
@@ -123,7 +117,7 @@ void GLModelWidget::resizeAndShiftVoxelGrid(const Imath::V3i& sizeInc,
         }
     }
 
-    m_undoManager.changeEntireVoxelGrid(m_gvg, newGridPtr);
+    p_undoManager->changeEntireVoxelGrid(m_gvg, newGridPtr);
     centerGrid();
     updateGL();
 }
@@ -185,7 +179,7 @@ void GLModelWidget::reresVoxelGrid(const float scale)
         }
     }
 
-    m_undoManager.changeEntireVoxelGrid(m_gvg, newGridPtr);
+    p_undoManager->changeEntireVoxelGrid(m_gvg, newGridPtr);
     updateGL();
 }
 
@@ -208,13 +202,13 @@ void GLModelWidget::setActiveTool(const SproxelTool tool)
     switch (tool)
     {
         case TOOL_RAY: break;   // TODO: Add icon and implement!
-        case TOOL_SPLAT: m_activeTool = new SplatToolState(&m_undoManager); break;
-        case TOOL_FLOOD: m_activeTool = new FloodToolState(&m_undoManager); break;
-        case TOOL_DROPPER: m_activeTool = new DropperToolState(&m_undoManager); break;
-        case TOOL_ERASER: m_activeTool = new EraserToolState(&m_undoManager); break;
-        case TOOL_REPLACE: m_activeTool = new ReplaceToolState(&m_undoManager); break;
-        case TOOL_SLAB: m_activeTool = new SlabToolState(&m_undoManager); break;
-        case TOOL_LINE: m_activeTool = new LineToolState(&m_undoManager); break;
+        case TOOL_SPLAT: m_activeTool = new SplatToolState(p_undoManager); break;
+        case TOOL_FLOOD: m_activeTool = new FloodToolState(p_undoManager); break;
+        case TOOL_DROPPER: m_activeTool = new DropperToolState(p_undoManager); break;
+        case TOOL_ERASER: m_activeTool = new EraserToolState(p_undoManager); break;
+        case TOOL_REPLACE: m_activeTool = new ReplaceToolState(p_undoManager); break;
+        case TOOL_SLAB: m_activeTool = new SlabToolState(p_undoManager); break;
+        case TOOL_LINE: m_activeTool = new LineToolState(p_undoManager); break;
     }
 }
 
@@ -1706,7 +1700,7 @@ void GLModelWidget::shiftVoxels(const SproxelAxis axis, const bool up, const boo
     if (up) std::swap(backupIndex, clearIndex);
 
 
-    m_undoManager.beginMacro("Shift");
+    p_undoManager->beginMacro("Shift");
 
     // Backup the necessary slice
     Imath::Color4f* sliceBackup = NULL;
@@ -1796,7 +1790,7 @@ void GLModelWidget::shiftVoxels(const SproxelAxis axis, const bool up, const boo
     if (sliceBackup   ) delete[] sliceBackup   ;
     if (sliceBackupInd) delete[] sliceBackupInd;
 
-    m_undoManager.endMacro();
+    p_undoManager->endMacro();
     updateGL();
 }
 
@@ -1844,7 +1838,7 @@ void GLModelWidget::rotateVoxels(const SproxelAxis axis, const int dir)
         }
     }
 
-    m_undoManager.changeEntireVoxelGrid(m_gvg, newGridPtr);
+    p_undoManager->changeEntireVoxelGrid(m_gvg, newGridPtr);
 
     centerGrid();
     updateGL();
@@ -1856,7 +1850,7 @@ void GLModelWidget::mirrorVoxels(const SproxelAxis axis)
     //== FIXME: current implementation collapses all layers, should be per-layer operation
     VoxelGridGroupPtr backup(new VoxelGridGroup(*m_gvg));
 
-    m_undoManager.beginMacro("Mirror");
+    p_undoManager->beginMacro("Mirror");
 
     Imath::Box3i dim=m_gvg->bounds();
 
@@ -1878,7 +1872,7 @@ void GLModelWidget::mirrorVoxels(const SproxelAxis axis)
         }
     }
 
-    m_undoManager.endMacro();
+    p_undoManager->endMacro();
     updateGL();
 }
 
@@ -1894,5 +1888,5 @@ void GLModelWidget::setVoxelColor(const Imath::V3i& index, const Imath::Color4f 
         return;
     */
 
-    m_undoManager.setVoxelColor(m_gvg, index, color, ind);
+    p_undoManager->setVoxelColor(m_gvg, index, color, ind);
 }

@@ -36,6 +36,8 @@ private:
 
     SproxelProjectPtr m_project;
 
+    UndoManager m_undoManager;
+
     GLModelWidget* m_glModelWidget;
 
     // Menus

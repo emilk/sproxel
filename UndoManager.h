@@ -31,6 +31,8 @@ public:
                        const Imath::Color4f& color,
                        int index);
 
+    void setPaletteColor(ColorPalettePtr pal, int index, const SproxelColor &color);
+
     void beginMacro(const QString& macroName);
     void endMacro();
     void clear();
@@ -41,6 +43,12 @@ public:
     void setClean();
     bool isClean() const;
 
+    QAction* createUndoAction(QObject *parent, const QString &prefix)
+      { return m_undoStack.createUndoAction(parent, prefix); }
+
+    QAction* createRedoAction(QObject *parent, const QString &prefix)
+      { return m_undoStack.createRedoAction(parent, prefix); }
+
 signals:
     void cleanChanged(bool);
 
@@ -50,7 +58,35 @@ private:
 };
 
 
-// Sproxel registers two QT undo'able commands
+// Change single palette color
+class CmdSetPaletteColor : public QUndoCommand
+{
+public:
+
+  CmdSetPaletteColor(ColorPalettePtr pal, int index, const SproxelColor &color)
+    : m_palette(pal), m_index(index), m_newColor(color)
+  {
+    m_oldColor=pal->color(index);
+    setText("Change palette color");
+  }
+
+  virtual void redo()
+  {
+    m_palette->setColor(m_index, m_newColor);
+  }
+
+  virtual void undo()
+  {
+    m_palette->setColor(m_index, m_oldColor);
+  }
+
+private:
+  ColorPalettePtr m_palette;
+  int m_index;
+  SproxelColor m_oldColor, m_newColor;
+};
+
+
 // ChangeEntireVoxelGrid (which cannot be Macro'ed)
 class CmdChangeEntireVoxelGrid : public QUndoCommand
 {

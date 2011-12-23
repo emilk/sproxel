@@ -6,6 +6,7 @@
 #include <QPalette>
 #include <ImathColor.h>
 #include "VoxelGridGroup.h"
+#include "UndoManager.h"
 
 
 class PaletteWidget : public QWidget
@@ -13,8 +14,9 @@ class PaletteWidget : public QWidget
     Q_OBJECT
 
 public:
-    PaletteWidget(QWidget* parent = NULL) :
+    PaletteWidget(QWidget* parent, UndoManager *um) :
         QWidget(parent),
+        p_undoManager(um),
         m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
         m_passiveColor(0.0f, 0.0f, 0.0f, 1.0f),
         m_activeIndex(-1),
@@ -62,6 +64,8 @@ private:
     ColorPalettePtr m_palette;
 
     int m_hilightIndex;
+
+    UndoManager *p_undoManager;
 
     QColor toQColor(const Imath::Color4f& in);
     QColor toQColor(const Imath::Color4f& in, float alpha);
