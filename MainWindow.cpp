@@ -231,6 +231,12 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     // ------ view menu
     m_menuView = menuBar()->addMenu("&View");
 
+    QAction *action=new QAction(tr("Frame sprite"), this);
+    action->setShortcut(Qt::Key_Z);
+    m_menuView->addAction(action);
+    connect(action, SIGNAL(triggered()),
+      m_glModelWidget, SLOT(frameFull()));
+
     m_actViewGrid = new QAction("View Grid", this);
     m_actViewGrid->setShortcut(Qt::CTRL + Qt::Key_G);
     m_actViewGrid->setCheckable(true);

@@ -83,6 +83,8 @@ public slots:
     void setActiveColor(const Imath::Color4f& c, int i) { m_activeColor = c; m_activeIndex=i; }
     void onSpriteChanged(VoxelGridGroupPtr spr) { if (spr==m_gvg) update(); }
     void onPaletteChanged(ColorPalettePtr pal) { if (m_gvg && m_gvg->hasPalette(pal)) update(); }
+    void frameFull() { frame(true); }
+    void frameData() { frame(false); }
 
 protected:
     void initializeGL();
