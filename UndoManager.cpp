@@ -1,5 +1,6 @@
 #include "UndoManager.h"
 
+
 UndoManager::UndoManager()
 {
     QObject::connect(&m_undoStack, SIGNAL(cleanChanged(bool)),
@@ -7,10 +8,22 @@ UndoManager::UndoManager()
 }
 
 
+void UndoManager::onSpriteChanged(VoxelGridGroupPtr spr)
+{
+  emit spriteChanged(spr);
+}
+
+
+void UndoManager::onPaletteChanged(ColorPalettePtr pal)
+{
+  emit paletteChanged(pal);
+}
+
+
 void UndoManager::changeEntireVoxelGrid(VoxelGridGroupPtr origGrid,
                                         const VoxelGridGroupPtr newGrid)
 {
-    m_undoStack.push(new CmdChangeEntireVoxelGrid(origGrid, newGrid));
+    m_undoStack.push(new CmdChangeEntireVoxelGrid(this, origGrid, newGrid));
 }
 
 
@@ -25,7 +38,7 @@ void UndoManager::setVoxelColor(VoxelGridGroupPtr sprite,
     VoxelGridLayerPtr layer=sprite->curLayer();
     if (!layer) return;
 
-    m_undoStack.push(new CmdSetVoxelColor(sprite, layer, pos, color, index));
+    m_undoStack.push(new CmdSetVoxelColor(this, sprite, layer, pos, color, index));
 }
 
 
@@ -33,7 +46,7 @@ void UndoManager::setPaletteColor(ColorPalettePtr pal, int index, const SproxelC
 {
   if (!pal) return;
 
-  m_undoStack.push(new CmdSetPaletteColor(pal, index, color));
+  m_undoStack.push(new CmdSetPaletteColor(this, pal, index, color));
 }
 
 

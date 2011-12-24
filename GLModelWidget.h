@@ -34,7 +34,6 @@ public:
     QSize sizeHint() const;
 
     VoxelGridGroupPtr getSprite() const { return m_gvg; }
-    void setSprite(VoxelGridGroupPtr sprite);
 
     void saveSettings();
 
@@ -74,6 +73,7 @@ signals:
     void colorSampled(const Imath::Color4f& color, int index);
 
 public slots:
+    void setSprite(VoxelGridGroupPtr sprite);
     void setActiveTool(const SproxelTool tool);
     void setDrawGrid(const bool value) { m_drawGrid = value; updateGL(); }
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
@@ -81,6 +81,8 @@ public slots:
     void setShiftWrap(const bool value) { m_shiftWrap = value; }
     void setCurrentAxis(const SproxelAxis val) { m_currAxis = val; updateGL(); }    // TODO: Change tool as well.
     void setActiveColor(const Imath::Color4f& c, int i) { m_activeColor = c; m_activeIndex=i; }
+    void onSpriteChanged(VoxelGridGroupPtr spr) { if (spr==m_gvg) update(); }
+    void onPaletteChanged(ColorPalettePtr pal) { if (m_gvg && m_gvg->hasPalette(pal)) update(); }
 
 protected:
     void initializeGL();

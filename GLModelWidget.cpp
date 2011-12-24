@@ -40,10 +40,16 @@ GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, UndoManage
     m_drawBoundingBox=p_appSettings->value("GLModelWidget/drawBoundingBox", false).toBool();
 
     // Default empty grid
-    centerGrid();
+    //centerGrid();
 
     // Always shoot rays through the scene - even when a mouse button isn't pressed
     setMouseTracking(true);
+
+    connect(p_undoManager, SIGNAL(spriteChanged(VoxelGridGroupPtr)),
+      this, SLOT(onSpriteChanged(VoxelGridGroupPtr)));
+
+    connect(p_undoManager, SIGNAL(paletteChanged(ColorPalettePtr)),
+      this, SLOT(onPaletteChanged(ColorPalettePtr)));
 }
 
 
@@ -67,7 +73,7 @@ void GLModelWidget::saveSettings()
 void GLModelWidget::setSprite(VoxelGridGroupPtr sprite)
 {
   m_gvg=sprite;
-  centerGrid();
+  //centerGrid();
   updateGL();
 }
 

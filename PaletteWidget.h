@@ -29,6 +29,9 @@ public:
             m_backgroundColor = Imath::Color4f((float)winColor.red()/255.0f,
                                                (float)winColor.green()/255.0f,
                                                (float)winColor.blue()/255.0f, 1.0f);
+
+            connect(p_undoManager, SIGNAL(paletteChanged(ColorPalettePtr)),
+              this, SLOT(onPaletteChanged(ColorPalettePtr)));
         }
     ~PaletteWidget() {}
 
@@ -45,6 +48,7 @@ public slots:
     void setActiveColor (const Imath::Color4f& color, int index);
     void setPassiveColor(const Imath::Color4f& color, int index);
     void swapColors();
+    void onPaletteChanged(ColorPalettePtr pal) { if (pal==m_palette) update(); }
 
 protected:
     void paintEvent(QPaintEvent *event);

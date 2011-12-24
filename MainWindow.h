@@ -8,6 +8,7 @@
 #include <QSettings>
 #include <QMainWindow>
 
+#include "ProjectWidget.h"
 #include "LayersWidget.h"
 #include "NewGridDialog.h"
 #include "PaletteWidget.h"
@@ -52,6 +53,9 @@ private:
 
     QDockWidget* m_paletteDocker;
     PaletteWidget* m_paletteWidget;
+
+    QDockWidget* m_projectDocker;
+    ProjectWidget* m_projectWidget;
 
     //QDockWidget* m_layersDocker;
     //LayersWidget* m_layersWidget;

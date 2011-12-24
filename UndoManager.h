@@ -4,7 +4,7 @@
 #include "Global.h"
 
 #include <QString>
-#include <QWidget>
+#include <QObject>
 #include <QVector>
 #include <QUndoStack>
 #include <QUndoCommand>
@@ -12,7 +12,7 @@
 
 // A wrapper class for Sproxel.
 // Allows for an easy subset of undo/redo operations.
-class UndoManager : public QWidget
+class UndoManager : public QObject
 {
     Q_OBJECT
 
@@ -49,8 +49,13 @@ public:
     QAction* createRedoAction(QObject *parent, const QString &prefix)
       { return m_undoStack.createRedoAction(parent, prefix); }
 
+    void onSpriteChanged(VoxelGridGroupPtr);
+    void onPaletteChanged(ColorPalettePtr);
+
 signals:
     void cleanChanged(bool);
+    void spriteChanged(VoxelGridGroupPtr);
+    void paletteChanged(ColorPalettePtr);
 
 private:
     QUndoStack m_undoStack;
@@ -63,8 +68,8 @@ class CmdSetPaletteColor : public QUndoCommand
 {
 public:
 
-  CmdSetPaletteColor(ColorPalettePtr pal, int index, const SproxelColor &color)
-    : m_palette(pal), m_index(index), m_newColor(color)
+  CmdSetPaletteColor(UndoManager *mgr, ColorPalettePtr pal, int index, const SproxelColor &color)
+    : m_manager(mgr), m_palette(pal), m_index(index), m_newColor(color)
   {
     m_oldColor=pal->color(index);
     setText("Change palette color");
@@ -73,14 +78,17 @@ public:
   virtual void redo()
   {
     m_palette->setColor(m_index, m_newColor);
+    m_manager->onPaletteChanged(m_palette);
   }
 
   virtual void undo()
   {
     m_palette->setColor(m_index, m_oldColor);
+    m_manager->onPaletteChanged(m_palette);
   }
 
 private:
+  UndoManager *m_manager;
   ColorPalettePtr m_palette;
   int m_index;
   SproxelColor m_oldColor, m_newColor;
@@ -91,8 +99,8 @@ private:
 class CmdChangeEntireVoxelGrid : public QUndoCommand
 {
 public:
-    CmdChangeEntireVoxelGrid(VoxelGridGroupPtr gvg, const VoxelGridGroupPtr newGrid) :
-        m_pGvg(gvg)
+    CmdChangeEntireVoxelGrid(UndoManager *mgr, VoxelGridGroupPtr gvg, const VoxelGridGroupPtr newGrid) :
+        m_manager(mgr), m_pGvg(gvg)
     {
         m_newGrid = new VoxelGridGroup(*newGrid);
         m_oldGrid = new VoxelGridGroup(*gvg);
@@ -102,14 +110,17 @@ public:
     virtual void redo()
     {
         *m_pGvg = *m_newGrid;
+        m_manager->onSpriteChanged(m_pGvg);
     }
 
     virtual void undo()
     {
         *m_pGvg = *m_oldGrid;
+        m_manager->onSpriteChanged(m_pGvg);
     }
 
 private:
+    UndoManager *m_manager;
     VoxelGridGroupPtr m_pGvg;
     VoxelGridGroupPtr m_newGrid;
     VoxelGridGroupPtr m_oldGrid;
@@ -121,9 +132,9 @@ class CmdSetVoxelColor : public QUndoCommand
 {
 public:
 
-  CmdSetVoxelColor(VoxelGridGroupPtr spr, VoxelGridLayerPtr layer,
+  CmdSetVoxelColor(UndoManager *mgr, VoxelGridGroupPtr spr, VoxelGridLayerPtr layer,
     const Imath::V3i& pos, const Imath::Color4f &color, int index)
-    : m_sprite(spr), m_layer(layer)
+    : m_manager(mgr), m_sprite(spr), m_layer(layer)
   {
     m_changes.push_back(Change(pos, m_layer->getColor(pos), m_layer->getInd(pos), color, index));
     setText("Set voxel");
@@ -131,13 +142,13 @@ public:
 
   virtual void redo()
   {
-    if (!m_layer) return;
-
     for (int i=0; i<m_changes.size(); ++i)
     {
       const Change &c=m_changes[i];
       m_layer->set(c.pos, c.newColor, c.newIndex);
     }
+
+    m_manager->onSpriteChanged(m_sprite);
   }
 
   virtual void undo()
@@ -147,6 +158,8 @@ public:
       const Change &c=m_changes[i];
       m_layer->set(c.pos, c.oldColor, c.oldIndex);
     }
+
+    m_manager->onSpriteChanged(m_sprite);
   }
 
   virtual int id() const { return UndoManager::ID_SETVOXEL; }
@@ -176,6 +189,7 @@ protected:
   }
 
 private:
+  UndoManager *m_manager;
   VoxelGridGroupPtr m_sprite;
   VoxelGridLayerPtr m_layer;
   QVector<Change> m_changes;

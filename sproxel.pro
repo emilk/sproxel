@@ -43,6 +43,7 @@ SOURCES += \
     PreferencesDialog.cpp \
     PaletteWidget.cpp \
     LayersWidget.cpp \
+    ProjectWidget.cpp \
     Tools.cpp \
     UndoManager.cpp \
     SproxelProject.cpp \
@@ -62,6 +63,7 @@ HEADERS  += \
     PreferencesDialog.h \
     PaletteWidget.h \
     LayersWidget.h \
+    ProjectWidget.h \
     Tools.h \
     UndoManager.h \
     script.h \

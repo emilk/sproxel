@@ -441,6 +441,15 @@ public:
   }
 
 
+  bool hasPalette(ColorPalettePtr pal) const
+  {
+    for (int i=0; i<m_layers.size(); ++i)
+      if (m_layers[i]->palette()==pal) return true;
+
+    return false;
+  }
+
+
   Imath::V3d voxelCenter(const Imath::V3i& v) const
   {
     return Imath::V3d(

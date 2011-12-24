@@ -27,6 +27,16 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     sprite->setName("unnamed");
     m_project->sprites.push_back(sprite);
 
+    VoxelGridGroupPtr otherSprite;
+
+    otherSprite=new VoxelGridGroup(*sprite);
+    otherSprite->setName("sprite-1");
+    m_project->sprites.push_back(otherSprite);
+
+    otherSprite=new VoxelGridGroup(*sprite);
+    otherSprite->setName("sprite-2");
+    m_project->sprites.push_back(otherSprite);
+
     // Windows
     m_glModelWidget = new GLModelWidget(this, &m_appSettings, &m_undoManager, sprite);
     setCentralWidget(m_glModelWidget);
@@ -38,6 +48,14 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_paletteDocker->setWidget(m_paletteWidget);
     m_paletteWidget->setPalette(m_project->mainPalette);
     addDockWidget(Qt::RightDockWidgetArea, m_paletteDocker);
+
+    // The docking project widget
+    m_projectDocker=new QDockWidget(tr("Project"), this);
+    m_projectDocker->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    m_projectWidget=new ProjectWidget(this, &m_undoManager, &m_appSettings);
+    m_projectDocker->setWidget(m_projectWidget);
+    m_projectWidget->setProject(m_project);
+    addDockWidget(Qt::RightDockWidgetArea, m_projectDocker);
 
     // The docking layers widget
     //m_layersDocker = new QDockWidget(tr("Layers"), this);
@@ -53,6 +71,9 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
                      m_paletteWidget, SLOT(setActiveColor(Imath::Color4f, int)));
     QObject::connect(&m_undoManager, SIGNAL(cleanChanged(bool)),
                      this, SLOT(reactToModified(bool)));
+
+    QObject::connect(m_projectWidget, SIGNAL(spriteSelected(VoxelGridGroupPtr)),
+      m_glModelWidget, SLOT(setSprite(VoxelGridGroupPtr)));
 
 
     // Toolbar
@@ -117,18 +138,10 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_actUndo=m_undoManager.createUndoAction(this, "Undo");
     m_actUndo->setShortcut(Qt::CTRL + Qt::Key_Z);
     m_menuEdit->addAction(m_actUndo);
-    connect(m_actUndo, SIGNAL(triggered()),
-            m_glModelWidget, SLOT(updateGL()));
-    connect(m_actUndo, SIGNAL(triggered()),
-            m_paletteWidget, SLOT(repaint()));
 
     m_actRedo=m_undoManager.createRedoAction(this, "Redo");
     m_actRedo->setShortcut(Qt::CTRL + Qt::SHIFT + Qt::Key_Z);
     m_menuEdit->addAction(m_actRedo);
-    connect(m_actRedo, SIGNAL(triggered()),
-            m_glModelWidget, SLOT(updateGL()));
-    connect(m_actRedo, SIGNAL(triggered()),
-            m_paletteWidget, SLOT(repaint()));
 
     m_menuEdit->addSeparator();
 
@@ -247,6 +260,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_menuWindow = menuBar()->addMenu("&Window");
     m_menuWindow->addAction(m_toolbar->toggleViewAction());
     m_menuWindow->addAction(m_paletteDocker->toggleViewAction());
+    m_menuWindow->addAction(m_projectDocker->toggleViewAction());
     //m_menuWindow->addAction(m_layersDocker->toggleViewAction());
     m_menuWindow->addAction(get_python_console_widget()->toggleViewAction());
     get_python_console_widget()->toggleViewAction()->setChecked(false);
@@ -308,6 +322,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
         move(m_appSettings.value("MainWindow/position", QPoint(200, 200)).toPoint());
         m_toolbar->setVisible(m_appSettings.value("toolbar/visibility", true).toBool());
         m_paletteDocker->setVisible(m_appSettings.value("paletteWindow/visibility", true).toBool());
+        m_projectDocker->setVisible(m_appSettings.value("projectWindow/visibility", true).toBool());
         //m_layersDocker->setVisible(m_appSettings.value("layersWindow/visibility", true).toBool());
     }
 
@@ -366,6 +381,7 @@ void MainWindow::closeEvent(QCloseEvent* event)
         m_appSettings.setValue("MainWindow/position", pos());
         m_appSettings.setValue("toolbar/visibility", m_toolbar->isVisible());
         m_appSettings.setValue("paletteWindow/visibility", m_paletteDocker->isVisible());
+        m_appSettings.setValue("projectWindow/visibility", m_projectDocker->isVisible());
         //m_appSettings.setValue("layersWindow/visibility", m_layersDocker->isVisible());
     }
 
@@ -491,6 +507,7 @@ void MainWindow::newGrid()
 
         m_glModelWidget->setSprite(sprite);
         m_paletteWidget->setPalette(m_project->mainPalette);
+        m_projectWidget->setProject(m_project);
     }
 }
 
@@ -609,6 +626,7 @@ void MainWindow::openFile()
 
         m_glModelWidget->setSprite(m_project->sprites[0]);
         m_paletteWidget->setPalette(m_project->mainPalette);
+        m_projectWidget->setProject(m_project);
 
         m_activeFilename = filename;
         setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
