@@ -134,6 +134,21 @@ void SpriteListModel::currentChanged(const QModelIndex &current, const QModelInd
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
+class SpriteItemDelegate : public QStyledItemDelegate
+{
+public:
+  SpriteItemDelegate(QObject *p) : QStyledItemDelegate(p) {}
+
+  QSize sizeHint(const QStyleOptionViewItem &, const QModelIndex &) const
+  {
+    return QSize(ICON_SIZE+10, ICON_SIZE+20);
+  }
+};
+
+
+//ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
 ProjectWidget::ProjectWidget(QWidget* parent, UndoManager *um, QSettings *sett)
   : QWidget(parent), p_undoManager(um)
 {
@@ -144,9 +159,13 @@ ProjectWidget::ProjectWidget(QWidget* parent, UndoManager *um, QSettings *sett)
   m_sprListView->setViewMode(QListView::IconMode);
   m_sprListView->setIconSize(QSize(ICON_SIZE, ICON_SIZE));
   m_sprListView->setGridSize(QSize(ICON_SIZE+10, ICON_SIZE+20));
-  //m_sprListView->setSpacing(10);
   m_sprListView->setMovement(QListView::Snap);
+  m_sprListView->setTextElideMode(Qt::ElideMiddle);
   m_sprListView->setResizeMode(QListView::Adjust);
+
+  // set custom delegate to ensure constant item size
+  m_sprDelegate=new SpriteItemDelegate(this);
+  m_sprListView->setItemDelegate(m_sprDelegate);
 
   m_sprListModel=new SpriteListModel(sett, this);
   m_sprListView->setModel(m_sprListModel);
@@ -198,6 +217,12 @@ ProjectWidget::ProjectWidget(QWidget* parent, UndoManager *um, QSettings *sett)
 
   connect(m_sprListModel, SIGNAL(spriteSelected(VoxelGridGroupPtr)),
     this, SIGNAL(spriteSelected(VoxelGridGroupPtr)));
+}
+
+
+ProjectWidget::~ProjectWidget()
+{
+  if (m_sprDelegate) delete m_sprDelegate;
 }
 
 

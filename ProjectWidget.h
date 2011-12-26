@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QListView>
+#include <QStyledItemDelegate>
 #include <QImage>
 #include <QPixmap>
 #include <QVector>
@@ -119,6 +120,7 @@ class ProjectWidget : public QWidget
 
 public:
   ProjectWidget(QWidget* parent, UndoManager *um, QSettings *sett);
+  ~ProjectWidget();
 
   QSize minimumSizeHint() const;
   QSize sizeHint() const;
@@ -141,6 +143,7 @@ private:
   SproxelProjectPtr m_project;
   QListView* m_sprListView;
   SpriteListModel* m_sprListModel;
+  QStyledItemDelegate *m_sprDelegate;
 };
 
 
