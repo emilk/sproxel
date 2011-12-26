@@ -20,8 +20,8 @@ class SpriteListModel : public QAbstractListModel
   Q_OBJECT
 
 public:
-  SpriteListModel(QSettings *sett, QObject* parent = NULL)
-    : QAbstractListModel(parent), p_appSettings(sett)
+  SpriteListModel(QSettings *sett, UndoManager *um, QObject* parent = NULL)
+    : QAbstractListModel(parent), p_appSettings(sett), p_undoManager(um)
   {
   }
 
@@ -59,6 +59,7 @@ private:
   QVector<QPixmap> m_icons;
 
   QSettings *p_appSettings;
+  UndoManager *p_undoManager;
 
   void updateIcon(int i);
 
@@ -91,7 +92,7 @@ public:
     int row=index.row();
     if (role==Qt::EditRole)
     {
-      m_project->sprites[row]->setName(value.toString()); //== TODO: undo
+      p_undoManager->renameSprite(m_project->sprites[row], value.toString());
       emit dataChanged(index, index);
       return true;
     }

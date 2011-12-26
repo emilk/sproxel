@@ -167,7 +167,7 @@ ProjectWidget::ProjectWidget(QWidget* parent, UndoManager *um, QSettings *sett)
   m_sprDelegate=new SpriteItemDelegate(this);
   m_sprListView->setItemDelegate(m_sprDelegate);
 
-  m_sprListModel=new SpriteListModel(sett, this);
+  m_sprListModel=new SpriteListModel(sett, um, this);
   m_sprListView->setModel(m_sprListModel);
 
   QHBoxLayout *buttonBar=new QHBoxLayout(this);

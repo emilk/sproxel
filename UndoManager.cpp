@@ -92,6 +92,13 @@ void UndoManager::removeSprite(SproxelProjectPtr proj, int at)
 }
 
 
+void UndoManager::renameSprite(VoxelGridGroupPtr spr, const QString &name)
+{
+  if (!spr) return;
+  m_undoStack.push(new CmdRenameSprite(this, spr, name));
+}
+
+
 void UndoManager::beginMacro(const QString& macroName)
 {
     m_undoStack.beginMacro(macroName);

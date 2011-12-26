@@ -37,6 +37,8 @@ public:
     void addSprite(SproxelProjectPtr proj, int at, VoxelGridGroupPtr spr);
     void removeSprite(SproxelProjectPtr proj, int at);
 
+    void renameSprite(VoxelGridGroupPtr spr, const QString &name);
+
     void beginMacro(const QString& macroName);
     void endMacro();
     void clear();
@@ -72,6 +74,37 @@ signals:
 private:
     QUndoStack m_undoStack;
 
+};
+
+
+// Rename sprite
+class CmdRenameSprite : public QUndoCommand
+{
+public:
+
+  CmdRenameSprite(UndoManager *mgr, VoxelGridGroupPtr spr, const QString &name)
+    : m_manager(mgr), m_sprite(spr), m_newName(name)
+  {
+    m_oldName=spr->name();
+    setText("Rename sprite");
+  }
+
+  virtual void redo()
+  {
+    m_sprite->setName(m_newName);
+    m_manager->onSpriteChanged(m_sprite);
+  }
+
+  virtual void undo()
+  {
+    m_sprite->setName(m_oldName);
+    m_manager->onSpriteChanged(m_sprite);
+  }
+
+private:
+  UndoManager *m_manager;
+  VoxelGridGroupPtr m_sprite;
+  QString m_oldName, m_newName;
 };
 
 
