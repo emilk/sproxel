@@ -1,6 +1,7 @@
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
+#include <QMimeData>
 #include "ProjectWidget.h"
 
 
@@ -131,6 +132,32 @@ void SpriteListModel::currentChanged(const QModelIndex &current, const QModelInd
 }
 
 
+bool SpriteListModel::dropMimeData(const QMimeData *mime, Qt::DropAction, int row, int, const QModelIndex &parent)
+{
+  QByteArray encoded = mime->data("application/x-qabstractitemmodeldatalist");
+  if (encoded.size())
+  {
+    QDataStream stream(&encoded, QIODevice::ReadOnly);
+    int fromRow=-1;
+    stream >> fromRow;
+
+    if (row<0) row=parent.row();
+    if (row<0 || fromRow<0) return false;
+    if (row==fromRow) return false;
+
+    p_undoManager->beginMacro("Move sprite");
+    VoxelGridGroupPtr spr=m_project->sprites[fromRow];
+    p_undoManager->removeSprite(m_project, fromRow);
+    p_undoManager->addSprite(m_project, row, spr);
+    p_undoManager->endMacro();
+
+    return true;
+  }
+
+  return false;
+}
+
+
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
@@ -217,6 +244,9 @@ ProjectWidget::ProjectWidget(QWidget* parent, UndoManager *um, QSettings *sett)
 
   connect(m_sprListModel, SIGNAL(spriteSelected(VoxelGridGroupPtr)),
     this, SIGNAL(spriteSelected(VoxelGridGroupPtr)));
+
+  connect(m_sprListView, SIGNAL(indexesMoved(const QModelIndexList&)),
+    this, SLOT(indexesMoved(const QModelIndexList&)));
 }
 
 
@@ -250,6 +280,14 @@ void ProjectWidget::paintEvent(QPaintEvent *event)
 {
   m_sprListModel->updateIcons();
   QWidget::paintEvent(event);
+}
+
+
+void ProjectWidget::indexesMoved(const QModelIndexList &)
+{
+  // reset list layout when item is dropped into empty space
+  m_sprListView->setMovement(QListView::Static);
+  m_sprListView->setMovement(QListView::Snap);
 }
 
 

@@ -101,13 +101,22 @@ public:
   }
 
 
+  bool dropMimeData(const QMimeData *mime, Qt::DropAction action, int row, int col, const QModelIndex &parent);
+
+
+  Qt::DropActions supportedDropActions() const
+  {
+    return Qt::CopyAction;
+  }
+
+
   Qt::ItemFlags flags(const QModelIndex& index) const
   {
     Qt::ItemFlags defaultFlags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
     if (index.isValid())
-      return Qt::ItemIsEditable | defaultFlags;
+      return Qt::ItemIsDropEnabled | Qt::ItemIsDragEnabled | Qt::ItemIsEditable | defaultFlags;
     else
-      return defaultFlags;
+      return Qt::ItemIsDropEnabled | defaultFlags;
   }
 };
 
@@ -135,6 +144,8 @@ public slots:
   void newSprite();
   void deleteSelected();
   void duplicateSelected();
+
+  void indexesMoved(const QModelIndexList &list);
 
 protected:
   void paintEvent(QPaintEvent *event);
