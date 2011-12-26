@@ -2,6 +2,7 @@
 #define __UNDO_MANAGER_H__
 
 #include "Global.h"
+#include "SproxelProject.h"
 
 #include <QString>
 #include <QObject>
@@ -33,6 +34,9 @@ public:
 
     void setPaletteColor(ColorPalettePtr pal, int index, const SproxelColor &color);
 
+    void addSprite(SproxelProjectPtr proj, int at, VoxelGridGroupPtr spr);
+    void removeSprite(SproxelProjectPtr proj, int at);
+
     void beginMacro(const QString& macroName);
     void endMacro();
     void clear();
@@ -51,15 +55,94 @@ public:
 
     void onSpriteChanged(VoxelGridGroupPtr);
     void onPaletteChanged(ColorPalettePtr);
+    void onBeforeSpriteAdded(SproxelProjectPtr, int);
+    void onSpriteAdded(SproxelProjectPtr, int);
+    void onBeforeSpriteRemoved(SproxelProjectPtr, int, VoxelGridGroupPtr);
+    void onSpriteRemoved(SproxelProjectPtr, int, VoxelGridGroupPtr);
 
 signals:
     void cleanChanged(bool);
     void spriteChanged(VoxelGridGroupPtr);
     void paletteChanged(ColorPalettePtr);
+    void beforeSpriteAdded(SproxelProjectPtr, int);
+    void spriteAdded(SproxelProjectPtr, int);
+    void beforeSpriteRemoved(SproxelProjectPtr, int, VoxelGridGroupPtr);
+    void spriteRemoved(SproxelProjectPtr, int, VoxelGridGroupPtr);
 
 private:
     QUndoStack m_undoStack;
 
+};
+
+
+// Add sprite to project
+class CmdAddSprite : public QUndoCommand
+{
+public:
+
+  CmdAddSprite(UndoManager *mgr, SproxelProjectPtr proj, int at, VoxelGridGroupPtr spr)
+    : m_manager(mgr), m_project(proj), m_index(at), m_sprite(spr)
+  {
+    setText("Add sprite");
+  }
+
+  virtual void redo()
+  {
+    m_manager->onBeforeSpriteAdded(m_project, m_index);
+    m_project->sprites.insert(m_index, m_sprite);
+    m_manager->onSpriteAdded(m_project, m_index);
+  }
+
+  virtual void undo()
+  {
+    if (m_index>=m_project->sprites.size() || m_project->sprites[m_index]!=m_sprite) return;
+
+    m_manager->onBeforeSpriteRemoved(m_project, m_index, m_sprite);
+    m_project->sprites.remove(m_index);
+    m_manager->onSpriteRemoved(m_project, m_index, m_sprite);
+  }
+
+private:
+  UndoManager *m_manager;
+  SproxelProjectPtr m_project;
+  VoxelGridGroupPtr m_sprite;
+  int m_index;
+};
+
+
+// Remove sprite from project
+class CmdRemoveSprite : public QUndoCommand
+{
+public:
+
+  CmdRemoveSprite(UndoManager *mgr, SproxelProjectPtr proj, int at)
+    : m_manager(mgr), m_project(proj), m_index(at)
+  {
+    m_sprite=m_project->sprites[m_index];
+    setText("Remove sprite");
+  }
+
+  virtual void redo()
+  {
+    if (m_index>=m_project->sprites.size() || m_project->sprites[m_index]!=m_sprite) return;
+
+    m_manager->onBeforeSpriteRemoved(m_project, m_index, m_sprite);
+    m_project->sprites.remove(m_index);
+    m_manager->onSpriteRemoved(m_project, m_index, m_sprite);
+  }
+
+  virtual void undo()
+  {
+    m_manager->onBeforeSpriteAdded(m_project, m_index);
+    m_project->sprites.insert(m_index, m_sprite);
+    m_manager->onSpriteAdded(m_project, m_index);
+  }
+
+private:
+  UndoManager *m_manager;
+  SproxelProjectPtr m_project;
+  VoxelGridGroupPtr m_sprite;
+  int m_index;
 };
 
 

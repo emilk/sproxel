@@ -332,6 +332,7 @@ public:
   {
     m_transform=from.m_transform;
     m_curLayer =from.m_curLayer ;
+    m_name     =from.m_name     ;
 
     m_layers.reserve(from.m_layers.size());
     for (int i=0; i<from.m_layers.size(); ++i)

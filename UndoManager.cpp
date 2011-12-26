@@ -20,6 +20,30 @@ void UndoManager::onPaletteChanged(ColorPalettePtr pal)
 }
 
 
+void UndoManager::onBeforeSpriteAdded(SproxelProjectPtr proj, int i)
+{
+  emit beforeSpriteAdded(proj, i);
+}
+
+
+void UndoManager::onSpriteAdded(SproxelProjectPtr proj, int i)
+{
+  emit spriteAdded(proj, i);
+}
+
+
+void UndoManager::onBeforeSpriteRemoved(SproxelProjectPtr proj, int i, VoxelGridGroupPtr spr)
+{
+  emit beforeSpriteRemoved(proj, i, spr);
+}
+
+
+void UndoManager::onSpriteRemoved(SproxelProjectPtr proj, int i, VoxelGridGroupPtr spr)
+{
+  emit spriteRemoved(proj, i, spr);
+}
+
+
 void UndoManager::changeEntireVoxelGrid(VoxelGridGroupPtr origGrid,
                                         const VoxelGridGroupPtr newGrid)
 {
@@ -47,6 +71,24 @@ void UndoManager::setPaletteColor(ColorPalettePtr pal, int index, const SproxelC
   if (!pal) return;
 
   m_undoStack.push(new CmdSetPaletteColor(this, pal, index, color));
+}
+
+
+void UndoManager::addSprite(SproxelProjectPtr proj, int at, VoxelGridGroupPtr spr)
+{
+  if (!proj || !spr) return;
+  if (at<0 || at>proj->sprites.size()) at=proj->sprites.size();
+
+  m_undoStack.push(new CmdAddSprite(this, proj, at, spr));
+}
+
+
+void UndoManager::removeSprite(SproxelProjectPtr proj, int at)
+{
+  if (!proj) return;
+  if (at<0 || at>=proj->sprites.size()) return;
+
+  m_undoStack.push(new CmdRemoveSprite(this, proj, at));
 }
 
 

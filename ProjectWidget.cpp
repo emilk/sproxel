@@ -1,4 +1,6 @@
 #include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QPushButton>
 #include "ProjectWidget.h"
 
 
@@ -85,6 +87,41 @@ void SpriteListModel::onPaletteChanged(ColorPalettePtr pal)
 }
 
 
+void SpriteListModel::onBeforeSpriteAdded(SproxelProjectPtr proj, int at)
+{
+  if (m_project!=proj) return;
+
+  beginInsertRows(QModelIndex(), at, at);
+}
+
+
+void SpriteListModel::onSpriteAdded(SproxelProjectPtr proj, int at)
+{
+  if (m_project!=proj) return;
+
+  m_icons.insert(at, QPixmap());
+  updateIcon(at);
+  endInsertRows();
+}
+
+
+void SpriteListModel::onBeforeSpriteRemoved(SproxelProjectPtr proj, int at, VoxelGridGroupPtr spr)
+{
+  if (m_project!=proj) return;
+
+  beginRemoveRows(QModelIndex(), at, at);
+}
+
+
+void SpriteListModel::onSpriteRemoved(SproxelProjectPtr proj, int at, VoxelGridGroupPtr spr)
+{
+  if (m_project!=proj) return;
+
+  m_icons.remove(at);
+  endRemoveRows();
+}
+
+
 void SpriteListModel::currentChanged(const QModelIndex &current, const QModelIndex &)
 {
   if (current.isValid())
@@ -114,6 +151,28 @@ ProjectWidget::ProjectWidget(QWidget* parent, UndoManager *um, QSettings *sett)
   m_sprListModel=new SpriteListModel(sett, this);
   m_sprListView->setModel(m_sprListModel);
 
+  QHBoxLayout *buttonBar=new QHBoxLayout(this);
+  layout->addLayout(buttonBar);
+
+  QPushButton *button;
+  button=new QPushButton("");
+  button->setIcon(QIcon(QPixmap(":/icons/layerNew.png")));
+  button->setToolTip("New sprite");
+  connect(button, SIGNAL(pressed()), this, SLOT(newSprite()));
+  buttonBar->addWidget(button);
+
+  button=new QPushButton("");
+  button->setIcon(QIcon(QPixmap(":/icons/layerDuplicate.png")));
+  button->setToolTip("Clone sprite");
+  connect(button, SIGNAL(pressed()), this, SLOT(duplicateSelected()));
+  buttonBar->addWidget(button);
+
+  button=new QPushButton("");
+  button->setIcon(QIcon(QPixmap(":/icons/layerDelete.png")));
+  button->setToolTip("Delete sprite");
+  connect(button, SIGNAL(pressed()), this, SLOT(deleteSelected()));
+  buttonBar->addWidget(button);
+
   layout->addWidget(m_sprListView);
 
   connect(p_undoManager, SIGNAL(spriteChanged(VoxelGridGroupPtr)),
@@ -123,6 +182,16 @@ ProjectWidget::ProjectWidget(QWidget* parent, UndoManager *um, QSettings *sett)
 
   connect(p_undoManager, SIGNAL(paletteChanged(ColorPalettePtr)),
     m_sprListModel, SLOT(onPaletteChanged(ColorPalettePtr)));
+
+  connect(p_undoManager, SIGNAL(beforeSpriteAdded(SproxelProjectPtr, int)),
+    m_sprListModel, SLOT(onBeforeSpriteAdded(SproxelProjectPtr, int)));
+  connect(p_undoManager, SIGNAL(spriteAdded(SproxelProjectPtr, int)),
+    m_sprListModel, SLOT(onSpriteAdded(SproxelProjectPtr, int)));
+
+  connect(p_undoManager, SIGNAL(beforeSpriteRemoved(SproxelProjectPtr, int, VoxelGridGroupPtr)),
+    m_sprListModel, SLOT(onBeforeSpriteRemoved(SproxelProjectPtr, int, VoxelGridGroupPtr)));
+  connect(p_undoManager, SIGNAL(spriteRemoved(SproxelProjectPtr, int, VoxelGridGroupPtr)),
+    m_sprListModel, SLOT(onSpriteRemoved(SproxelProjectPtr, int, VoxelGridGroupPtr)));
 
   connect(m_sprListView->selectionModel(), SIGNAL(currentChanged(const QModelIndex &, const QModelIndex &)),
     m_sprListModel, SLOT(currentChanged(const QModelIndex &, const QModelIndex &)));
@@ -167,11 +236,24 @@ void ProjectWidget::newSprite()
 
 void ProjectWidget::deleteSelected()
 {
-  //==
+  QModelIndex cur=m_sprListView->currentIndex();
+  if (!cur.isValid()) return;
+
+  if (m_project->sprites.size()<=1) return; // don't delete last sprite - we need to show it in the editor!
+
+  p_undoManager->removeSprite(m_project, cur.row());
 }
 
 
 void ProjectWidget::duplicateSelected()
 {
-  //==
+  QModelIndex cur=m_sprListView->currentIndex();
+  if (!cur.isValid()) return;
+
+  VoxelGridGroupPtr spr(new VoxelGridGroup(*m_project->sprites[cur.row()]));
+  if (!spr->name().endsWith(" copy")) spr->setName(spr->name()+" copy");
+
+  p_undoManager->addSprite(m_project, cur.row()+1, spr);
+
+  m_sprListView->setCurrentIndex(m_sprListModel->index(cur.row()+1, 0));
 }

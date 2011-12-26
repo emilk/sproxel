@@ -46,6 +46,10 @@ signals:
 public slots:
   void onSpriteChanged(VoxelGridGroupPtr spr);
   void onPaletteChanged(ColorPalettePtr pal);
+  void onBeforeSpriteAdded(SproxelProjectPtr, int);
+  void onSpriteAdded(SproxelProjectPtr, int);
+  void onBeforeSpriteRemoved(SproxelProjectPtr, int, VoxelGridGroupPtr);
+  void onSpriteRemoved(SproxelProjectPtr, int, VoxelGridGroupPtr);
 
   void currentChanged(const QModelIndex &current, const QModelIndex &previous);
 
@@ -69,7 +73,7 @@ public:
   {
     if (!index.isValid()) return QVariant();
 
-    if (role==Qt::DisplayRole || role==Qt::EditRole)
+    if (role==Qt::DisplayRole || role==Qt::EditRole || role==Qt::ToolTipRole)
     {
       return QString(m_project->sprites[index.row()]->name());
     }
