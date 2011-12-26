@@ -469,7 +469,7 @@ public:
   const Imath::Box3d worldBounds() const
   {
     const Imath::Box3i box=bounds();
-    const Imath::Box3d retBox(box.min, box.max);
+    const Imath::Box3d retBox(box.min, box.max+Imath::V3i(1));
 
     // (ImathBoxAlgo) This properly computes the world bounding box
     return Imath::transform(retBox, m_transform);

@@ -3,7 +3,8 @@
 
 
 #define ICON_SIZE 60
-#define WIDGET_W ((ICON_SIZE+10)*2+40)
+#define WIDGET_W ((ICON_SIZE+10)*1+40)
+#define WIDGET_H ((ICON_SIZE+20)*1+30)
 
 
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
@@ -133,13 +134,13 @@ ProjectWidget::ProjectWidget(QWidget* parent, UndoManager *um, QSettings *sett)
 
 QSize ProjectWidget::minimumSizeHint() const
 {
-  return QSize(WIDGET_W, WIDGET_W);
+  return QSize(WIDGET_W, WIDGET_H);
 }
 
 
 QSize ProjectWidget::sizeHint() const
 {
-  return QSize(WIDGET_W, WIDGET_W*2);
+  return QSize(WIDGET_W, WIDGET_H*2);
 }
 
 

@@ -7,30 +7,49 @@
 
 #define CBOX_W 40
 #define CBOX_H 40
-#define CBOX_AX 17
-#define CBOX_AY  5
-#define CBOX_PX 42
-#define CBOX_PY 30
+#define CBOX_AX m_cboxX
+#define CBOX_AY   5
+#define CBOX_PX (25+m_cboxX)
+#define CBOX_PY  30
 
 #define HR_Y 75
 
-#define PAL_X  5
+#define PAL_X m_palX
 #define PAL_Y 85
 #define PAL_NX  8
 #define PAL_NY 32
-#define PBOX_W 11
-#define PBOX_H 11
+#define PBOX_W m_pboxW
+#define PBOX_H m_pboxH
 
 
 QSize PaletteWidget::minimumSizeHint() const
 {
-  return QSize(100, PAL_Y+PAL_NY*PBOX_H+PBOX_H/2);
+  return QSize(100, PAL_Y+PAL_NY*8+8/2);
 }
 
 
 QSize PaletteWidget::sizeHint() const
 {
   return QSize(100, PAL_Y+PAL_NY*PBOX_H+PBOX_H/2);
+}
+
+
+void PaletteWidget::resizeEvent(QResizeEvent *event)
+{
+  int w=event->size().width();
+  int h=event->size().height();
+
+  m_pboxW=(w-5*2)/PAL_NX;
+  m_pboxH=(h-PAL_Y-5)/PAL_NY;
+
+  if (m_pboxW<2) m_pboxW=2;
+  if (m_pboxH<2) m_pboxH=2;
+
+  m_palX=(w-m_pboxW*PAL_NX)/2;
+
+  m_cboxX=(w-(CBOX_PX-m_cboxX+CBOX_W))/2;
+
+  //printf("palette box: %dx%d\n", m_pboxW, m_pboxH);
 }
 
 
@@ -97,8 +116,6 @@ void PaletteWidget::paintEvent(QPaintEvent*)
   // Palette grid
   if (m_palette)
   {
-    //painter.fillRect(PAL_X-1, PAL_Y-1, PAL_NX*PBOX_W+1, PAL_NY*PBOX_H+1, QBrush(QColor(0, 0, 0)));
-
     for (int y=0; y<PAL_NY; ++y)
       for (int x=0; x<PAL_NX; ++x)
       {

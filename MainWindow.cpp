@@ -43,6 +43,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
 
     // The docking palette widget
     m_paletteDocker = new QDockWidget(tr("Palette"), this);
+    m_paletteDocker->setObjectName("paletteDocker");
     m_paletteDocker->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     m_paletteWidget = new PaletteWidget(this, &m_undoManager);
     m_paletteDocker->setWidget(m_paletteWidget);
@@ -51,7 +52,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
 
     // The docking project widget
     m_projectDocker=new QDockWidget(tr("Project"), this);
-    m_projectDocker->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    m_projectDocker->setObjectName("projectDocker");
     m_projectWidget=new ProjectWidget(this, &m_undoManager, &m_appSettings);
     m_projectDocker->setWidget(m_projectWidget);
     m_projectWidget->setProject(m_project);
@@ -78,6 +79,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
 
     // Toolbar
     m_toolbar = new QToolBar("Tools", this);
+    m_toolbar->setObjectName("toolbar");
     m_toolbar->setOrientation(Qt::Vertical);
     addToolBar(Qt::LeftToolBarArea, m_toolbar);
 
@@ -261,6 +263,14 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     connect(m_actViewBBox, SIGNAL(toggled(bool)),
             m_glModelWidget, SLOT(setDrawBoundingBox(bool)));
 
+    action=new QAction("Sprite Bounds", this);
+    action->setShortcut(Qt::Key_B);
+    action->setCheckable(true);
+    action->setChecked(m_glModelWidget->drawSpriteBounds());
+    m_menuView->addAction(action);
+    connect(action, SIGNAL(toggled(bool)),
+            m_glModelWidget, SLOT(setDrawSpriteBounds(bool)));
+
 
     // ------ window menu
     m_menuWindow = menuBar()->addMenu("&Window");
@@ -326,6 +336,8 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     {
         resize(m_appSettings.value("MainWindow/size", QSize(546, 427)).toSize());
         move(m_appSettings.value("MainWindow/position", QPoint(200, 200)).toPoint());
+        setWindowState((Qt::WindowStates)m_appSettings.value("MainWindow/windowState", Qt::WindowActive).toInt());
+        restoreState(m_appSettings.value("MainWindow/widgetsState").toByteArray());
         m_toolbar->setVisible(m_appSettings.value("toolbar/visibility", true).toBool());
         m_paletteDocker->setVisible(m_appSettings.value("paletteWindow/visibility", true).toBool());
         m_projectDocker->setVisible(m_appSettings.value("projectWindow/visibility", true).toBool());
@@ -385,6 +397,8 @@ void MainWindow::closeEvent(QCloseEvent* event)
     {
         m_appSettings.setValue("MainWindow/size", size());
         m_appSettings.setValue("MainWindow/position", pos());
+        m_appSettings.setValue("MainWindow/windowState", (int)windowState());
+        m_appSettings.setValue("MainWindow/widgetsState", saveState());
         m_appSettings.setValue("toolbar/visibility", m_toolbar->isVisible());
         m_appSettings.setValue("paletteWindow/visibility", m_paletteDocker->isVisible());
         m_appSettings.setValue("projectWindow/visibility", m_projectDocker->isVisible());

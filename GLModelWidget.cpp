@@ -30,6 +30,7 @@ GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, UndoManage
       m_drawGrid(true),
       m_drawVoxelGrid(true),
       m_drawBoundingBox(false),
+      m_drawSpriteBounds(true),
       m_shiftWrap(true),
       m_currAxis(Y_AXIS),
       m_activeTool(NULL),
@@ -38,6 +39,7 @@ GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, UndoManage
     m_drawGrid=p_appSettings->value("GLModelWidget/drawGrid", true).toBool();
     m_drawVoxelGrid=p_appSettings->value("GLModelWidget/drawVoxelGrid", true).toBool();
     m_drawBoundingBox=p_appSettings->value("GLModelWidget/drawBoundingBox", false).toBool();
+    m_drawSpriteBounds=p_appSettings->value("GLModelWidget/drawSpriteBounds", true).toBool();
 
     // Default empty grid
     //centerGrid();
@@ -67,6 +69,7 @@ void GLModelWidget::saveSettings()
   p_appSettings->setValue("GLModelWidget/drawGrid", m_drawGrid);
   p_appSettings->setValue("GLModelWidget/drawVoxelGrid", m_drawVoxelGrid);
   p_appSettings->setValue("GLModelWidget/drawBoundingBox", m_drawBoundingBox);
+  p_appSettings->setValue("GLModelWidget/drawSpriteBounds", m_drawSpriteBounds);
 }
 
 
@@ -268,6 +271,50 @@ void GLModelWidget::paintGL()
         glPopMatrix();
     }
 
+    if (m_drawSpriteBounds)
+    {
+      Imath::Box3d box=m_gvg->worldBounds();
+
+      if (!box.isEmpty())
+      {
+        const Imath::V3d &min=box.min;
+        const Imath::V3d &max=box.max;
+
+        QColor tempG = p_appSettings->value("GLModelWidget/gridColor", QColor(0,0,0)).value<QColor>();
+        glColor3f(tempG.redF(), tempG.greenF(), tempG.blueF());
+        glLineWidth(2);
+        glDisable(GL_DEPTH_TEST);
+
+        glBegin(GL_LINE_LOOP);
+        glVertex3f(min.x, min.y, min.z);
+        glVertex3f(max.x, min.y, min.z);
+        glVertex3f(max.x, min.y, max.z);
+        glVertex3f(min.x, min.y, max.z);
+        glEnd();
+
+        glBegin(GL_LINE_LOOP);
+        glVertex3f(min.x, max.y, min.z);
+        glVertex3f(max.x, max.y, min.z);
+        glVertex3f(max.x, max.y, max.z);
+        glVertex3f(min.x, max.y, max.z);
+        glEnd();
+
+        glBegin(GL_LINES);
+        glVertex3f(min.x, min.y, min.z);
+        glVertex3f(min.x, max.y, min.z);
+        glVertex3f(max.x, min.y, min.z);
+        glVertex3f(max.x, max.y, min.z);
+        glVertex3f(min.x, min.y, max.z);
+        glVertex3f(min.x, max.y, max.z);
+        glVertex3f(max.x, min.y, max.z);
+        glVertex3f(max.x, max.y, max.z);
+        glEnd();
+
+        glLineWidth(1);
+        glEnable(GL_DEPTH_TEST);
+      }
+    }
+
     glDrawAxes();
 
 
@@ -463,16 +510,32 @@ void GLModelWidget::glDrawGrid(const int size,
     // Lighter grid lines
     const Imath::Color4f lightColor = ((bgColor - gridColor) * 0.80f) + gridColor;
 
+    Imath::Box3i ext=m_gvg->bounds();
+    if (ext.isEmpty() || !m_drawSpriteBounds)
+    {
+      ext=Imath::Box3i(Imath::V3i(-size), Imath::V3i(size));
+    }
+    else
+    {
+      ext.min-=Imath::V3i(1);
+      ext.max+=Imath::V3i(2);
+    }
+
     glBegin(GL_LINES);
     glColor4f(lightColor.r, lightColor.g, lightColor.b, 1.0f);
-    for (int i = -size; i <= size; i++)
+    for (int i = ext.min.x; i <= ext.max.x; i++)
     {
         if (i == 0) continue;
         if (i % gridCellSize) continue;
-        glVertex3f(i, 0,  size);
-        glVertex3f(i, 0, -size);
-        glVertex3f( size, 0, i);
-        glVertex3f(-size, 0, i);
+        glVertex3f(i, 0, ext.max.z);
+        glVertex3f(i, 0, ext.min.z);
+    }
+    for (int i = ext.min.z; i <= ext.max.z; i++)
+    {
+        if (i == 0) continue;
+        if (i % gridCellSize) continue;
+        glVertex3f(ext.max.x, 0, i);
+        glVertex3f(ext.min.x, 0, i);
     }
     glEnd();
 
@@ -481,10 +544,10 @@ void GLModelWidget::glDrawGrid(const int size,
     glLineWidth(2);
     glBegin(GL_LINES);
     glColor4f(gridColor.r, gridColor.g, gridColor.b, 1.0f);
-    glVertex3f( size, 0, 0);
-    glVertex3f(-size, 0, 0);
-    glVertex3f(0, 0,  size);
-    glVertex3f(0, 0, -size);
+    glVertex3f(ext.min.x, 0, 0);
+    glVertex3f(ext.max.x, 0, 0);
+    glVertex3f(0, 0, ext.min.z);
+    glVertex3f(0, 0, ext.max.z);
     glEnd();
     glLineWidth(1);
 

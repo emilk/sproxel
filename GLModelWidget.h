@@ -66,6 +66,7 @@ public:
     bool drawGrid() const { return m_drawGrid; }
     bool drawVoxelGrid() const { return m_drawVoxelGrid; }
     bool drawBoundingBox() const { return m_drawBoundingBox; }
+    bool drawSpriteBounds() const { return m_drawSpriteBounds; }
     bool shiftWrap() const { return m_shiftWrap; }
     SproxelAxis currentAxis() const { return m_currAxis; }
 
@@ -78,6 +79,7 @@ public slots:
     void setDrawGrid(const bool value) { m_drawGrid = value; updateGL(); }
     void setDrawVoxelGrid(const bool value) { m_drawVoxelGrid = value; updateGL(); }
     void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
+    void setDrawSpriteBounds(const bool value) { m_drawSpriteBounds = value; updateGL(); }
     void setShiftWrap(const bool value) { m_shiftWrap = value; }
     void setCurrentAxis(const SproxelAxis val) { m_currAxis = val; updateGL(); }    // TODO: Change tool as well.
     void setActiveColor(const Imath::Color4f& c, int i) { m_activeColor = c; m_activeIndex=i; }
@@ -113,6 +115,7 @@ private:
     bool m_drawGrid;
     bool m_drawVoxelGrid;
     bool m_drawBoundingBox;
+    bool m_drawSpriteBounds;
     bool m_shiftWrap;
 
     SproxelAxis m_currAxis;

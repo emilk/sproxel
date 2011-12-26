@@ -21,7 +21,9 @@ public:
         m_passiveColor(0.0f, 0.0f, 0.0f, 1.0f),
         m_activeIndex(-1),
         m_passiveIndex(-1),
-        m_hilightIndex(HIT_NONE)
+        m_hilightIndex(HIT_NONE),
+        m_pboxW(8), m_pboxH(8),
+        m_palX(0), m_cboxX(0)
         {
             setMouseTracking(true);
             QPalette pal;
@@ -57,6 +59,7 @@ protected:
     virtual void mouseMoveEvent(QMouseEvent* event);
     virtual void mouseDoubleClickEvent(QMouseEvent* event);
     virtual void leaveEvent(QEvent* event);
+    virtual void resizeEvent(QResizeEvent *event);
 
 private:
     Imath::Color4f m_activeColor;
@@ -70,6 +73,8 @@ private:
     int m_hilightIndex;
 
     UndoManager *p_undoManager;
+
+    int m_palX, m_pboxW, m_pboxH, m_cboxX;
 
     QColor toQColor(const Imath::Color4f& in);
     QColor toQColor(const Imath::Color4f& in, float alpha);
