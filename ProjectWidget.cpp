@@ -3,6 +3,7 @@
 #include <QPushButton>
 #include <QMimeData>
 #include "ProjectWidget.h"
+#include "NewGridDialog.h"
 
 
 #define ICON_SIZE 60
@@ -293,7 +294,23 @@ void ProjectWidget::indexesMoved(const QModelIndexList &)
 
 void ProjectWidget::newSprite()
 {
-  //==
+  NewGridDialog dlg(this);
+  dlg.setModal(true);
+  if (dlg.exec())
+  {
+    VoxelGridGroupPtr sprite(new VoxelGridGroup(dlg.getVoxelSize(),
+      dlg.isIndexed()?m_project->mainPalette:ColorPalettePtr()));
+    sprite->setName("unnamed");
+
+    int at=m_sprListView->currentIndex().row();
+    if (at<0) at=m_project->sprites.size();
+
+    p_undoManager->addSprite(m_project, at, sprite);
+
+    QModelIndex index=m_sprListModel->index(at, 0);
+    m_sprListView->setCurrentIndex(index);
+    m_sprListView->edit(index);
+  }
 }
 
 
@@ -318,5 +335,7 @@ void ProjectWidget::duplicateSelected()
 
   p_undoManager->addSprite(m_project, cur.row()+1, spr);
 
-  m_sprListView->setCurrentIndex(m_sprListModel->index(cur.row()+1, 0));
+  QModelIndex index=m_sprListModel->index(cur.row()+1, 0);
+  m_sprListView->setCurrentIndex(index);
+  m_sprListView->edit(index);
 }

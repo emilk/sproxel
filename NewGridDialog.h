@@ -20,8 +20,14 @@ public:
     Imath::V3i getVoxelSize();
     bool isIndexed();
 
+public slots:
+    int exec();
+
 private:
     Ui::NewGridDialog *ui;
+
+    static Imath::V3i lastSize;
+    static bool lastIndexed;
 };
 
 #endif // NEWGRIDDIALOG_H
