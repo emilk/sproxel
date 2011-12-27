@@ -76,6 +76,9 @@ private:
 
     int m_palX, m_pboxW, m_pboxH, m_cboxX;
 
+    QRect palRect(int index) const;
+    void setHilight(int index);
+
     QColor toQColor(const Imath::Color4f& in);
     QColor toQColor(const Imath::Color4f& in, float alpha);
     Imath::Color4f toColor4f(QColor c);

@@ -53,6 +53,16 @@ void PaletteWidget::resizeEvent(QResizeEvent *event)
 }
 
 
+QRect PaletteWidget::palRect(int index) const
+{
+  if (index<0) return QRect();
+
+  int x=PAL_X+(index%PAL_NX)*PBOX_W;
+  int y=PAL_Y+(index/PAL_NX)*PBOX_H;
+  return QRect(x, y, PBOX_W, PBOX_H);
+}
+
+
 QColor PaletteWidget::toQColor(const Imath::Color4f& in)
 {
     return QColor((int)(in.r * 255.0f),
@@ -131,6 +141,23 @@ void PaletteWidget::paintEvent(QPaintEvent*)
       painter.fillRect(x+1, y+1, PBOX_W-2, PBOX_H-2, QColor(255, 255, 255));
       painter.fillRect(x+2, y+2, PBOX_W-4, PBOX_H-4, toQColor(m_palette->color(m_hilightIndex), 1));
     }
+
+    if (m_activeIndex>=0)
+    {
+      int x=PAL_X+(m_activeIndex%PAL_NX)*PBOX_W;
+      int y=PAL_Y+(m_activeIndex/PAL_NX)*PBOX_H;
+      painter.fillRect(x+PBOX_W/4, y+PBOX_H/2, PBOX_W/2, 1, toQColor(SproxelColor(1)-m_activeColor, 1));
+      painter.fillRect(x+PBOX_W/2, y+PBOX_H/4, 1, PBOX_H/2, toQColor(SproxelColor(1)-m_activeColor, 1));
+    }
+
+    /*
+    if (m_passiveIndex>=0)
+    {
+      int x=PAL_X+(m_passiveIndex%PAL_NX)*PBOX_W;
+      int y=PAL_Y+(m_passiveIndex/PAL_NX)*PBOX_H;
+      painter.fillRect(x+PBOX_W/4, y+PBOX_H/2, PBOX_W/2, 1, toQColor(SproxelColor(1)-m_passiveColor, 1));
+    }
+    */
   }
 }
 
@@ -141,7 +168,7 @@ void PaletteWidget::mousePressEvent(QMouseEvent* event)
 
   int ci=clickHit(event->pos());
 
-  m_hilightIndex=ci; update();
+  setHilight(ci);
 
   switch(ci)
   {
@@ -185,17 +212,18 @@ void PaletteWidget::mousePressEvent(QMouseEvent* event)
 
 void PaletteWidget::mouseMoveEvent(QMouseEvent* event)
 {
-  int ci=clickHit(event->pos());
+  setHilight(clickHit(event->pos()));
+}
+
+
+void PaletteWidget::setHilight(int ci)
+{
   if (m_hilightIndex!=ci)
   {
-    int x=PAL_X+(m_hilightIndex%PAL_NX)*PBOX_W;
-    int y=PAL_Y+(m_hilightIndex/PAL_NX)*PBOX_H;
+    int oldIndex=m_hilightIndex;
     m_hilightIndex=ci;
-    repaint(x, y, PBOX_W, PBOX_H);
-
-    x=PAL_X+(ci%PAL_NX)*PBOX_W;
-    y=PAL_Y+(ci/PAL_NX)*PBOX_H;
-    repaint(x, y, PBOX_W, PBOX_H);
+    repaint(palRect(oldIndex));
+    repaint(palRect(ci));
   }
 }
 
@@ -212,13 +240,7 @@ void PaletteWidget::mouseDoubleClickEvent(QMouseEvent* /*event*/)
 
 void PaletteWidget::leaveEvent(QEvent *)
 {
-  if (m_hilightIndex!=HIT_NONE)
-  {
-    int x=PAL_X+(m_hilightIndex%PAL_NX)*PBOX_W;
-    int y=PAL_Y+(m_hilightIndex/PAL_NX)*PBOX_H;
-    m_hilightIndex=HIT_NONE;
-    repaint(x, y, PBOX_W, PBOX_H);
-  }
+  setHilight(HIT_NONE);
 }
 
 
@@ -243,19 +265,25 @@ int PaletteWidget::clickHit(const QPoint& p)
 
 void PaletteWidget::setActiveColor(const Imath::Color4f& color, int index)
 {
+    int oldIndex=m_activeIndex;
     m_activeColor = color;
     m_activeIndex = index;
     emit activeColorChanged(m_activeColor, m_activeIndex);
     repaint(0, 0, width(), HR_Y);
+    repaint(palRect(oldIndex));
+    repaint(palRect(m_activeIndex));
 }
 
 
 void PaletteWidget::setPassiveColor(const Imath::Color4f& color, int index)
 {
+    int oldIndex=m_passiveIndex;
     m_passiveColor = color;
     m_passiveIndex = index;
     //emit activeColorChanged(m_activeColor);
     repaint(0, 0, width(), HR_Y);
+    repaint(palRect(oldIndex));
+    repaint(palRect(m_passiveIndex));
 }
 
 
@@ -265,4 +293,6 @@ void PaletteWidget::swapColors()
     int            icpy = m_activeIndex; m_activeIndex = m_passiveIndex; m_passiveIndex = icpy;
     emit activeColorChanged(m_activeColor, m_activeIndex);
     repaint(0, 0, width(), HR_Y);
+    repaint(palRect(m_activeIndex));
+    repaint(palRect(m_passiveIndex));
 }
