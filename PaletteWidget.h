@@ -61,6 +61,8 @@ protected:
     virtual void leaveEvent(QEvent* event);
     virtual void resizeEvent(QResizeEvent *event);
 
+    bool event(QEvent *event);
+
 private:
     Imath::Color4f m_activeColor;
     Imath::Color4f m_passiveColor;

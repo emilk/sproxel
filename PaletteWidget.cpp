@@ -2,6 +2,7 @@
 #include <QPainter>
 #include <QPaintEvent>
 #include <QColorDialog>
+#include <QToolTip>
 #include "PaletteWidget.h"
 
 
@@ -95,6 +96,35 @@ void PaletteWidget::setPalette(ColorPalettePtr pal)
 {
   m_palette=pal;
   update();
+}
+
+
+bool PaletteWidget::event(QEvent *event)
+{
+  if (event->type()==QEvent::ToolTip)
+  {
+    const QHelpEvent &he=*(QHelpEvent*)event;
+    int ci=clickHit(he.pos());
+
+    if (ci<0 || !m_palette)
+    {
+      QToolTip::hideText();
+      event->ignore();
+    }
+    else
+    {
+      SproxelColor c=m_palette->color(ci);
+      QToolTip::showText(he.globalPos(),
+        QString("%1 (#%2): #%3\nR:%4 G:%5 B:%6 A:%7").arg(ci).arg(ci, 2, 16, QChar('0'))
+          .arg(toQColor(c).rgba(), 8, 16, QChar('0'))
+          .arg(int(c.r*255)).arg(int(c.g*255)).arg(int(c.b*255)).arg(int(c.a*255)),
+        this, palRect(ci));
+    }
+
+    return true;
+  }
+
+  return QWidget::event(event);
 }
 
 
@@ -198,9 +228,9 @@ void PaletteWidget::mousePressEvent(QMouseEvent* event)
       {
         if (m_palette)
         {
-          QString tmpStr; tmpStr.setNum(ci);
           color = QColorDialog::getColor(toQColor(m_palette->color(ci)), this,
-            "Select palette color #"+tmpStr, QColorDialog::ShowAlphaChannel);
+            QString("Select palette color %1 (#%2)").arg(ci).arg(ci, 2, 16, QChar('0')),
+            QColorDialog::ShowAlphaChannel);
 
           if (color.isValid()) p_undoManager->setPaletteColor(m_palette, ci, toColor4f(color));
         }
