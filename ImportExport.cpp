@@ -487,12 +487,100 @@ public:
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
+class PalImporter : public Importer
+{
+public:
+  virtual QString name() { return "JASC-PAL palette files"; }
+  virtual QString filter() { return "*.pal"; }
+
+  virtual bool doImport(const QString &filename, UndoManager *um,
+    SproxelProjectPtr project, VoxelGridGroupPtr)
+  {
+    FILE *fp=fopen(qPrintable(filename), "rt");
+    if (!fp) return false;
+
+    SproxelColor colors[256];
+
+    char str[9];
+    if (fscanf(fp, "%8s\n", str)!=1 || strcmp(str, "JASC-PAL")!=0) goto error;
+    if (fscanf(fp, "%4s\n", str)!=1 || strcmp(str, "0100")!=0) goto error;
+
+    int num=0;
+    if (fscanf(fp, "%u\n", &num)!=1) goto error;
+
+    if (num>256) num=256;
+
+    for (int i=0; i<num; ++i)
+    {
+      int r, g, b;
+      if (fscanf(fp, "%u %u %u\n", &r, &g, &b)!=3) goto error;
+      colors[i]=SproxelColor(r/255.0f, g/255.0f, b/255.0f, 1);
+    }
+
+    fclose(fp);
+
+    um->beginMacro("Import palette");
+    for (int i=0; i<num; ++i) um->setPaletteColor(project->mainPalette, i, colors[i]);
+    um->endMacro();
+
+    return true;
+
+  error:
+    fclose(fp);
+    return false;
+  }
+};
+
+
+//ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
+class PalExporter : public Exporter
+{
+public:
+  virtual QString name() { return "JASC-PAL palette files"; }
+  virtual QString filter() { return "*.pal"; }
+
+  static int convert(float f)
+  {
+    int i=int(f*255);
+    if (i>255) return 255;
+    if (i<0) return 0;
+    return i;
+  }
+
+  virtual bool doExport(const QString &filename, SproxelProjectPtr project, VoxelGridGroupPtr)
+  {
+    FILE *fp=fopen(qPrintable(ensure_ext(filename, ".pal")), "wb");
+    if (!fp) return false;
+
+    ColorPalettePtr pal=project->mainPalette;
+
+    fprintf(fp, "JASC-PAL\n0100\n%u\n", pal->numColors());
+
+    for (int i=0; i<pal->numColors(); ++i)
+    {
+      SproxelColor c=pal->color(i);
+      fprintf(fp, "%u %u %u\n", convert(c.r), convert(c.g), convert(c.b));
+    }
+
+    fclose(fp);
+
+    return true;
+  }
+};
+
+
+//ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
 void register_builtin_importers_exporters()
 {
   #define REG(name) static name s_##name; register_importer(& s_##name);
   REG(SproxelPngImporter)
   REG(SproxelCsvImporter)
   REG(ImageImporter)
+  REG(PalImporter)
   #undef REG
 
   #define REG(name) static name s_##name; register_exporter(& s_##name);
@@ -500,5 +588,6 @@ void register_builtin_importers_exporters()
   REG(ObjTriangleExporter)
   REG(SproxelPngExporter)
   REG(SproxelCsvExporter)
+  REG(PalExporter)
   #undef REG
 }
