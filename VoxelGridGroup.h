@@ -308,11 +308,11 @@ private:
 
 public:
 
-  VoxelGridGroup(VoxelGridLayer *layer=NULL) : m_transform(), m_curLayer(-1)
+  VoxelGridGroup(VoxelGridLayerPtr layer=VoxelGridLayerPtr()) : m_transform(), m_curLayer(-1)
   {
     if (layer)
     {
-      m_layers.push_back(VoxelGridLayerPtr(layer));
+      m_layers.push_back(layer);
       m_curLayer=0;
     }
   }
@@ -451,6 +451,9 @@ public:
   }
 
 
+  VoxelGridLayerPtr bakeLayers() const;
+
+
   Imath::V3d voxelCenter(const Imath::V3i& v) const
   {
     return Imath::V3d(
@@ -477,7 +480,7 @@ public:
   }
 
 
-  int getInd(const Imath::V3i &at)
+  int getInd(const Imath::V3i &at) const
   {
     int result=0;
 
@@ -491,7 +494,7 @@ public:
   }
 
 
-  SproxelColor get(const Imath::V3i &at)
+  SproxelColor get(const Imath::V3i &at) const
   {
     SproxelColor result(0, 0, 0, 0);
 

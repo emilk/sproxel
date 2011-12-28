@@ -113,3 +113,41 @@ QImage VoxelGridLayer::makeQImage() const
 
   return writeMe;
 }
+
+
+//ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
+VoxelGridLayerPtr VoxelGridGroup::bakeLayers() const
+{
+  VoxelGridLayerPtr grid(new VoxelGridLayer());
+
+  ColorPalettePtr palette;
+  bool hasRgb=false, hasMultiPal=false;
+
+  foreach (VoxelGridLayerPtr layer, m_layers)
+    if (layer->palette())
+    {
+      if (!palette) palette=layer->palette();
+      else if (layer->palette()!=palette) hasMultiPal=true;
+    }
+    else
+      hasRgb=true;
+
+  if (hasRgb || hasMultiPal) palette=NULL;
+
+  grid->setPalette(palette);
+
+  Imath::Box3i ext=bounds();
+  grid->resize(ext);
+
+  for (int z=ext.min.z; z<=ext.max.z; ++z)
+    for (int y=ext.min.y; y<=ext.max.y; ++y)
+      for (int x=ext.min.x; x<=ext.max.x; ++x)
+      {
+        Imath::V3i at(x, y, z);
+        grid->set(at, get(at), getInd(at));
+      }
+
+  return grid;
+}

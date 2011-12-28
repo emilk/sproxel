@@ -114,6 +114,7 @@ public slots:
     void saveFile();
     void saveFileAs();
     void openFile();
+    void openFile(QString);
 
     void import();
     void exportGrid();

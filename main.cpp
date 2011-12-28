@@ -1,4 +1,5 @@
 #include "MainWindow.h"
+#include "ImportExport.h"
 #include "script.h"
 #include "ConsoleWidget.h"
 #include "pyConsole.h"
@@ -17,6 +18,8 @@ int main(int argc, char *argv[])
         filename = argv[1];
 
     QApplication a(argc, argv);
+
+    register_builtin_importers_exporters();
 
     init_script(argc>=1 ? argv[0] : "sproxel.exe");
 

@@ -41,15 +41,6 @@ public:
     void frame(bool fullExtents);
     void handleArrows(QKeyEvent *event);
 
-    bool loadGridCSV(const std::string& filename);
-    bool saveGridCSV(const std::string& filename);
-
-    bool loadGridPNG(const std::string& filename);
-    bool saveGridPNG(const std::string& filename);
-
-    bool importImageIntoGrid(const std::string& filename);
-    bool exportGridOBJ(const std::string& filename, bool asTriangles);
-
     void resizeAndClearVoxelGrid(const Imath::V3i& size);
     void resizeAndShiftVoxelGrid(const Imath::V3i& size, const Imath::V3i& shift);
     void reresVoxelGrid(const float scale);

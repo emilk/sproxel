@@ -46,6 +46,7 @@ SOURCES += \
     ProjectWidget.cpp \
     Tools.cpp \
     UndoManager.cpp \
+    ImportExport.cpp \
     SproxelProject.cpp \
     script.cpp \
     pyConsole.cpp \
@@ -66,6 +67,7 @@ HEADERS  += \
     ProjectWidget.h \
     Tools.h \
     UndoManager.h \
+    ImportExport.h \
     script.h \
     pyConsole.h \
     ConsoleWidget.h \

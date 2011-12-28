@@ -9,6 +9,7 @@
 #include "PreferencesDialog.h"
 #include "ConsoleWidget.h"
 #include "pyConsole.h"
+#include "ImportExport.h"
 
 #include <QFileDialog>
 #include <QColorDialog>
@@ -26,16 +27,6 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
       ColorPalettePtr()));
     sprite->setName("unnamed");
     m_project->sprites.push_back(sprite);
-
-    VoxelGridGroupPtr otherSprite;
-
-    otherSprite=new VoxelGridGroup(*sprite);
-    otherSprite->setName("sprite-1");
-    m_project->sprites.push_back(otherSprite);
-
-    otherSprite=new VoxelGridGroup(*sprite);
-    otherSprite->setName("sprite-2");
-    m_project->sprites.push_back(otherSprite);
 
     // Windows
     m_glModelWidget = new GLModelWidget(this, &m_appSettings, &m_undoManager, sprite);
@@ -347,20 +338,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     // Load the commandline supplied filename
     if (initialFilename != "")
     {
-        // TODO: Can be merged with openFile to be more tidy
-        bool success = false;
-        if (initialFilename.endsWith(".PNG", Qt::CaseInsensitive))
-            success = m_glModelWidget->loadGridPNG(initialFilename.toStdString());
-        else if (initialFilename.endsWith(".CSV", Qt::CaseInsensitive))
-            success = m_glModelWidget->loadGridCSV(initialFilename.toStdString());
-
-        if (success)
-        {
-            m_activeFilename = initialFilename;
-            setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
-            if (m_appSettings.value("frameOnOpen", false).toBool())
-                m_glModelWidget->frame(true);
-        }
+        openFile(initialFilename);
     }
 
     // Better way to keep the state in one place
@@ -540,13 +518,7 @@ void MainWindow::saveFile()
     if (m_activeFilename == "")
         return saveFileAs();
 
-    bool success = false;
-    if (m_activeFilename.endsWith(".sxl", Qt::CaseInsensitive))
-        success = save_project(m_activeFilename, m_project);
-    else if (m_activeFilename.endsWith(".PNG", Qt::CaseInsensitive))
-        success = m_glModelWidget->saveGridPNG(m_activeFilename.toStdString());
-    else if (m_activeFilename.endsWith(".CSV", Qt::CaseInsensitive))
-        success = m_glModelWidget->saveGridCSV(m_activeFilename.toStdString());
+    bool success = save_project(m_activeFilename, m_project);
 
     if (success)
       m_undoManager.setClean();
@@ -558,7 +530,7 @@ void MainWindow::saveFile()
 void MainWindow::saveFileAs()
 {
     QFileDialog fd(this, "Save voxel file as...");
-    fd.setFilter(tr("Sproxel project (*.sxl);;PNG Files (*.png);;CSV Files (*.csv)"));
+    fd.setFilter(tr("Sproxel project (*.sxl)"));
     fd.setAcceptMode(QFileDialog::AcceptSave);
     fd.exec();
     QStringList qsl = fd.selectedFiles();
@@ -570,24 +542,9 @@ void MainWindow::saveFileAs()
 
     // Switch on save type
     bool success = false;
-    if (activeFilter.startsWith("Sproxel"))
-    {
-        if (!filename.endsWith(".sxl", Qt::CaseInsensitive))
-            filename.append(".sxl");
-        success = save_project(filename, m_project);
-    }
-    else if (activeFilter.startsWith("PNG"))
-    {
-        if (!filename.endsWith(".PNG", Qt::CaseInsensitive))
-            filename.append(".png");
-        success = m_glModelWidget->saveGridPNG(filename.toStdString());
-    }
-    else if (activeFilter.startsWith("CSV"))
-    {
-        if (!filename.endsWith(".CSV", Qt::CaseInsensitive))
-            filename.append(".csv");
-        success = m_glModelWidget->saveGridCSV(filename.toStdString());
-    }
+    if (!filename.endsWith(".sxl", Qt::CaseInsensitive))
+        filename.append(".sxl");
+    success = save_project(filename, m_project);
 
     if (success)
     {
@@ -605,10 +562,16 @@ void MainWindow::openFile()
     QString filename = QFileDialog::getOpenFileName(this,
         tr("Select file to Open..."),
         QString(),
-        tr("Sproxel projects (*.sxl);;Sproxel Save Files (*.png *.csv)"));
+        tr("Sproxel projects (*.sxl)"));
     if (filename.isEmpty())
         return;
 
+    openFile(filename);
+}
+
+
+void MainWindow::openFile(QString filename)
+{
     // Confirmation dialog
     if (!m_undoManager.isClean())
     {
@@ -621,15 +584,8 @@ void MainWindow::openFile()
     }
 
     bool success = false;
-    if (filename.endsWith(".sxl", Qt::CaseInsensitive))
-    {
-        SproxelProjectPtr project=load_project(filename);
-        if (project) { m_project=project; success=true; }
-    }
-    else if (filename.endsWith(".PNG", Qt::CaseInsensitive))
-        success = m_glModelWidget->loadGridPNG(filename.toStdString());
-    else if (filename.endsWith(".CSV", Qt::CaseInsensitive))
-        success = m_glModelWidget->loadGridCSV(filename.toStdString());
+    SproxelProjectPtr project=load_project(filename);
+    if (project) { m_project=project; success=true; }
 
     if (success)
     {
@@ -660,48 +616,65 @@ void MainWindow::openFile()
 
 void MainWindow::import()
 {
-    QFileDialog fd(this, "Import file...");
-    fd.setFilter(tr("Image files (*.bmp *.gif *.jpg *.jpeg *.png *.tiff *.tif)"));
-    fd.setAcceptMode(QFileDialog::AcceptOpen);
-    fd.setFileMode(QFileDialog::ExistingFile);
-    fd.exec();
-    QStringList qsl = fd.selectedFiles();
-    if (qsl.isEmpty()) return;
-    if (QFileInfo(qsl[0]).isDir()) return;  // It returns the directory if you press Cancel
+  const QList<Importer*> &importers=get_importers();
 
-    QString filename = qsl[0];
-    QString activeFilter = fd.selectedNameFilter();
+  QStringList filters;
+  filters.reserve(importers.size());
+  foreach (Importer *imp, importers) filters += imp->name()+" ("+imp->filter()+")";
 
-    if (activeFilter.startsWith("Image files"))
-    {
-        m_glModelWidget->importImageIntoGrid(filename.toStdString());
-    }
+  QFileDialog fd(this, "Import file...");
+  fd.setNameFilters(filters);
+  fd.setAcceptMode(QFileDialog::AcceptOpen);
+  fd.setFileMode(QFileDialog::ExistingFiles);
+  if (!fd.exec()) return;
+
+  QStringList files=fd.selectedFiles();
+  if (files.isEmpty()) return;
+
+  QString activeFilter=fd.selectedNameFilter();
+  Importer *activeImporter=NULL;
+  for (int i=0; i<filters.size(); ++i)
+    if (filters[i]==activeFilter) { activeImporter=importers[i]; break; }
+
+  if (!activeImporter) return;
+
+  foreach (const QString &filename, files)
+  {
+    if (QFileInfo(filename).isDir()) continue;
+    activeImporter->doImport(filename, &m_undoManager, m_project, m_glModelWidget->getSprite());
+  }
 }
 
 
 void MainWindow::exportGrid()
 {
-    QFileDialog fd(this, "Export file...");
-    fd.setFilter(tr("OBJ files (*.obj);;OBJ triangle files (*.obj)"));
-    fd.setAcceptMode(QFileDialog::AcceptSave);
-    fd.exec();
-    QStringList qsl = fd.selectedFiles();
-    if (qsl.isEmpty()) return;
-    if (QFileInfo(qsl[0]).isDir()) return;  // It returns the directory if you press Cancel
+  const QList<Exporter*> &exporters=get_exporters();
 
-    QString filename = qsl[0];
-    QString activeFilter = fd.selectedNameFilter();
+  QStringList filters;
+  filters.reserve(exporters.size());
+  foreach (Exporter *exp, exporters) filters += exp->name()+" ("+exp->filter()+")";
 
-    if (activeFilter.startsWith("OBJ"))
-    {
-        if (!filename.endsWith(".OBJ", Qt::CaseInsensitive))
-            filename.append(".obj");
-        if (activeFilter.startsWith("OBJ triangle files"))
-            m_glModelWidget->exportGridOBJ(filename.toStdString(), true);
-        else
-            m_glModelWidget->exportGridOBJ(filename.toStdString(), false);
-    }
+  QFileDialog fd(this, "Export file...");
+  fd.setNameFilters(filters);
+  fd.setAcceptMode(QFileDialog::AcceptSave);
+  if (!fd.exec()) return;
+
+  QStringList files=fd.selectedFiles();
+  if (files.isEmpty()) return;
+
+  QString filename=files[0];
+  if (QFileInfo(filename).isDir()) return;
+
+  QString activeFilter=fd.selectedNameFilter();
+  Exporter *activeExporter=NULL;
+  for (int i=0; i<filters.size(); ++i)
+    if (filters[i]==activeFilter) { activeExporter=exporters[i]; break; }
+
+  if (!activeExporter) return;
+
+  activeExporter->doExport(filename, m_project, m_glModelWidget->getSprite());
 }
+
 
 void MainWindow::editPreferences()
 {

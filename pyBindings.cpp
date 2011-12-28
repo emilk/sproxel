@@ -760,7 +760,7 @@ static int PySprite_init(PySprite *self, PyObject *args, PyObject *kwds)
     else if (PyObject_TypeCheck(o, &sproxelPyLayerType))
     {
       PyLayer *pyl=(PyLayer*)o;
-      newSpr=new VoxelGridGroup(pyl->layer.data());
+      newSpr=new VoxelGridGroup(pyl->layer);
     }
     else
     {
