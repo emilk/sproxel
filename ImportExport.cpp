@@ -502,10 +502,10 @@ public:
     SproxelColor colors[256];
 
     char str[9];
+    int num=0;
     if (fscanf(fp, "%8s\n", str)!=1 || strcmp(str, "JASC-PAL")!=0) goto error;
     if (fscanf(fp, "%4s\n", str)!=1 || strcmp(str, "0100")!=0) goto error;
 
-    int num=0;
     if (fscanf(fp, "%u\n", &num)!=1) goto error;
 
     if (num>256) num=256;
