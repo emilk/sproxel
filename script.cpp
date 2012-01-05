@@ -60,12 +60,12 @@ PyObject *py_save_project=NULL, *py_load_project=NULL;
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
-void init_script(char *exe_path)
+void init_script(const char *exe_path)
 {
   exe_dir=QFileInfo(exe_path).absoluteDir();
 
   qDebug() << "prog name:" << exe_path;
-  Py_SetProgramName(exe_path);
+  Py_SetProgramName((char*)exe_path);
 
   qDebug() << "init py...";
   Py_Initialize();
@@ -105,7 +105,7 @@ void init_script(char *exe_path)
   if (!mod)
   {
     PyErr_Print();
-    QMessageBox::critical(NULL, "Sproxel Error", "Failed to import sproxel.utils");
+    QMessageBox::critical(NULL, "Sproxel Error", "Failed to import sproxel_utils");
   }
   else
   {

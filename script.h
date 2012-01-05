@@ -5,7 +5,7 @@
 #include <Python.h>
 
 
-void init_script(char *exe_path);
+void init_script(const char *exe_path);
 void close_script();
 
 void script_set_main_window(class MainWindow *);
