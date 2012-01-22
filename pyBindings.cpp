@@ -1365,12 +1365,246 @@ static PyObject* project_to_py(SproxelProjectPtr proj)
 }
 
 
+//  UndoManager  ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
+extern PyTypeObject sproxelPyUndoManagerType;
+
+
+struct PyUndoManager
+{
+  PyObject_HEAD
+  UndoManager *undo;
+};
+
+
+static void PyUndoManager_dtor(PyUndoManager *self)
+{
+  self->undo=NULL;
+  self->ob_type->tp_free((PyObject*)self);
+}
+
+
+PyObject* undo_manager_to_py(UndoManager *um)
+{
+  if (!um) Py_RETURN_NONE;
+  PyUndoManager *pyu=PyObject_New(PyUndoManager, &sproxelPyUndoManagerType);
+  if (!pyu) return PyErr_NoMemory();
+  pyu->undo=um;
+  return (PyObject*)pyu;
+}
+
+
+#define CHECK_PYUNDO \
+  if (!self->undo) { PyErr_SetString(PyExc_TypeError, "NULL UndoManager"); return NULL; }
+
+
+static PyObject* PyUndoManager_changeEntireSprite(PyUndoManager *self, PyObject *args)
+{
+  CHECK_PYUNDO
+  PySprite *oldSpr, *newSpr;
+  if (!PyArg_ParseTuple(args, "O!O!", &sproxelPySpriteType, &oldSpr, &sproxelPySpriteType, &newSpr)) return NULL;
+
+  self->undo->changeEntireVoxelGrid(oldSpr->spr, newSpr->spr);
+  Py_RETURN_NONE;
+}
+
+
+static PyObject* PyUndoManager_setVoxelColor(PyUndoManager *self, PyObject *args)
+{
+  CHECK_PYUNDO
+  PySprite *spr;
+  int x, y, z;
+  PyObject *co;
+  int index=-1;
+  if (!PyArg_ParseTuple(args, "O!iiiO|i", &sproxelPySpriteType, &spr, &x, &y, &z, &co, &index)) return NULL;
+  SproxelColor c;
+  if (!py_to_color(co, c)) return NULL;
+
+  self->undo->setVoxelColor(spr->spr, Imath::V3i(x, y, z), c, index);
+  Py_RETURN_NONE;
+}
+
+
+static PyObject* PyUndoManager_setPaletteColor(PyUndoManager *self, PyObject *args)
+{
+  CHECK_PYUNDO
+  int i;
+  PyObject *o;
+  PyPalette *pal;
+  if (!PyArg_ParseTuple(args, "O!iO", &sproxelPyPaletteType, &pal, &i, &o)) return NULL;
+  SproxelColor c;
+  if (!py_to_color(o, c)) return NULL;
+
+  self->undo->setPaletteColor(pal->pal, i, c);
+  Py_RETURN_NONE;
+}
+
+
+static PyObject* PyUndoManager_addSprite(PyUndoManager *self, PyObject *args)
+{
+  CHECK_PYUNDO
+  PyProject *proj;
+  PySprite *spr;
+  int at;
+  if (!PyArg_ParseTuple(args, "O!iO!", &sproxelPyProjectType, &proj, &at, &sproxelPySpriteType, &spr)) return NULL;
+
+  self->undo->addSprite(proj->proj, at, spr->spr);
+  Py_RETURN_NONE;
+}
+
+
+static PyObject* PyUndoManager_removeSprite(PyUndoManager *self, PyObject *args)
+{
+  CHECK_PYUNDO
+  PyProject *proj;
+  int at;
+  if (!PyArg_ParseTuple(args, "O!i", &sproxelPyProjectType, &proj, &at)) return NULL;
+
+  self->undo->removeSprite(proj->proj, at);
+  Py_RETURN_NONE;
+}
+
+
+static PyObject* PyUndoManager_renameSprite(PyUndoManager *self, PyObject *args)
+{
+  CHECK_PYUNDO
+  PySprite *spr;
+  PyObject *o;
+  if (!PyArg_ParseTuple(args, "O!O", &sproxelPySpriteType, &spr, &o)) return NULL;
+  QString name;
+  if (!py_to_qstr(o, name)) return NULL;
+
+  self->undo->renameSprite(spr->spr, name);
+  Py_RETURN_NONE;
+}
+
+
+static PyObject* PyUndoManager_beginMacro(PyUndoManager *self, PyObject *arg)
+{
+  QString name;
+  if (!py_to_qstr(arg, name)) return NULL;
+  self->undo->beginMacro(name);
+  Py_RETURN_NONE;
+}
+
+
+static PyObject* PyUndoManager_endMacro(PyUndoManager *self)
+{
+  CHECK_PYUNDO
+  self->undo->endMacro();
+  Py_RETURN_NONE;
+}
+
+
+static PyObject* PyUndoManager_clear(PyUndoManager *self)
+{
+  CHECK_PYUNDO
+  self->undo->clear();
+  Py_RETURN_NONE;
+}
+
+
+static PyObject* PyUndoManager_undo(PyUndoManager *self)
+{
+  CHECK_PYUNDO
+  self->undo->undo();
+  Py_RETURN_NONE;
+}
+
+
+static PyObject* PyUndoManager_redo(PyUndoManager *self)
+{
+  CHECK_PYUNDO
+  self->undo->redo();
+  Py_RETURN_NONE;
+}
+
+
+static PyMethodDef pyUndoManager_methods[]=
+{
+  { "changeEntireSprite", (PyCFunction)PyUndoManager_changeEntireSprite, METH_VARARGS, "Change entire sprite." },
+  { "setVoxelColor", (PyCFunction)PyUndoManager_setVoxelColor, METH_VARARGS, "Set single voxel color/index." },
+  { "setPaletteColor", (PyCFunction)PyUndoManager_setPaletteColor, METH_VARARGS, "Set palette color." },
+  { "addSprite", (PyCFunction)PyUndoManager_addSprite, METH_VARARGS, "Add sprite to project." },
+  { "removeSprite", (PyCFunction)PyUndoManager_removeSprite, METH_VARARGS, "Remove sprite from project." },
+  { "renameSprite", (PyCFunction)PyUndoManager_renameSprite, METH_VARARGS, "Change sprite name." },
+  { "beginMacro", (PyCFunction)PyUndoManager_beginMacro, METH_O, "Begin macro action." },
+  { "endMacro", (PyCFunction)PyUndoManager_endMacro, METH_NOARGS, "End macro action." },
+  { "clear", (PyCFunction)PyUndoManager_clear, METH_NOARGS, "Clear all undo history." },
+  { "undo", (PyCFunction)PyUndoManager_undo, METH_NOARGS, "Undo." },
+  { "redo", (PyCFunction)PyUndoManager_redo, METH_NOARGS, "Redo." },
+  { NULL, NULL, 0, NULL }
+};
+
+
+static int PyUndoManager_cmp(PyUndoManager *self, PyObject *o)
+{
+  if (o==Py_None && !self->undo) return 0;
+  if (!PyObject_TypeCheck(o, &sproxelPyUndoManagerType)) return -1;
+  PyUndoManager *other=(PyUndoManager*)o;
+  if (self->undo==other->undo) return 0;
+  if (self->undo<other->undo) return -1;
+  return 1;
+}
+
+
+PyTypeObject sproxelPyUndoManagerType=
+{
+  PyObject_HEAD_INIT(NULL)
+  0,                         /*ob_size*/
+  "sproxel.UndoManager",     /*tp_name*/
+  sizeof(PyUndoManager),     /*tp_basicsize*/
+  0,                         /*tp_itemsize*/
+  (destructor)PyUndoManager_dtor,/*tp_dealloc*/
+  0,                         /*tp_print*/
+  0,                         /*tp_getattr*/
+  0,                         /*tp_setattr*/
+  (cmpfunc)PyUndoManager_cmp,/*tp_compare*/
+  0,                         /*tp_repr*/
+  0,                         /*tp_as_number*/
+  0,                         /*tp_as_sequence*/
+  0,                         /*tp_as_mapping*/
+  0,                         /*tp_hash */
+  0,                         /*tp_call*/
+  0,                         /*tp_str*/
+  0,                         /*tp_getattro*/
+  0,                         /*tp_setattro*/
+  0,                         /*tp_as_buffer*/
+  Py_TPFLAGS_DEFAULT,        /*tp_flags*/
+  "Sproxel undo manager",    /* tp_doc */
+  0,                           /* tp_traverse */
+  0,                           /* tp_clear */
+  0,                           /* tp_richcompare */
+  0,                           /* tp_weaklistoffset */
+  0,                           /* tp_iter */
+  0,                           /* tp_iternext */
+  pyUndoManager_methods,     /* tp_methods */
+  0,                         /* tp_members */
+  0,                         /* tp_getset */
+  0,                         /* tp_base */
+  0,                         /* tp_dict */
+  0,                         /* tp_descr_get */
+  0,                         /* tp_descr_set */
+  0,                         /* tp_dictoffset */
+  0,                         /* tp_init */
+  0,                         /* tp_alloc */
+  0,                         /* tp_new */
+};
+
+
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
 static PyObject* PySproxel_getProject(PyObject *)
 {
   return project_to_py(main_window->project());
+}
+
+
+static PyObject* PySproxel_getUndoManager(PyObject *)
+{
+  return undo_manager_to_py(main_window->undoManager());
 }
 
 
@@ -1402,6 +1636,7 @@ static PyObject* PySproxel_layerFromPng(PyObject *, PyObject *args)
 static PyMethodDef moduleMethods[]=
 {
   { "get_project", (PyCFunction)PySproxel_getProject, METH_NOARGS, "Get current Sproxel project." },
+  { "get_undo_manager", (PyCFunction)PySproxel_getUndoManager, METH_NOARGS, "Get current Sproxel undo manager." },
   { "layer_from_png", (PyCFunction)PySproxel_layerFromPng, METH_VARARGS, "Create layer from PNG data." },
   { NULL, NULL, 0, NULL }
 };
@@ -1481,6 +1716,9 @@ void init_sproxel_bindings()
   sproxelPyProjectType.tp_new=PyType_GenericNew;
   if (PyType_Ready(&sproxelPyProjectType)<0) return;
 
+  sproxelPyUndoManagerType.tp_new=PyType_GenericNew;
+  if (PyType_Ready(&sproxelPyUndoManagerType)<0) return;
+
   // create module
   PyObject *mod=Py_InitModule3("sproxel", moduleMethods, "Sproxel data types.");
 
@@ -1489,4 +1727,5 @@ void init_sproxel_bindings()
   Py_INCREF(&sproxelPyLayerType); PyModule_AddObject(mod, "Layer", (PyObject*)&sproxelPyLayerType);
   Py_INCREF(&sproxelPySpriteType); PyModule_AddObject(mod, "Sprite", (PyObject*)&sproxelPySpriteType);
   Py_INCREF(&sproxelPyProjectType); PyModule_AddObject(mod, "Project", (PyObject*)&sproxelPyProjectType);
+  Py_INCREF(&sproxelPyUndoManagerType); PyModule_AddObject(mod, "UndoManager", (PyObject*)&sproxelPyUndoManagerType);
 }

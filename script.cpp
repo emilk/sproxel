@@ -183,6 +183,8 @@ void script_set_main_window(MainWindow *mwin)
   PyList_SetItem(o, 0, qstr_to_py(exe_dir.absoluteFilePath("plugins")));
   PyModule_AddObject(mod, "plugin_pathes", o);
 
+  PyModule_AddObject(mod, "undo", undo_manager_to_py(mwin->undoManager()));
+
   //== TODO: add more components to script
 
   // init plugin pathes

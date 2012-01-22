@@ -28,6 +28,8 @@ public:
 
     SproxelProjectPtr project() { return m_project; }
 
+    UndoManager* undoManager() { return &m_undoManager; }
+
 protected:
     void closeEvent(QCloseEvent* event);
     void keyPressEvent(QKeyEvent* event);
