@@ -21,7 +21,8 @@ QDir exe_dir;
 
 static PyObject *glue=NULL;
 
-PyObject *py_save_project=NULL, *py_load_project=NULL;
+PyObject *py_save_project=NULL, *py_load_project=NULL, *py_init_plugin_pathes=NULL,
+  *py_scan_plugins=NULL, *py_register_plugins=NULL, *py_unregister_plugins=NULL;
 
 
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
@@ -74,6 +75,8 @@ void init_script(const char *exe_path)
   init_python_console();
   init_sproxel_bindings();
 
+  pycon("exe path: %s", exe_path);
+
   pycon("Importing PySide.SproxelGlue...");
   glue=PyImport_ImportModule("PySide.SproxelGlue");
   if (!glue)
@@ -118,6 +121,18 @@ void init_script(const char *exe_path)
     py_load_project=PyObject_GetAttrString(mod, "load_project");
     if (PyErr_Occurred()) { PyErr_Print(); gotErrors=true; }
 
+    py_init_plugin_pathes=PyObject_GetAttrString(mod, "init_plugin_pathes");
+    if (PyErr_Occurred()) { PyErr_Print(); gotErrors=true; }
+
+    py_scan_plugins=PyObject_GetAttrString(mod, "scan_plugins");
+    if (PyErr_Occurred()) { PyErr_Print(); gotErrors=true; }
+
+    py_register_plugins=PyObject_GetAttrString(mod, "register_plugins");
+    if (PyErr_Occurred()) { PyErr_Print(); gotErrors=true; }
+
+    py_unregister_plugins=PyObject_GetAttrString(mod, "unregister_plugins");
+    if (PyErr_Occurred()) { PyErr_Print(); gotErrors=true; }
+
     pycon("Scripted methods: %s", gotErrors ? "some missing" : "all OK");
     if (gotErrors) QMessageBox::critical(NULL, "Sproxel Error", "Some scripted methods are missing.");
 
@@ -130,6 +145,10 @@ void close_script()
 {
   close_python_console();
 
+  Py_XDECREF(py_unregister_plugins); py_unregister_plugins=NULL;
+  Py_XDECREF(py_register_plugins); py_register_plugins=NULL;
+  Py_XDECREF(py_scan_plugins); py_scan_plugins=NULL;
+  Py_XDECREF(py_init_plugin_pathes); py_init_plugin_pathes=NULL;
   Py_XDECREF(py_save_project); py_save_project=NULL;
   Py_XDECREF(py_load_project); py_load_project=NULL;
 
@@ -152,7 +171,7 @@ void script_set_main_window(MainWindow *mwin)
 {
   pycon("Adding Sproxel objects to script...");
 
-  PyObject *mod=PyImport_AddModule("__main__");
+  PyObject *mod=PyImport_AddModule("sproxel");
   PyObject *o;
   bool gotErrors=false;
 
@@ -160,9 +179,57 @@ void script_set_main_window(MainWindow *mwin)
   if (!o) { gotErrors=true; PyErr_Print(); o=Py_None; Py_INCREF(o); }
   PyModule_AddObject(mod, "main_window", o);
 
+  o=PyList_New(1);
+  PyList_SetItem(o, 0, qstr_to_py(exe_dir.absoluteFilePath("plugins")));
+  PyModule_AddObject(mod, "plugin_pathes", o);
+
   //== TODO: add more components to script
 
+  // init plugin pathes
+  if (py_init_plugin_pathes)
+  {
+    PyObject *res=PyObject_CallFunctionObjArgs(py_init_plugin_pathes, NULL);
+    if (!res) PyErr_Print();
+    else Py_DECREF(res);
+  }
+
   pycon("Sproxel objects: %s", gotErrors ? "FAILED to add to script" : "all added");
+}
+
+
+//ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
+
+
+void scan_plugins()
+{
+  if (py_scan_plugins)
+  {
+    PyObject *res=PyObject_CallFunctionObjArgs(py_scan_plugins, NULL);
+    if (!res) PyErr_Print();
+    else Py_DECREF(res);
+  }
+}
+
+
+void register_plugins()
+{
+  if (py_register_plugins)
+  {
+    PyObject *res=PyObject_CallFunctionObjArgs(py_register_plugins, NULL);
+    if (!res) PyErr_Print();
+    else Py_DECREF(res);
+  }
+}
+
+
+void unregister_plugins()
+{
+  if (py_unregister_plugins)
+  {
+    PyObject *res=PyObject_CallFunctionObjArgs(py_unregister_plugins, NULL);
+    if (!res) PyErr_Print();
+    else Py_DECREF(res);
+  }
 }
 
 

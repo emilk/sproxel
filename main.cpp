@@ -28,10 +28,13 @@ int main(int argc, char *argv[])
     window.show();
 
     script_set_main_window(&window);
+    scan_plugins();
+    register_plugins();
     run_script("test.py");
     //get_python_console_widget()->toggleViewAction()->setChecked(true);
 
     int r=a.exec();
+    unregister_plugins();
     close_script();
     main_window=NULL;
     return r;

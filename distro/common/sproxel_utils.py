@@ -1,6 +1,8 @@
 import sproxel
-from zipfile import *
+from zipfile import ZipFile, ZIP_DEFLATED
 import json
+import os, sys
+import imp
 
 
 CUR_VERSION=1
@@ -38,6 +40,7 @@ def save_project(filename, proj):
     for i, l in enumerate(layers): zf.writestr('%04d.png' % i, l.toPNG())
 
   return True
+
 
 
 def load_project(filename):
@@ -90,3 +93,62 @@ def load_project(filename):
 
   #print prj.sprites
   return prj
+
+
+
+def init_plugin_pathes():
+  sproxel.plugin_pathes=[os.path.abspath(p) for p in sproxel.plugin_pathes]
+  sys.path=sproxel.plugin_pathes+sys.path
+
+
+
+def scan_plugin_module(name, fn):
+  mod=imp.load_source(name, fn)
+  try:
+    info=mod.plugin_info
+  except KeyError:
+    return
+  print '  plugin', name, fn
+  info['module']=name
+  info['path']=fn
+  sproxel.plugins_info[name]=info
+  sproxel.plugins[name]=mod
+
+
+def scan_plugins():
+  sproxel.plugins_info=dict()
+  sproxel.plugins=dict()
+  for path in sproxel.plugin_pathes:
+    #print 'scanning', path
+    for name in os.listdir(path):
+      fn=os.path.join(path, name)
+      if os.path.isdir(fn):
+        fn=os.path.join(fn, '__init__.py')
+        if os.path.isfile(fn):
+          scan_plugin_module(name, fn)
+      else:
+        modname, ext = os.path.splitext(name)
+        if ext.lower()=='.py':
+          scan_plugin_module(modname, fn)
+
+
+
+def register_plugins():
+  for mod in sproxel.plugins.itervalues():
+    if hasattr(mod, 'register'):
+      print 'registering plugin', mod.plugin_info['module']
+      try:
+        mod.register()
+      except:
+        print 'error registering plugin', mod.plugin_info['name']
+
+
+
+def unregister_plugins():
+  for mod in sproxel.plugins.itervalues():
+    if hasattr(mod, 'unregister'):
+      print 'unregistering plugin', mod.plugin_info['module']
+      try:
+        mod.unregister()
+      except:
+        print 'error unregistering plugin', mod.plugin_info['name']

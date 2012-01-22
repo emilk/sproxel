@@ -3,6 +3,7 @@
 
 print "in test.py!!!"
 import sys
+import sproxel
 from PySide.QtCore import *
 from PySide.QtGui import *
 
@@ -10,13 +11,16 @@ print "trying glue..."
 from PySide.SproxelGlue import *
 
 print "in test.py!", 1, 2, 3
+print "plugin pathes:", sproxel.plugin_pathes
 print "sys.path: ", sys.path
+#print "sys.modules:", sys.modules
 
-print "main window: ", repr(main_window)
+print "main window: ", repr(sproxel.main_window)
 
-main_window.statusBar().showMessage("Python was here!")
+#sproxel.main_window.statusBar().showMessage("Python was here!")
 
-import sproxel
+
+print 'plugins info:', sproxel.plugins_info
 
 
 l=sproxel.Layer((10, 20, 30), name='My Layer')
@@ -43,9 +47,12 @@ prj.sprites=(s,)
 print 'sprites:', prj.sprites
 
 prj=sproxel.get_project()
+#sprites=prj.sprites
+#s=sproxel.Sprite(sprites[0]); s.name='python1'; sprites.append(s)
+#s=sproxel.Sprite(sprites[0]); s.name='python2'; sprites.append(s)
+#prj.sprites=sprites
 print 'project:', repr(prj)
 print 'sprites:', prj.sprites
-#save_project('test.zip', prj)
 
 # Create a Label and show it
 #label = QLabel("Hello World")

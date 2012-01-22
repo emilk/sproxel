@@ -10,6 +10,10 @@ void close_script();
 
 void script_set_main_window(class MainWindow *);
 
+void scan_plugins();
+void register_plugins();
+void unregister_plugins();
+
 bool run_script(const class QString &filename);
 
 
@@ -23,6 +27,9 @@ bool run_script(const class QString &filename);
 extern class QDir exe_dir;
 
 extern PyObject *py_save_project, *py_load_project;
+
+
+PyObject* qstr_to_py(const QString &str);
 
 
 #endif
