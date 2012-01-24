@@ -30,7 +30,8 @@ extern PyObject *py_save_project, *py_load_project;
 
 
 PyObject* qstr_to_py(const QString &str);
-PyObject* undo_manager_to_py(class UndoManager *);
+
+bool py_to_qstr(PyObject *o, QString &str);
 
 
 #endif

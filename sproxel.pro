@@ -50,7 +50,8 @@ SOURCES += \
     SproxelProject.cpp \
     script.cpp \
     pyConsole.cpp \
-    pyBindings.cpp
+    pyBindings.cpp \
+    pyImportExport.cpp
 
 HEADERS  += \
     Foundation.h \
@@ -70,6 +71,7 @@ HEADERS  += \
     ImportExport.h \
     script.h \
     pyConsole.h \
+    pyBindings.h \
     ConsoleWidget.h \
     glue/classGlue.h
 

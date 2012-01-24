@@ -6,6 +6,7 @@
 #include "MainWindow.h"
 #include "script.h"
 #include "pyConsole.h"
+#include "pyBindings.h"
 
 
 extern void init_sproxel_bindings();

@@ -140,6 +140,7 @@ def register_plugins():
       try:
         mod.register()
       except:
+        sys.excepthook(*sys.exc_info())
         print 'error registering plugin', mod.plugin_info['name']
 
 
@@ -151,4 +152,5 @@ def unregister_plugins():
       try:
         mod.unregister()
       except:
+        sys.excepthook(*sys.exc_info())
         print 'error unregistering plugin', mod.plugin_info['name']

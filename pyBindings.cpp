@@ -2,7 +2,7 @@
 #include <QImage>
 #include <QBuffer>
 #include "pyConsole.h"
-#include "script.h"
+#include "pyBindings.h"
 #include "VoxelGridGroup.h"
 #include "SproxelProject.h"
 #include "MainWindow.h"
@@ -1099,7 +1099,7 @@ PyTypeObject sproxelPySpriteType=
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
-static PyObject* sprite_to_py(VoxelGridGroupPtr sprite)
+PyObject* sprite_to_py(VoxelGridGroupPtr sprite)
 {
   if (!sprite) Py_RETURN_NONE;
   PySprite *pys=PyObject_New(PySprite, &sproxelPySpriteType);
@@ -1354,7 +1354,7 @@ PyTypeObject sproxelPyProjectType=
 //ZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZZ//
 
 
-static PyObject* project_to_py(SproxelProjectPtr proj)
+PyObject* project_to_py(SproxelProjectPtr proj)
 {
   if (!proj) Py_RETURN_NONE;
   PyProject *pyp=PyObject_New(PyProject, &sproxelPyProjectType);
@@ -1638,6 +1638,10 @@ static PyMethodDef moduleMethods[]=
   { "get_project", (PyCFunction)PySproxel_getProject, METH_NOARGS, "Get current Sproxel project." },
   { "get_undo_manager", (PyCFunction)PySproxel_getUndoManager, METH_NOARGS, "Get current Sproxel undo manager." },
   { "layer_from_png", (PyCFunction)PySproxel_layerFromPng, METH_VARARGS, "Create layer from PNG data." },
+  { "register_importer", (PyCFunction)PySproxel_registerImporter, METH_O, "Register custom importer object." },
+  { "unregister_importer", (PyCFunction)PySproxel_unregisterImporter, METH_O, "Unregister custom importer object." },
+  { "register_exporter", (PyCFunction)PySproxel_registerExporter, METH_O, "Register custom exporter object." },
+  { "unregister_exporter", (PyCFunction)PySproxel_unregisterExporter, METH_O, "Unregister custom exporter object." },
   { NULL, NULL, 0, NULL }
 };
 
