@@ -1017,6 +1017,13 @@ static PyObject* PySprite_traceRay(PySprite *self, PyObject *args)
 }
 
 
+static PyObject* PySprite_bakeLayers(PySprite *self)
+{
+  CHECK_PYSPR
+  return layer_to_py(self->spr->bakeLayers());
+}
+
+
 static PyMethodDef pySprite_methods[]=
 {
   { "reset", (PyCFunction)PySprite_reset, METH_NOARGS, "Reset sprite to the default empty state." },
@@ -1028,6 +1035,7 @@ static PyMethodDef pySprite_methods[]=
   { "set", (PyCFunction)PySprite_set, METH_VARARGS|METH_KEYWORDS,
     "Set color and/or index value of the specified voxel in the current layer." },
   { "traceRay", (PyCFunction)PySprite_traceRay, METH_VARARGS, "Trace ray and return tuple of affected grid cells." },
+  { "bakeLayers", (PyCFunction)PySprite_bakeLayers, METH_NOARGS, "Bake all layers and return new resulting layer." },
   { NULL, NULL, 0, NULL }
 };
 
