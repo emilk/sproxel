@@ -73,7 +73,7 @@ PreferencesDialog::PreferencesDialog(QWidget* parent, QSettings* appSettings) :
     m_pPagesWidget->addWidget(m_pPalettePage);
     m_pWIPPage = new WIPPage(this, m_pAppSettings);
     m_pPagesWidget->addWidget(m_pWIPPage);
-    
+
     QPushButton* cancelButton = new QPushButton(tr("Cancel"));
     connect(cancelButton, SIGNAL(clicked()), this, SLOT(reject()));
 
@@ -151,7 +151,7 @@ GeneralPage::GeneralPage(QWidget* parent, QSettings* appSettings) :
     mainLayout->addWidget(configGroup);
     mainLayout->addStretch(1);
     setLayout(mainLayout);
-    
+
     // Populate the settings
     if (m_pAppSettings->value("saveUILayout", true).toBool())
         saveWindowPositions->setCheckState(Qt::Checked);
@@ -161,11 +161,11 @@ GeneralPage::GeneralPage(QWidget* parent, QSettings* appSettings) :
         frameOnOpen->setCheckState(Qt::Checked);
     else
         frameOnOpen->setCheckState(Qt::Unchecked);
-    
+
     // Backup original values
     m_saveWindowPositionsOrig = saveWindowPositions->isChecked();
     m_frameOnOpenOrig = frameOnOpen->isChecked();
-    
+
     // Hook up the signals
     QObject::connect(saveWindowPositions, SIGNAL(stateChanged(int)),
                      this, SLOT(setSaveWindowPositions(int)));
@@ -217,7 +217,7 @@ ModelViewPage::ModelViewPage(QWidget* parent, QSettings* appSettings) :
     setLayout(mainLayout);
 
     // Populate the settings
-    bgColorSelect->setColor(m_pAppSettings->value("GLModelWidget/backgroundColor", 
+    bgColorSelect->setColor(m_pAppSettings->value("GLModelWidget/backgroundColor",
                                                   QColor(161,161,161)).value<QColor>());
     if (m_pAppSettings->value("GLModelWidget/dragEnabled", true).toBool())
         dragEnabled->setCheckState(Qt::Checked);
@@ -275,11 +275,13 @@ VoxelPage::VoxelPage(QWidget* parent, QSettings* appSettings) :
     m_pAppSettings(appSettings)
 {
     QCheckBox* drawOutlines = new QCheckBox("Draw Outlines", this);
+    QCheckBox* drawSmooth   = new QCheckBox("Draw Smooth Voxels", this);
 
     QGroupBox* gridGroup = new QGroupBox();
 
     QGridLayout* gridLayout = new QGridLayout;
     gridLayout->addWidget(drawOutlines, 0, 0);
+    gridLayout->addWidget(drawSmooth, 1, 0);
     gridGroup->setLayout(gridLayout);
 
     QVBoxLayout* mainLayout = new QVBoxLayout;
@@ -293,22 +295,37 @@ VoxelPage::VoxelPage(QWidget* parent, QSettings* appSettings) :
     else
         drawOutlines->setCheckState(Qt::Unchecked);
 
+    if (m_pAppSettings->value("GLModelWidget/drawSmoothVoxels", false).toBool())
+        drawSmooth->setCheckState(Qt::Checked);
+    else
+        drawSmooth->setCheckState(Qt::Unchecked);
+
     // Backup original values
     m_drawOutlinesOrig = drawOutlines->isChecked();
+    m_drawSmoothOrig = drawSmooth->isChecked();
 
     // Hook up the signals
     QObject::connect(drawOutlines, SIGNAL(stateChanged(int)),
                      this, SLOT(setDrawOutlines(int)));
+    QObject::connect(drawSmooth, SIGNAL(stateChanged(int)),
+                     this, SLOT(setDrawSmooth(int)));
 }
 
 void VoxelPage::restoreOriginals()
 {
     m_pAppSettings->setValue("GLModelWidget/drawVoxelOutlines", m_drawOutlinesOrig);
+    m_pAppSettings->setValue("GLModelWidget/drawSmoothVoxels", m_drawSmoothOrig);
 }
 
 void VoxelPage::setDrawOutlines(int value)
 {
     m_pAppSettings->setValue("GLModelWidget/drawVoxelOutlines", value);
+    emit preferenceChanged();
+}
+
+void VoxelPage::setDrawSmooth(int value)
+{
+    m_pAppSettings->setValue("GLModelWidget/drawSmoothVoxels", value);
     emit preferenceChanged();
 }
 
@@ -350,7 +367,7 @@ GridPage::GridPage(QWidget* parent, QSettings* appSettings) :
     setLayout(mainLayout);
 
     // Populate the settings
-    gridColorSelect->setColor(m_pAppSettings->value("GLModelWidget/gridColor", 
+    gridColorSelect->setColor(m_pAppSettings->value("GLModelWidget/gridColor",
                                                     QColor(0,0,0)).value<QColor>());
     sizeSpinBox->setValue(m_pAppSettings->value("GLModelWidget/gridSize", 16).toInt());
     cellSizeSpinBox->setValue(m_pAppSettings->value("GLModelWidget/gridCellSize", 1).toInt());
@@ -426,7 +443,7 @@ LightingPage::LightingPage(QWidget* parent, QSettings* appSettings) :
 
 void LightingPage::restoreOriginals()
 {
-    
+
 }
 
 
@@ -467,7 +484,7 @@ GuidesPage::GuidesPage(QWidget* parent, QSettings* appSettings) :
 
 void GuidesPage::restoreOriginals()
 {
-    
+
 }
 
 
@@ -501,7 +518,7 @@ PalettePage::PalettePage(QWidget* parent, QSettings* appSettings) :
 
 void PalettePage::restoreOriginals()
 {
-    
+
 }
 
 
@@ -518,7 +535,7 @@ WIPPage::WIPPage(QWidget* parent, QSettings* appSettings) :
 
 void WIPPage::restoreOriginals()
 {
-    
+
 }
 
 
@@ -555,7 +572,7 @@ void ColorWidget::mousePressEvent(QMouseEvent*)
     QColor backupColor = m_color;
 
     QColorDialog qcd(m_color, this);
-    connect(&qcd, SIGNAL(currentColorChanged(QColor)), 
+    connect(&qcd, SIGNAL(currentColorChanged(QColor)),
             this, SLOT(colorChangedSlot(QColor)));
     qcd.exec();
 

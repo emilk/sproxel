@@ -128,7 +128,7 @@ private:
                     const Imath::Color4f& bgColor);
 
     void glDrawCubeWire();
-    void glDrawCubePoly(const CubeFaceMask mask);
+    void glDrawCubePoly(const CubeFaceMask mask, bool smooth);
 
     void glDrawVoxelGrid();
     void glDrawActiveVoxel();

@@ -40,7 +40,7 @@ private:
     QSettings* m_pAppSettings;
     QListWidget* m_pContentsWidget;
     QStackedWidget* m_pPagesWidget;
-    
+
     // Keep track of all the sub-pages
     GeneralPage* m_pGeneralPage;
     ModelViewPage* m_pModelViewPage;
@@ -61,7 +61,7 @@ class GeneralPage : public QWidget
 {   Q_OBJECT
 public:
     GeneralPage(QWidget* parent = NULL, QSettings* appSettings = NULL);
-    
+
     QSettings* m_pAppSettings;
     bool m_saveWindowPositionsOrig;
     bool m_frameOnOpenOrig;
@@ -102,9 +102,9 @@ class VoxelPage : public QWidget
 {   Q_OBJECT
 public:
     VoxelPage(QWidget* parent = NULL, QSettings* appSettings = NULL);
-    
+
     QSettings* m_pAppSettings;
-    bool m_drawOutlinesOrig;
+    bool m_drawOutlinesOrig, m_drawSmoothOrig;
     void restoreOriginals();
 
 signals:
@@ -112,6 +112,7 @@ signals:
 
 public slots:
     void setDrawOutlines(int value);
+    void setDrawSmooth(int value);
 };
 
 
@@ -119,7 +120,7 @@ class GridPage : public QWidget
 {   Q_OBJECT
 public:
     GridPage(QWidget* parent = NULL, QSettings* appSettings = NULL);
-    
+
     QSettings* m_pAppSettings;
     QColor m_gridColorOrig;
     int m_gridSizeOrig;
@@ -140,7 +141,7 @@ class LightingPage : public QWidget
 {   Q_OBJECT
 public:
     LightingPage(QWidget* parent = NULL, QSettings* appSettings = NULL);
-    
+
     QSettings* m_pAppSettings;
     void restoreOriginals();
 };
@@ -150,7 +151,7 @@ class GuidesPage : public QWidget
 {   Q_OBJECT
 public:
     GuidesPage(QWidget* parent = NULL, QSettings* appSettings = NULL);
-    
+
     QSettings* m_pAppSettings;
     void restoreOriginals();
 };
@@ -160,7 +161,7 @@ class PalettePage : public QWidget
 {   Q_OBJECT
 public:
     PalettePage(QWidget* parent = NULL, QSettings* appSettings = NULL);
-    
+
     QSettings* m_pAppSettings;
     void restoreOriginals();
 };
@@ -170,7 +171,7 @@ class WIPPage : public QWidget
 {   Q_OBJECT
 public:
     WIPPage(QWidget* parent = NULL, QSettings* appSettings = NULL);
-    
+
     QSettings* m_pAppSettings;
     void restoreOriginals();
 };
@@ -183,11 +184,11 @@ public:
 class ColorWidget : public QWidget
 {
     Q_OBJECT
-            
+
 public:
-    ColorWidget(QWidget* parent = NULL) : 
-        QWidget(parent), 
-        m_color(255,0,0) 
+    ColorWidget(QWidget* parent = NULL) :
+        QWidget(parent),
+        m_color(255,0,0)
     {
         setMinimumSize(50, 22);
     }
