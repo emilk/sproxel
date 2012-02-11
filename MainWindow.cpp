@@ -657,6 +657,8 @@ void MainWindow::exportGrid()
   QFileDialog fd(this, "Export file...");
   fd.setNameFilters(filters);
   fd.setAcceptMode(QFileDialog::AcceptSave);
+  fd.selectNameFilter(m_appSettings.value("lastExportFilter", QString()).toString());
+  fd.selectFile(m_appSettings.value("lastExportFile", QString()).toString());
   if (!fd.exec()) return;
 
   QStringList files=fd.selectedFiles();
@@ -672,7 +674,11 @@ void MainWindow::exportGrid()
 
   if (!activeExporter) return;
 
-  activeExporter->doExport(filename, m_project, m_glModelWidget->getSprite());
+  if (!activeExporter->doExport(filename, m_project, m_glModelWidget->getSprite()))
+    QMessageBox::critical(this, "Sproxel Error", QString("Failed to export ")+filename);
+
+  m_appSettings.setValue("lastExportFile", filename);
+  m_appSettings.setValue("lastExportFilter", activeFilter);
 }
 
 
