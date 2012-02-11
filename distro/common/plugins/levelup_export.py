@@ -10,10 +10,54 @@ plugin_info=dict(
 
 def register():
   sproxel.register_exporter(TilesExporter)
+  sproxel.register_exporter(PalExporter)
 
 
 def unregister():
   sproxel.unregister_exporter(TilesExporter)
+  sproxel.unregister_exporter(PalExporter)
+
+
+def packColorComp(f):
+  if f<=0 : return 0
+  if f>=1 : return 255
+  return int(round(f*255))
+
+
+class PalExporter(object):
+  @staticmethod
+  def name(): return 'LEVEL UP! palette'
+
+  @staticmethod
+  def filter(): return '*.pal'
+
+  @staticmethod
+  def doExport(fn, prj, cur_sprite):
+    if not fn.lower().endswith('.pal') : fn+='.pal'
+
+    fmt32=struct.Struct('<I')
+    cfmt=struct.Struct('<4B')
+
+    colors=prj.mainPalette.colors
+
+    with open(fn, 'wb') as f:
+      f.write(fmt32.pack(0x12020900)) # version
+      f.write(fmt32.pack(len(colors)))
+
+      buf=''
+      for c in colors:
+        buf+=cfmt.pack(
+          packColorComp(c[2]),
+          packColorComp(c[1]),
+          packColorComp(c[0]),
+          packColorComp(c[3])
+          )
+
+      packed=zlib.compress(buf, 9)
+      f.write(fmt32.pack(len(packed)))
+      f.write(packed)
+
+    return True
 
 
 class TilesExporter(object):
@@ -75,7 +119,7 @@ class TilesExporter(object):
 
     # compress and save to file
     with open(fn, 'wb') as f:
-      f.write(fmt32.pack(0x12020800))
+      f.write(fmt32.pack(0x12020800)) # version
       f.write(fmt32.pack(len(sprites)))
       f.write(fmt32.pack(len(buf)))
       packed=zlib.compress(str(buf), 9)
