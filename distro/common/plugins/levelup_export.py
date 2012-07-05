@@ -72,7 +72,7 @@ class TilesExporter(object):
     if not fn.lower().endswith('.bin') : fn+='.bin'
     ok=True
 
-    tfmt=struct.Struct('<3I II')
+    tfmt=struct.Struct('<3H 3h II')
     fmt32=struct.Struct('<I')
 
     sprites=prj.sprites
@@ -114,12 +114,13 @@ class TilesExporter(object):
         b[1][0]-b[0][0]+1,
         b[1][1]-b[0][1]+1,
         b[1][2]-b[0][2]+1,
+        0, 0, 0,
         dataOfs[i],
         nameOfs[i])
 
     # compress and save to file
     with open(fn, 'wb') as f:
-      f.write(fmt32.pack(0x12020800)) # version
+      f.write(fmt32.pack(0x12021200)) # version
       f.write(fmt32.pack(len(sprites)))
       f.write(fmt32.pack(len(buf)))
       packed=zlib.compress(str(buf), 9)
