@@ -318,6 +318,41 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_toolbar->addActions(m_toolbarActionGroup->actions());
 
 
+    // Toolbar widgets for slicing
+    m_toolbar->addSeparator();
+    m_minSliceBox=new QSpinBox();
+    m_maxSliceBox=new QSpinBox();
+    m_toolbar->addWidget(m_maxSliceBox);
+    m_toolbar->addWidget(m_minSliceBox);
+
+    connect(m_glModelWidget, SIGNAL(sliceChanged(int, int, int)), this, SLOT(updateSlice(int, int, int)));
+    connect(m_minSliceBox, SIGNAL(valueChanged(int)), m_glModelWidget, SLOT(setMinSlice(int)));
+    connect(m_maxSliceBox, SIGNAL(valueChanged(int)), m_glModelWidget, SLOT(setMaxSlice(int)));
+
+    // axis selection
+    QActionGroup *axisGroup=new QActionGroup(this);
+
+    QAction *a=new QAction("X", axisGroup);
+    a->setCheckable(true);
+    connect(a, SIGNAL(toggled(bool)), m_glModelWidget, SLOT(setAxisX()));
+    m_actAxisX=a;
+
+    a=new QAction("Y", axisGroup);
+    a->setCheckable(true);
+    connect(a, SIGNAL(toggled(bool)), m_glModelWidget, SLOT(setAxisY()));
+    m_actAxisY=a;
+
+    a=new QAction("Z", axisGroup);
+    a->setCheckable(true);
+    connect(a, SIGNAL(toggled(bool)), m_glModelWidget, SLOT(setAxisZ()));
+    m_actAxisZ=a;
+
+    m_toolbar->addSeparator();
+    m_toolbar->addActions(axisGroup->actions());
+
+    m_actAxisY->setChecked(true);
+
+
     // Remaining verbosity
     setWindowTitle(BASE_WINDOW_TITLE);
     statusBar()->showMessage(tr("Ready"));
@@ -347,6 +382,15 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
 
     // Start things off focused on the GLWidget
     m_glModelWidget->setFocus();
+}
+
+
+void MainWindow::updateSlice(int mino, int maxo, int range)
+{
+  m_minSliceBox->setRange(0, range);
+  m_maxSliceBox->setRange(0, range);
+  m_minSliceBox->setValue(mino);
+  m_maxSliceBox->setValue(maxo);
 }
 
 
@@ -395,15 +439,15 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
 
     if (altDown && event->key() == Qt::Key_X)
     {
-        m_glModelWidget->setCurrentAxis(X_AXIS);
+      m_actAxisX->setChecked(true);
     }
     else if (altDown && event->key() == Qt::Key_Y)
     {
-        m_glModelWidget->setCurrentAxis(Y_AXIS);
+      m_actAxisY->setChecked(true);
     }
     else if (altDown && event->key() == Qt::Key_Z)
     {
-        m_glModelWidget->setCurrentAxis(Z_AXIS);
+      m_actAxisZ->setChecked(true);
     }
     else if (ctrlDown && event->key() == Qt::Key_C)
     {

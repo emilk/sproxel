@@ -7,6 +7,7 @@
 #include <QToolBar>
 #include <QSettings>
 #include <QMainWindow>
+#include <QSpinBox>
 
 #include "ProjectWidget.h"
 #include "LayersWidget.h"
@@ -62,6 +63,9 @@ private:
     //QDockWidget* m_layersDocker;
     //LayersWidget* m_layersWidget;
 
+    QSpinBox *m_minSliceBox;
+    QSpinBox *m_maxSliceBox;
+
     // Actions
     QAction* m_actQuit;
 
@@ -103,6 +107,10 @@ private:
     QAction* m_actToolSlab;
     QAction* m_actToolLine;
     QAction* m_actToolRay;
+
+    QAction *m_actAxisX;
+    QAction *m_actAxisY;
+    QAction *m_actAxisZ;
 
     // Locals
     QString m_activeFilename;
@@ -146,6 +154,8 @@ public slots:
     void setToolLine(bool stat);
 
     void reactToModified(bool value);
+
+    void updateSlice(int mino, int maxo, int range);
 };
 
 extern MainWindow *main_window;

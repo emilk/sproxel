@@ -63,6 +63,7 @@ public:
 
 signals:
     void colorSampled(const Imath::Color4f& color, int index);
+    void sliceChanged(int min_ofs, int max_ofs, int range);
 
 public slots:
     void setSprite(VoxelGridGroupPtr sprite);
@@ -72,12 +73,18 @@ public slots:
     void setDrawBoundingBox(const bool value) { m_drawBoundingBox = value; updateGL(); }
     void setDrawSpriteBounds(const bool value) { m_drawSpriteBounds = value; updateGL(); }
     void setShiftWrap(const bool value) { m_shiftWrap = value; }
-    void setCurrentAxis(const SproxelAxis val) { m_currAxis = val; updateGL(); }    // TODO: Change tool as well.
+    void setCurrentAxis(const SproxelAxis val);
+    void setAxisX() { setCurrentAxis(X_AXIS); }
+    void setAxisY() { setCurrentAxis(Y_AXIS); }
+    void setAxisZ() { setCurrentAxis(Z_AXIS); }
     void setActiveColor(const Imath::Color4f& c, int i) { m_activeColor = c; m_activeIndex=i; }
     void onSpriteChanged(VoxelGridGroupPtr spr) { if (spr==m_gvg) update(); }
     void onPaletteChanged(ColorPalettePtr pal) { if (m_gvg && m_gvg->hasPalette(pal)) update(); }
     void frameFull() { frame(true); }
     void frameData() { frame(false); }
+
+    void setMinSlice(int);
+    void setMaxSlice(int);
 
 protected:
     void initializeGL();
@@ -112,6 +119,10 @@ private:
     SproxelAxis m_currAxis;
     ToolState* m_activeTool;
 
+    Imath::V3i m_minBoundOffset, m_maxBoundOffset;
+
+    Imath::Box3i editBounds();
+
     double* glMatrix(const Imath::M44d& m);
     void objWritePoly(FILE* fp, bool asTriangles,
                       const int& v0, const int& v1, const int& v2, const int& v3);
@@ -119,7 +130,7 @@ private:
     Imath::Box3d dataBounds();
     void centerGrid();
 
-    CubeFaceMask computeVoxelFaceMask(const Imath::V3i& index);
+    CubeFaceMask computeVoxelFaceMask(const Imath::V3i& index, const Imath::Box3i &bounds);
 
     void glDrawAxes();
     void glDrawGrid(const int size,
@@ -134,6 +145,8 @@ private:
     void glDrawActiveVoxel();
     void glDrawPreviewVoxels();
     void glDrawVoxelCenter(const size_t sx, const size_t sy, const size_t sz);
+
+    void glDrawBounds(const Imath::Box3i &bounds, QColor color);
 
     QSettings* p_appSettings;
 };

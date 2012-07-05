@@ -29,12 +29,14 @@ public:
 
     const Imath::Line3d& ray() const { return m_ray; }
 
-    void set(VoxelGridGroupPtr gvg, const Imath::Line3d& ray, const Imath::Color4f& color, int index)
+    void set(VoxelGridGroupPtr gvg, const Imath::Box3i &edit_bounds,
+      const Imath::Line3d& ray, const Imath::Color4f& color, int index)
     {
+        p_gvg = gvg;
+        m_editBounds=edit_bounds;
         m_ray = ray;
         m_color = color;
         m_index = index;
-        p_gvg = gvg;
     }
 
     int clicksRemaining() { return m_clicksRemain; }
@@ -54,10 +56,18 @@ protected:
 
     UndoManager* p_undoManager;
     Imath::Line3d m_ray;
+    Imath::Box3i m_editBounds;
     Imath::Color4f m_color;
     int m_index;
     VoxelGridGroupPtr p_gvg;
     bool m_supportsDrag;
+
+
+    std::vector<Imath::V3i> rayIntersection(const Imath::Line3d &worldRay)
+    {
+      Imath::Line3d localRay = worldRay * p_gvg->transform().inverse();
+      return walk_ray(localRay, m_editBounds);
+    }
 };
 
 

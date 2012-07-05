@@ -21,8 +21,7 @@ std::vector<Imath::V3i> SplatToolState::voxelsAffected()
     std::vector<Imath::V3i> voxels;
 
     // Intersect and check
-    std::vector<Imath::V3i> intersects =
-        p_gvg->rayIntersection(m_ray);
+    std::vector<Imath::V3i> intersects = rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 
@@ -109,8 +108,7 @@ std::vector<Imath::V3i> FloodToolState::voxelsAffected()
     std::vector<Imath::V3i> voxels;
 
     // Intersect and check
-    std::vector<Imath::V3i> intersects =
-        p_gvg->rayIntersection(m_ray);
+    std::vector<Imath::V3i> intersects = rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 
@@ -148,8 +146,7 @@ std::vector<Imath::V3i> EraserToolState::voxelsAffected()
     std::vector<Imath::V3i> voxels;
 
     // Intersect and check
-    std::vector<Imath::V3i> intersects =
-        p_gvg->rayIntersection(m_ray);
+    std::vector<Imath::V3i> intersects = rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 
@@ -188,8 +185,7 @@ std::vector<Imath::V3i> ReplaceToolState::voxelsAffected()
     std::vector<Imath::V3i> voxels;
 
     // Intersect and check
-    std::vector<Imath::V3i> intersects =
-        p_gvg->rayIntersection(m_ray);
+    std::vector<Imath::V3i> intersects = rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 
@@ -224,7 +220,7 @@ void RayToolState::execute()
 
 std::vector<Imath::V3i> RayToolState::voxelsAffected()
 {
-    return p_gvg->rayIntersection(m_ray);
+    return rayIntersection(m_ray);
 }
 
 
@@ -254,8 +250,7 @@ std::vector<Imath::V3i> SlabToolState::voxelsAffected()
 
     // TODO: Should this do an intersection at all, or maybe just fill in the
     //       row based on the first hit?
-    std::vector<Imath::V3i> intersects =
-        p_gvg->rayIntersection(m_ray);
+    std::vector<Imath::V3i> intersects = rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 
@@ -352,8 +347,7 @@ std::vector<Imath::V3i> LineToolState::voxelsAffected()
     std::vector<Imath::V3i> voxels;
 
     // Intersect and check
-    std::vector<Imath::V3i> intersects =
-        p_gvg->rayIntersection(m_ray);
+    std::vector<Imath::V3i> intersects = rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 
@@ -397,7 +391,7 @@ std::vector<Imath::V3i> LineToolState::voxelsAffected()
         else
         {
             // Trim off the end, making it a ray segment instead of an entire ray
-            std::vector<Imath::V3i> initialInts = p_gvg->rayIntersection(ray);
+            std::vector<Imath::V3i> initialInts = rayIntersection(ray);
             for (size_t i = 0; i < initialInts.size(); i++)
             {
                 voxels.push_back(initialInts[i]);
@@ -423,8 +417,7 @@ std::vector<Imath::V3i> DropperToolState::voxelsAffected()
     std::vector<Imath::V3i> voxels;
 
     // Intersect and check
-    std::vector<Imath::V3i> intersects =
-        p_gvg->rayIntersection(m_ray);
+    std::vector<Imath::V3i> intersects = rayIntersection(m_ray);
     if (intersects.size() == 0)
         return voxels;
 

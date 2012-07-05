@@ -34,10 +34,12 @@ GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, UndoManage
       m_shiftWrap(true),
       m_currAxis(Y_AXIS),
       m_activeTool(NULL),
-      p_appSettings(appSettings)
+      p_appSettings(appSettings),
+      m_minBoundOffset(0),
+      m_maxBoundOffset(0)
 {
     m_drawGrid=p_appSettings->value("GLModelWidget/drawGrid", true).toBool();
-    m_drawVoxelGrid=p_appSettings->value("GLModelWidget/drawVoxelGrid", true).toBool();
+    m_drawVoxelGrid=p_appSettings->value("GLModelWidget/drawVoxelGrid", false).toBool();
     m_drawBoundingBox=p_appSettings->value("GLModelWidget/drawBoundingBox", false).toBool();
     m_drawSpriteBounds=p_appSettings->value("GLModelWidget/drawSpriteBounds", true).toBool();
 
@@ -73,10 +75,84 @@ void GLModelWidget::saveSettings()
 }
 
 
+Imath::Box3i GLModelWidget::editBounds()
+{
+  Imath::Box3i box=m_gvg->bounds();
+
+  switch (m_currAxis)
+  {
+    case X_AXIS:
+      box.min.x+=m_minBoundOffset.x;
+      box.max.x-=m_maxBoundOffset.x;
+      break;
+
+    case Y_AXIS:
+      box.min.y+=m_minBoundOffset.y;
+      box.max.y-=m_maxBoundOffset.y;
+      break;
+
+    case Z_AXIS:
+      box.min.z+=m_minBoundOffset.z;
+      box.max.z-=m_maxBoundOffset.z;
+      break;
+
+    default:
+      box.min+=m_minBoundOffset;
+      box.max-=m_maxBoundOffset;
+  }
+
+  return box;
+}
+
+
 void GLModelWidget::setSprite(VoxelGridGroupPtr sprite)
 {
   m_gvg=sprite;
   //centerGrid();
+  updateGL();
+}
+
+
+void GLModelWidget::setCurrentAxis(const SproxelAxis val)
+{
+  m_currAxis = val;
+
+  int mino, maxo, range;
+  switch (m_currAxis)
+  {
+    case X_AXIS: mino=m_minBoundOffset.x; maxo=m_maxBoundOffset.x; range=m_gvg->bounds().size().x; break;
+    case Y_AXIS: mino=m_minBoundOffset.y; maxo=m_maxBoundOffset.y; range=m_gvg->bounds().size().y; break;
+    case Z_AXIS: mino=m_minBoundOffset.z; maxo=m_maxBoundOffset.z; range=m_gvg->bounds().size().z; break;
+    default: mino=0; maxo=0; range=0;
+  }
+
+  emit sliceChanged(mino, maxo, range);
+
+  // TODO: Change tool as well.
+  updateGL();
+}
+
+
+void GLModelWidget::setMinSlice(int o)
+{
+  switch (m_currAxis)
+  {
+    case X_AXIS: m_minBoundOffset.x=o; break;
+    case Y_AXIS: m_minBoundOffset.y=o; break;
+    case Z_AXIS: m_minBoundOffset.z=o; break;
+  }
+  updateGL();
+}
+
+
+void GLModelWidget::setMaxSlice(int o)
+{
+  switch (m_currAxis)
+  {
+    case X_AXIS: m_maxBoundOffset.x=o; break;
+    case Y_AXIS: m_maxBoundOffset.y=o; break;
+    case Z_AXIS: m_maxBoundOffset.z=o; break;
+  }
   updateGL();
 }
 
@@ -244,6 +320,50 @@ void GLModelWidget::resizeGL(int width, int height)
 }
 
 
+void GLModelWidget::glDrawBounds(const Imath::Box3i &bounds, QColor color)
+{
+  if (bounds.isEmpty()) return;
+
+  Imath::Box3d box(bounds.min, bounds.max+Imath::V3i(1));
+  box=Imath::transform(box, m_gvg->transform());
+
+  const Imath::V3d &min=box.min;
+  const Imath::V3d &max=box.max;
+
+  glColor3f(color.redF(), color.greenF(), color.blueF());
+  glLineWidth(2);
+  glDisable(GL_DEPTH_TEST);
+
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(min.x, min.y, min.z);
+  glVertex3f(max.x, min.y, min.z);
+  glVertex3f(max.x, min.y, max.z);
+  glVertex3f(min.x, min.y, max.z);
+  glEnd();
+
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(min.x, max.y, min.z);
+  glVertex3f(max.x, max.y, min.z);
+  glVertex3f(max.x, max.y, max.z);
+  glVertex3f(min.x, max.y, max.z);
+  glEnd();
+
+  glBegin(GL_LINES);
+  glVertex3f(min.x, min.y, min.z);
+  glVertex3f(min.x, max.y, min.z);
+  glVertex3f(max.x, min.y, min.z);
+  glVertex3f(max.x, max.y, min.z);
+  glVertex3f(min.x, min.y, max.z);
+  glVertex3f(min.x, max.y, max.z);
+  glVertex3f(max.x, min.y, max.z);
+  glVertex3f(max.x, max.y, max.z);
+  glEnd();
+
+  glLineWidth(1);
+  glEnable(GL_DEPTH_TEST);
+}
+
+
 void GLModelWidget::paintGL()
 {
     QColor bg = p_appSettings->value("GLModelWidget/backgroundColor", QColor(161,161,161)).value<QColor>();
@@ -273,46 +393,16 @@ void GLModelWidget::paintGL()
 
     if (m_drawSpriteBounds)
     {
-      Imath::Box3d box=m_gvg->worldBounds();
+      Imath::Box3i bounds=m_gvg->bounds(), sliced=editBounds();
 
-      if (!box.isEmpty())
+      if (sliced!=bounds)
       {
-        const Imath::V3d &min=box.min;
-        const Imath::V3d &max=box.max;
-
-        QColor tempG = p_appSettings->value("GLModelWidget/gridColor", QColor(0,0,0)).value<QColor>();
-        glColor3f(tempG.redF(), tempG.greenF(), tempG.blueF());
-        glLineWidth(2);
-        glDisable(GL_DEPTH_TEST);
-
-        glBegin(GL_LINE_LOOP);
-        glVertex3f(min.x, min.y, min.z);
-        glVertex3f(max.x, min.y, min.z);
-        glVertex3f(max.x, min.y, max.z);
-        glVertex3f(min.x, min.y, max.z);
-        glEnd();
-
-        glBegin(GL_LINE_LOOP);
-        glVertex3f(min.x, max.y, min.z);
-        glVertex3f(max.x, max.y, min.z);
-        glVertex3f(max.x, max.y, max.z);
-        glVertex3f(min.x, max.y, max.z);
-        glEnd();
-
-        glBegin(GL_LINES);
-        glVertex3f(min.x, min.y, min.z);
-        glVertex3f(min.x, max.y, min.z);
-        glVertex3f(max.x, min.y, min.z);
-        glVertex3f(max.x, max.y, min.z);
-        glVertex3f(min.x, min.y, max.z);
-        glVertex3f(min.x, max.y, max.z);
-        glVertex3f(max.x, min.y, max.z);
-        glVertex3f(max.x, max.y, max.z);
-        glEnd();
-
-        glLineWidth(1);
-        glEnable(GL_DEPTH_TEST);
+        QColor tempS = p_appSettings->value("GLModelWidget/slicingColor", QColor(255,0,0)).value<QColor>();
+        glDrawBounds(sliced, tempS);
       }
+
+      QColor tempG = p_appSettings->value("GLModelWidget/gridColor", QColor(0,0,0)).value<QColor>();
+      glDrawBounds(bounds, tempG);
     }
 
     glDrawAxes();
@@ -344,7 +434,7 @@ void GLModelWidget::paintGL()
     bool drawOutlines=p_appSettings->value("GLModelWidget/drawVoxelOutlines", 0).toBool();
     bool drawSmoothCubes=p_appSettings->value("GLModelWidget/drawSmoothVoxels", 0).toBool();
 
-    const Imath::Box3i dim = m_gvg->bounds();
+    const Imath::Box3i dim = editBounds();
     for (int x = dim.min.x; x <= dim.max.x; x++)
     {
         for (int y = dim.min.y; y <= dim.max.y; y++)
@@ -362,7 +452,7 @@ void GLModelWidget::paintGL()
                     glPushMatrix();
                     glMultMatrixd(glMatrix(mat));
 
-                    CubeFaceMask mask = computeVoxelFaceMask(index);
+                    CubeFaceMask mask = computeVoxelFaceMask(index, dim);
 
                     if (drawOutlines)
                     {
@@ -558,7 +648,7 @@ void GLModelWidget::glDrawGrid(const int size,
 }
 
 
-GLModelWidget::CubeFaceMask GLModelWidget::computeVoxelFaceMask(const Imath::V3i& index)
+GLModelWidget::CubeFaceMask GLModelWidget::computeVoxelFaceMask(const Imath::V3i& index, const Imath::Box3i &bounds)
 {
     CubeFaceMask returnMask = FACE_NONE;
 
@@ -566,24 +656,32 @@ GLModelWidget::CubeFaceMask GLModelWidget::computeVoxelFaceMask(const Imath::V3i
     if (cellColor.a == 0.0f)
         return returnMask;
 
+    Imath::V3i at;
+
     // Positive
-    if (m_gvg->get(Imath::V3i(index.x+1, index.y, index.z)).a == 0.0)
+    at=index; at.x++;
+    if (!bounds.intersects(at) || m_gvg->get(at).a == 0.0)
         returnMask = (CubeFaceMask)(returnMask | FACE_POSX);
 
-    if (m_gvg->get(Imath::V3i(index.x, index.y+1, index.z)).a == 0.0)
+    at=index; at.y++;
+    if (!bounds.intersects(at) || m_gvg->get(at).a == 0.0)
         returnMask = (CubeFaceMask)(returnMask | FACE_POSY);
 
-    if (m_gvg->get(Imath::V3i(index.x, index.y, index.z+1)).a == 0.0)
+    at=index; at.z++;
+    if (!bounds.intersects(at) || m_gvg->get(at).a == 0.0)
         returnMask = (CubeFaceMask)(returnMask | FACE_POSZ);
 
     // Negative
-    if (m_gvg->get(Imath::V3i(index.x-1, index.y, index.z)).a == 0.0)
+    at=index; at.x--;
+    if (!bounds.intersects(at) || m_gvg->get(at).a == 0.0)
         returnMask = (CubeFaceMask)(returnMask | FACE_NEGX);
 
-    if (m_gvg->get(Imath::V3i(index.x, index.y-1, index.z)).a == 0.0)
+    at=index; at.y--;
+    if (!bounds.intersects(at) || m_gvg->get(at).a == 0.0)
         returnMask = (CubeFaceMask)(returnMask | FACE_NEGY);
 
-    if (m_gvg->get(Imath::V3i(index.x, index.y, index.z-1)).a == 0.0)
+    at=index; at.z--;
+    if (!bounds.intersects(at) || m_gvg->get(at).a == 0.0)
         returnMask = (CubeFaceMask)(returnMask | FACE_NEGZ);
 
     return returnMask;
@@ -997,7 +1095,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
             // CTRL+LMB is always replace - switch tools and execute
             SproxelTool currentTool = m_activeTool->type();
             setActiveTool(TOOL_REPLACE);
-            m_activeTool->set(m_gvg, localLine, m_activeColor, m_activeIndex);
+            m_activeTool->set(m_gvg, editBounds(), localLine, m_activeColor, m_activeIndex);
             m_activeTool->execute();
             setActiveTool(currentTool);
             updateGL();
@@ -1012,7 +1110,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
         {
             bool draggingEnabled = p_appSettings->value("GLModelWidget/dragEnabled", 1).toBool();
             m_activeTool->setDragSupport(draggingEnabled);
-            m_activeTool->set(m_gvg, localLine, m_activeColor, m_activeIndex);
+            m_activeTool->set(m_gvg, editBounds(), localLine, m_activeColor, m_activeIndex);
 
             if (m_activeTool->type() == TOOL_SLAB)
                 dynamic_cast<SlabToolState*>(m_activeTool)->setAxis(currentAxis());
@@ -1038,7 +1136,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
             // TODO: Restore old tool properly in ReleaseEvent
             SproxelTool currentTool = m_activeTool->type();
             setActiveTool(TOOL_DROPPER);
-            m_activeTool->set(m_gvg, localLine, m_activeColor, m_activeIndex);
+            m_activeTool->set(m_gvg, editBounds(), localLine, m_activeColor, m_activeIndex);
 
             // TODO: Coalesce this dropper code so i don't repeat it everywhere
             std::vector<Imath::V3i> ints = m_activeTool->voxelsAffected();
@@ -1056,7 +1154,7 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
             // TODO: Restore old tool properly in ReleaseEvent
             SproxelTool currentTool = m_activeTool->type();
             setActiveTool(TOOL_ERASER);
-            m_activeTool->set(m_gvg, localLine, m_activeColor, m_activeIndex);
+            m_activeTool->set(m_gvg, editBounds(), localLine, m_activeColor, m_activeIndex);
             m_activeTool->execute();
             setActiveTool(currentTool);
             m_activeTool->setDragSupport(p_appSettings->value("GLModelWidget/dragEnabled", 1).toInt());
@@ -1161,7 +1259,7 @@ void GLModelWidget::mouseMoveEvent(QMouseEvent *event)
         const Imath::Line3d localLine =
                 m_cam.unproject(Imath::V2d(event->pos().x(), height() - event->pos().y()));
 
-        m_activeTool->set(m_gvg, localLine, m_activeColor, m_activeIndex);
+        m_activeTool->set(m_gvg, editBounds(), localLine, m_activeColor, m_activeIndex);
 
         // Left click means you're tooling.
         if (event->buttons() & Qt::LeftButton)
