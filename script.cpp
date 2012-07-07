@@ -242,7 +242,11 @@ void unregister_plugins()
 bool run_script(const QString &fn)
 {
   QString filename=exe_dir.filePath(fn);
-  FILE *file=_wfopen((wchar_t*)filename.unicode(), L"r");
+  #ifdef _WIN32
+    FILE *file=_wfopen(filename.utf16(), L"r");
+  #else
+    FILE *file=fopen(filename.toUtf8(), "r");
+  #endif
   if (file)
   {
     pycon("Starting script %S", filename.unicode());
