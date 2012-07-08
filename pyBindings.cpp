@@ -28,7 +28,7 @@ bool py_to_qstr(PyObject *o, QString &str)
     o=u;
   }
 
-  str.setUtf16(PyUnicode_AsUnicode(o), PyUnicode_GetSize(o));
+  str=QString::fromWCharArray(PyUnicode_AsUnicode(o), PyUnicode_GetSize(o));
 
   Py_XDECREF(u);
   return true;
