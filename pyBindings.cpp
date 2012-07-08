@@ -28,7 +28,11 @@ bool py_to_qstr(PyObject *o, QString &str)
     o=u;
   }
 
-  str=QString::fromWCharArray(PyUnicode_AsUnicode(o), PyUnicode_GetSize(o));
+  #ifdef Py_UNICODE_WIDE
+    str=QString::fromUcs4(PyUnicode_AsUnicode(o), PyUnicode_GetSize(o));
+  #else
+    str.setUtf16(PyUnicode_AsUnicode(o), PyUnicode_GetSize(o));
+  #endif
 
   Py_XDECREF(u);
   return true;

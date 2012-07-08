@@ -39,6 +39,7 @@
 #include <cstdio>
 
 #include <qgl.h>
+#include <GL/glu.h>
 
 /*
 #if defined(__APPLE__) && defined(__MACH__)
@@ -136,7 +137,7 @@ void GLCamera::frame( const Box3d &bounds )
 
 //-*****************************************************************************
 Imath::V3d GLCamera::pointOfInterest() const
-{ 
+{
     Imath::V3d v(0.0, 0.0, -m_centerOfInterest);
     rotateVector(m_rotation.x, m_rotation.y, v);
     return m_translation + v;
@@ -150,13 +151,13 @@ void GLCamera::autoSetClippingPlanes( const Box3d &bounds )
     const V3d &eye = m_translation;
     double clipNear = FLT_MAX;
     double clipFar = FLT_MIN;
-	
+
     V3d v( 0.0, 0.0, -m_centerOfInterest );
     rotateVector( rotX, rotY, v );
     v.normalize();
-    
+
     V3d points[8];
-    
+
     points[0] = V3d( bounds.min.x, bounds.min.y, bounds.min.z );
     points[1] = V3d( bounds.min.x, bounds.min.y, bounds.max.z );
     points[2] = V3d( bounds.min.x, bounds.max.y, bounds.min.z );
@@ -165,7 +166,7 @@ void GLCamera::autoSetClippingPlanes( const Box3d &bounds )
     points[5] = V3d( bounds.max.x, bounds.min.y, bounds.max.z );
     points[6] = V3d( bounds.max.x, bounds.max.y, bounds.min.z );
     points[7] = V3d( bounds.max.x, bounds.max.y, bounds.max.z );
-    
+
     for( int p = 0; p < 8; ++p )
     {
         V3d dp = points[p] - eye;
@@ -173,14 +174,14 @@ void GLCamera::autoSetClippingPlanes( const Box3d &bounds )
         clipNear = std::min( proj, clipNear );
         clipFar = std::max( proj, clipFar );
     }
-    
+
     clipNear -= 0.5f;
     clipFar += 0.5f;
     clipNear = clamp( clipNear, 0.1, 100000.0 );
     clipFar = clamp( clipFar, 0.1, 100000.0 );
-    
+
     assert( clipFar > clipNear );
-    
+
     m_clip[0] = clipNear;
     m_clip[1] = clipFar;
 }
@@ -192,13 +193,13 @@ void GLCamera::lookAt( const V3d &eye, const V3d &at )
     m_translation = eye;
 
     const V3d dt = at - eye;
-	
+
     const double xzLen = sqrt( ( dt.x * dt.x ) +
                                ( dt.z * dt.z ) );
 
     m_rotation.x =  degrees( atan2( dt.y, xzLen ) );
-    m_rotation.y = -degrees( atan2( dt.x, -dt.z ) );    
-    
+    m_rotation.y = -degrees( atan2( dt.x, -dt.z ) );
+
     m_centerOfInterest = dt.length();
 }
 
@@ -208,14 +209,14 @@ void GLCamera::apply() const
     glViewport( 0, 0, ( GLsizei )m_size[0], ( GLsizei )m_size[1] );
     glMatrixMode( GL_PROJECTION );
     glLoadIdentity();
-    gluPerspective( m_fovy, 
+    gluPerspective( m_fovy,
                     ( ( GLdouble )m_size[0] ) /
-                    ( ( GLdouble )m_size[1] ), 
-                    m_clip[0], 
+                    ( ( GLdouble )m_size[1] ),
+                    m_clip[0],
                     m_clip[1] );
 
     glMatrixMode( GL_MODELVIEW );
-    glLoadIdentity();    
+    glLoadIdentity();
 
     ::glScaled( 1.0 / m_scale[0], 1.0 / m_scale[1], 1.0 / m_scale[2] );
     ::glRotated( -m_rotation[2], 0.0, 0.0, 1.0 );
@@ -232,22 +233,22 @@ M44d GLCamera::transform() const
     m.makeIdentity();
 
     tmp.setScale( V3d( 1.0 / m_scale[0],
-                       1.0 / m_scale[1], 
+                       1.0 / m_scale[1],
                        1.0 / m_scale[2] )  );
     m = m * tmp;
-    
+
     tmp.setAxisAngle( V3d( 0.0, 0.0, 1.0 ), radians( m_rotation[2] ) );
     m = m * tmp;
     tmp.setAxisAngle( V3d( 1.0, 0.0, 0.0 ), radians( m_rotation[0] ) );
     m = m * tmp;
     tmp.setAxisAngle( V3d( 0.0, 1.0, 0.0 ), radians( m_rotation[1] ) );
     m = m * tmp;
-    
+
     tmp.setTranslation( V3d( m_translation[0],
-                             m_translation[1],     
-                             m_translation[2] ) ); 
+                             m_translation[1],
+                             m_translation[2] ) );
     m = m * tmp;
-    
+
     return m;
 }
 
@@ -296,10 +297,10 @@ Imath::Line3d GLCamera::unproject(const Imath::V2d cameraPoint)
     Imath::V3d cPoint(cameraPoint.x, cameraPoint.y, -1.0);
     cPoint.x = (cPoint.x - 0.0) / (double)width();     // TODO: Viewport offset
     cPoint.y = (cPoint.y - 0.0) / (double)height();
-    
+
     cPoint.x = (cPoint.x * 2.0) - 1.0;
     cPoint.y = (cPoint.y * 2.0) - 1.0;
-    
+
     Imath::V3d result1;
     projection().inverse().multVecMatrix(cPoint, result1);
 
@@ -343,7 +344,7 @@ void GLCamera::dolly( const V2d &point,
     const double rotX = m_rotation.x;
     const double rotY = m_rotation.y;
     const V3d &eye = m_translation;
-	
+
     V3d v( 0.0, 0.0, -m_centerOfInterest );
     rotateVector( rotX, rotY, v );
     const V3d view = eye + v;
@@ -447,7 +448,7 @@ std::string GLCamera::RIB() const
                   ( float )( -m_translation[0] ),
                   ( float )( -m_translation[1] ),
                   ( float )( -m_translation[2] ));
-    
+
     // Then transpose and print.
     return ( std::string( str ) );
 }
