@@ -77,13 +77,23 @@ void init_script(const char *exe_path)
   init_sproxel_bindings();
 
   pycon("exe path: %s", exe_path);
+  pycon("exe dir: %s", exe_dir.absolutePath().toLocal8Bit().data());
+
+  #ifndef _WIN32
+    QString code="import sys\nsys.path.insert(0, \"";
+    code.append(exe_dir.absolutePath());
+    code.append("\")\nprint 'sys.path:', sys.path\n");
+    PyRun_SimpleString(code.toLocal8Bit().data());
+  #endif
 
   pycon("Importing PySide.SproxelGlue...");
   glue=PyImport_ImportModule("PySide.SproxelGlue");
   if (!glue)
   {
     pycon("Failed to import PySide.SproxelGlue");
-    QMessageBox::critical(NULL, "Sproxel Error", "Failed to import PySide.SproxelGlue");
+    #ifdef _WIN32
+      QMessageBox::critical(NULL, "Sproxel Error", "Failed to import PySide.SproxelGlue");
+    #endif
   }
   else
   {
