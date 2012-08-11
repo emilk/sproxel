@@ -16,7 +16,7 @@
 #include "GLModelWidget.h"
 #include "SproxelProject.h"
 
-#define SPROXEL_VERSION "0.6dev"
+#define SPROXEL_VERSION "0.6"
 #define BASE_WINDOW_TITLE (tr("Sproxel " SPROXEL_VERSION))
 
 class MainWindow : public QMainWindow
