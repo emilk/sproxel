@@ -13,6 +13,9 @@ enum SproxelTool { TOOL_SPLAT,
                    TOOL_ERASER,
                    TOOL_REPLACE,
                    TOOL_SLAB,
-                   TOOL_LINE };
+                   TOOL_LINE,
+                   TOOL_BOX,
+                   TOOL_EXTRUDE,
+                  };
 
 #endif

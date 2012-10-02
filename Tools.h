@@ -217,6 +217,51 @@ private:
 
 
 ////////////////////////////////////////////////////////////////////////////////
+// Box tool
+////////////////////////////////////////////////////////////////////////////////
+class BoxToolState : public ToolState
+{
+public:
+    BoxToolState(UndoManager* um) : ToolState(um), m_startPoint(-1, -1, -1)
+    {
+        m_totalClicks = m_clicksRemain = 2;
+    }
+    ~BoxToolState() {}
+
+    void execute();
+    SproxelTool type() { return TOOL_BOX; }
+    std::vector<Imath::V3i> voxelsAffected();
+
+private:
+    Imath::V3i m_startPoint;
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Extrude tool
+////////////////////////////////////////////////////////////////////////////////
+class ExtrudeToolState : public ToolState
+{
+public:
+    ExtrudeToolState(UndoManager* um) : ToolState(um)
+    {
+        m_totalClicks = m_clicksRemain = 1;
+    }
+    ~ExtrudeToolState() {}
+
+    void execute();
+    SproxelTool type() { return TOOL_EXTRUDE; }
+    std::vector<Imath::V3i> voxelsAffected();
+
+private:
+    Imath::V3i m_dir;
+
+    void fillExtrudeMap(GameVoxelGrid<char> &map, const Imath::V3i &mapOfs,
+      const Imath::V3i &pos, int axis);
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
 // Dropper tool
 ////////////////////////////////////////////////////////////////////////////////
 class DropperToolState : public ToolState

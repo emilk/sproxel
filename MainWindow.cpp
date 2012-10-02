@@ -312,6 +312,16 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_actToolLine->setCheckable(true);
     connect(m_actToolLine, SIGNAL(toggled(bool)), this, SLOT(setToolLine(bool)));
 
+    m_actToolBox = new QAction("Box", m_toolbarActionGroup);
+    m_actToolBox->setIcon(QIcon(QPixmap(":/icons/box.png")));
+    m_actToolBox->setCheckable(true);
+    connect(m_actToolBox, SIGNAL(toggled(bool)), this, SLOT(setToolBox(bool)));
+
+    m_actToolExtrude = new QAction("Extrude", m_toolbarActionGroup);
+    m_actToolExtrude->setIcon(QIcon(QPixmap(":/icons/extrude.png")));
+    m_actToolExtrude->setCheckable(true);
+    connect(m_actToolExtrude, SIGNAL(toggled(bool)), this, SLOT(setToolExtrude(bool)));
+
     //m_actToolRay = new QAction("Ray", this);
 
     m_actToolSplat->setChecked(true);
@@ -484,6 +494,8 @@ void MainWindow::keyPressEvent(QKeyEvent* event)
     else if (event->key() == Qt::Key_T) m_actToolEraser->setChecked(true);
     else if (event->key() == Qt::Key_Y) m_actToolSlab->setChecked(true);
     else if (event->key() == Qt::Key_U) m_actToolLine->setChecked(true);
+    else if (event->key() == Qt::Key_I) m_actToolBox->setChecked(true);
+    else if (event->key() == Qt::Key_O) m_actToolExtrude->setChecked(true);
 
     else if (event->key() >= Qt::Key_Left && event->key() <= Qt::Key_PageDown)
     {
@@ -821,6 +833,8 @@ void MainWindow::setToolEraser(bool stat)  { if (stat) m_glModelWidget->setActiv
 void MainWindow::setToolReplace(bool stat) { if (stat) m_glModelWidget->setActiveTool(TOOL_REPLACE); }
 void MainWindow::setToolSlab(bool stat)    { if (stat) m_glModelWidget->setActiveTool(TOOL_SLAB); }
 void MainWindow::setToolLine(bool stat)    { if (stat) m_glModelWidget->setActiveTool(TOOL_LINE); }
+void MainWindow::setToolBox(bool stat)     { if (stat) m_glModelWidget->setActiveTool(TOOL_BOX); }
+void MainWindow::setToolExtrude(bool stat) { if (stat) m_glModelWidget->setActiveTool(TOOL_EXTRUDE); }
 
 void MainWindow::reactToModified(bool clean)
 {

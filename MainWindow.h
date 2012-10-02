@@ -16,7 +16,7 @@
 #include "GLModelWidget.h"
 #include "SproxelProject.h"
 
-#define SPROXEL_VERSION "0.6"
+#define SPROXEL_VERSION "0.61"
 #define BASE_WINDOW_TITLE (tr("Sproxel " SPROXEL_VERSION))
 
 class MainWindow : public QMainWindow
@@ -106,6 +106,8 @@ private:
     QAction* m_actToolEraser;
     QAction* m_actToolSlab;
     QAction* m_actToolLine;
+    QAction* m_actToolBox;
+    QAction* m_actToolExtrude;
     QAction* m_actToolRay;
 
     QAction *m_actAxisX;
@@ -152,6 +154,8 @@ public slots:
     void setToolReplace(bool stat);
     void setToolSlab(bool stat);
     void setToolLine(bool stat);
+    void setToolBox(bool stat);
+    void setToolExtrude(bool stat);
 
     void reactToModified(bool value);
 

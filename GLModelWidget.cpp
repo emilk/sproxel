@@ -294,6 +294,8 @@ void GLModelWidget::setActiveTool(const SproxelTool tool)
         case TOOL_REPLACE: m_activeTool = new ReplaceToolState(p_undoManager); break;
         case TOOL_SLAB: m_activeTool = new SlabToolState(p_undoManager); break;
         case TOOL_LINE: m_activeTool = new LineToolState(p_undoManager); break;
+        case TOOL_BOX: m_activeTool = new BoxToolState(p_undoManager); break;
+        case TOOL_EXTRUDE: m_activeTool = new ExtrudeToolState(p_undoManager); break;
     }
 }
 

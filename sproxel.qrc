@@ -13,5 +13,7 @@
     <file>icons/layerNew.png</file>
     <file>icons/layerDuplicate.png</file>
     <file>icons/layerDelete.png</file>
+    <file>icons/box.png</file>
+    <file>icons/extrude.png</file>
 </qresource>
 </RCC>
