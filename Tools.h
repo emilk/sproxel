@@ -27,6 +27,8 @@ public:
     virtual SproxelTool type() = 0;
     virtual std::vector<Imath::V3i> voxelsAffected() = 0;
 
+    virtual void executeErase() {}
+
     const Imath::Line3d& ray() const { return m_ray; }
 
     void set(VoxelGridGroupPtr gvg, const Imath::Box3i &edit_bounds,
@@ -250,11 +252,14 @@ public:
     ~ExtrudeToolState() {}
 
     void execute();
+    void executeErase();
     SproxelTool type() { return TOOL_EXTRUDE; }
     std::vector<Imath::V3i> voxelsAffected();
 
 private:
     Imath::V3i m_dir;
+
+    void doExtrude(bool is_erase);
 
     void fillExtrudeMap(GameVoxelGrid<char> &map, const Imath::V3i &mapOfs,
       const Imath::V3i &pos, int axis);

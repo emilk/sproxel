@@ -487,16 +487,39 @@ std::vector<Imath::V3i> BoxToolState::voxelsAffected()
 ////////////////////////////////////////
 void ExtrudeToolState::execute()
 {
+  doExtrude(false);
+}
+
+
+void ExtrudeToolState::executeErase()
+{
+  doExtrude(true);
+}
+
+
+void ExtrudeToolState::doExtrude(bool is_erase)
+{
   std::vector<Imath::V3i> voxels = voxelsAffected();
 
-  p_undoManager->beginMacro("Extrude");
+  p_undoManager->beginMacro(is_erase?"Extrude erase":"Extrude");
 
-  for (size_t i = 0; i < voxels.size(); i++)
+  if (is_erase)
   {
-    Imath::V3i sp=voxels[i]-m_dir;
-    SproxelColor color=p_gvg->get(sp);
-    int index=p_gvg->getInd(sp);
-    p_undoManager->setVoxelColor(p_gvg, voxels[i], color, index);
+    for (size_t i=0; i<voxels.size(); i++)
+    {
+      Imath::V3i sp=voxels[i]-m_dir;
+      p_undoManager->setVoxelColor(p_gvg, sp, SproxelColor(0, 0, 0, 0), 0);
+    }
+  }
+  else
+  {
+    for (size_t i=0; i<voxels.size(); i++)
+    {
+      Imath::V3i sp=voxels[i]-m_dir;
+      SproxelColor color=p_gvg->get(sp);
+      int index=p_gvg->getInd(sp);
+      p_undoManager->setVoxelColor(p_gvg, voxels[i], color, index);
+    }
   }
 
   p_undoManager->endMacro();

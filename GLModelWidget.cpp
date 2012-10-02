@@ -1155,11 +1155,21 @@ void GLModelWidget::mousePressEvent(QMouseEvent *event)
             // Right button is always delete
             // TODO: Restore old tool properly in ReleaseEvent
             SproxelTool currentTool = m_activeTool->type();
-            setActiveTool(TOOL_ERASER);
-            m_activeTool->set(m_gvg, editBounds(), localLine, m_activeColor, m_activeIndex);
-            m_activeTool->execute();
-            setActiveTool(currentTool);
-            m_activeTool->setDragSupport(p_appSettings->value("GLModelWidget/dragEnabled", 1).toInt());
+
+            if (currentTool==TOOL_EXTRUDE)
+            {
+              m_activeTool->set(m_gvg, editBounds(), localLine, m_activeColor, m_activeIndex);
+              m_activeTool->executeErase();
+            }
+            else
+            {
+              setActiveTool(TOOL_ERASER);
+              m_activeTool->set(m_gvg, editBounds(), localLine, m_activeColor, m_activeIndex);
+              m_activeTool->execute();
+              setActiveTool(currentTool);
+              m_activeTool->setDragSupport(p_appSettings->value("GLModelWidget/dragEnabled", 1).toInt());
+            }
+
             updateGL();
         }
         return;
