@@ -15,12 +15,14 @@ unix:!macx {
 
 macx {
   INCLUDEPATH += Imath
+  ICON = sproxel.icns
 }
 
 win32 {
   INCLUDEPATH += Imath
   DEFINES += NOMINMAX
   QMAKE_CXXFLAGS += -wd4996
+  RC_FILE = sproxel.rc
 }
 
 SOURCES += \
