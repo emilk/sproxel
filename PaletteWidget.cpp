@@ -17,8 +17,8 @@
 
 #define PAL_X m_palX
 #define PAL_Y 85
-#define PAL_NX  8
-#define PAL_NY 32
+#define PAL_NX 16
+#define PAL_NY 16
 #define PBOX_W m_pboxW
 #define PBOX_H m_pboxH
 
