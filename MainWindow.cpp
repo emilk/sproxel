@@ -393,6 +393,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
 
     // Start things off focused on the GLWidget
     m_glModelWidget->setFocus();
+    m_glModelWidget->frame(true);
 }
 
 
@@ -835,8 +836,16 @@ void MainWindow::contractDown()
     m_glModelWidget->resizeAndShiftVoxelGrid(sizeInc, shift);
 }
 
-void MainWindow::upRes()   { m_glModelWidget->reresVoxelGrid(2.0f); }
-void MainWindow::downRes() { m_glModelWidget->reresVoxelGrid(0.5f); }
+void MainWindow::upRes()
+{
+    m_glModelWidget->reresVoxelGrid(2.0f);
+    m_glModelWidget->frame(true);
+}
+
+void MainWindow::downRes() {
+    m_glModelWidget->reresVoxelGrid(0.5f);
+    m_glModelWidget->frame(true);
+}
 
 void MainWindow::setToolSplat(bool stat)   { if (stat) m_glModelWidget->setActiveTool(TOOL_SPLAT); }
 void MainWindow::setToolFlood(bool stat)   { if (stat) m_glModelWidget->setActiveTool(TOOL_FLOOD); }

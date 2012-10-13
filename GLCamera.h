@@ -49,7 +49,7 @@ class GLCamera
 public:
     GLCamera();
     ~GLCamera() {};
-    
+
     // Executes OpenGL commands to show the current camera
     void apply() const;
 
@@ -58,10 +58,10 @@ public:
     // Transform
     Imath::M44d transform() const;
     Imath::M44d projection() const;
-    
+
     Imath::V2d project(const Imath::V3d worldPoint);
     Imath::Line3d unproject(const Imath::V2d cameraPoint);
-    
+
     const Imath::V3d &rotation() const { return m_rotation; }
     void setRotation( const Imath::V3d &r ) { m_rotation = r; }
 
@@ -84,7 +84,7 @@ public:
 
     int width() const { return m_size.x; }
     int height() const { return m_size.y; }
-    
+
     void autoSetClippingPlanes( const Imath::Box3d &bounds );
     void setClippingPlanes( double clipNear, double clipFar )
     {
@@ -96,7 +96,7 @@ public:
     //-*************************************************************************
     // UI Actions
     void track( const Imath::V2d &point );
-    void dolly( const Imath::V2d &point, 
+    void dolly( const Imath::V2d &point,
                 double dollySpeed = 5.0 );
     void rotate( const Imath::V2d &point,
                  double rotateSpeed = 400.0 );
@@ -131,7 +131,7 @@ protected:
     Imath::V3d m_rotation;
     Imath::V3d m_scale;
     Imath::V3d m_translation;
-   
+
     double m_centerOfInterest;
     double m_fovy;
     Imath::V2d m_clip;
@@ -140,4 +140,4 @@ protected:
 };
 
 
-#endif  
+#endif
