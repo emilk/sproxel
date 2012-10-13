@@ -51,12 +51,7 @@ SproxelProject::SproxelProject()
     float value = x / 16.f;
     mainPalette->setColor(240+x, colorFromHSV(0, 0, value));
   }
-  //mainPalette->setColor(0, SproxelColor(0, 0, 0, 0));
   palettes.push_back(mainPalette);
-
-  VoxelGridLayerPtr layer = VoxelGridLayerPtr(new VoxelGridLayer());
-  VoxelGridGroupPtr sprite = VoxelGridGroupPtr(new VoxelGridGroup(layer));
-  sprites.push_back(sprite);
 }
 
 VoxelGridLayerPtr VoxelGridLayer::fromQImage(QImage readMe, ColorPalettePtr pal)
