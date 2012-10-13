@@ -13,23 +13,15 @@ INCLUDEPATH += ../python/include
 LIBS += -L../python/libs -lpython27
 
 unix:!macx {
-  CONFIG += link_pkgconfig
-  PKGCONFIG += IlmBase
+  INCLUDEPATH += Imath
 }
 
 macx {
-  INCLUDEPATH += /usr/local/include/OpenEXR
-  LIBS += -lImath -lIex
+  INCLUDEPATH += Imath
 }
 
 win32 {
-  INCLUDEPATH += ../IlmBase/include
-  CONFIG(release) {
-    LIBS += -L../IlmBase/lib/Release
-  } else {
-    LIBS += -L../IlmBase/lib/Debug
-  }
-  LIBS += -lImath -lIex
+  INCLUDEPATH += Imath
   DEFINES += NOMINMAX
   QMAKE_CXXFLAGS += -wd4996
 }
@@ -51,7 +43,15 @@ SOURCES += \
     script.cpp \
     pyConsole.cpp \
     pyBindings.cpp \
-    pyImportExport.cpp
+    pyImportExport.cpp \
+    Imath/ImathVec.cpp \
+    Imath/ImathShear.cpp \
+    Imath/ImathRandom.cpp \
+    Imath/ImathMatrixAlgo.cpp \
+    Imath/ImathFun.cpp \
+    Imath/ImathColorAlgo.cpp \
+    Imath/ImathBox.cpp \
+    Imath/IexBaseExc.cpp
 
 HEADERS  += \
     Foundation.h \
@@ -73,7 +73,38 @@ HEADERS  += \
     pyConsole.h \
     pyBindings.h \
     ConsoleWidget.h \
-    glue/classGlue.h
+    glue/classGlue.h \
+    Imath/ImathVecAlgo.h \
+    Imath/ImathVec.h \
+    Imath/ImathSphere.h \
+    Imath/ImathShear.h \
+    Imath/ImathRoots.h \
+    Imath/ImathRandom.h \
+    Imath/ImathQuat.h \
+    Imath/ImathPlatform.h \
+    Imath/ImathPlane.h \
+    Imath/ImathMatrixAlgo.h \
+    Imath/ImathMatrix.h \
+    Imath/ImathMath.h \
+    Imath/ImathLineAlgo.h \
+    Imath/ImathLine.h \
+    Imath/ImathLimits.h \
+    Imath/ImathInterval.h \
+    Imath/ImathInt64.h \
+    Imath/ImathHalfLimits.h \
+    Imath/ImathGLU.h \
+    Imath/ImathGL.h \
+    Imath/ImathFun.h \
+    Imath/ImathFrustum.h \
+    Imath/ImathFrame.h \
+    Imath/ImathExc.h \
+    Imath/ImathEuler.h \
+    Imath/ImathColorAlgo.h \
+    Imath/ImathColor.h \
+    Imath/ImathBoxAlgo.h \
+    Imath/ImathBox.h \
+    Imath/IexBaseExc.h \
+    Imath/half.h
 
 FORMS += \
     NewGridDialog.ui
