@@ -1,6 +1,7 @@
 #ifndef __SPROXEL_SCRIPT_H__
 #define __SPROXEL_SCRIPT_H__
 
+#ifdef SPROXEL_USE_PYTHON
 
 #include <Python.h>
 
@@ -33,5 +34,5 @@ PyObject* qstr_to_py(const QString &str);
 
 bool py_to_qstr(PyObject *o, QString &str);
 
-
+#endif
 #endif

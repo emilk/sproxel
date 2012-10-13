@@ -1,3 +1,4 @@
+#ifdef SPROXEL_USE_PYTHON
 #include "pyBindings.h"
 #include "ImportExport.h"
 
@@ -175,3 +176,4 @@ PyObject* PySproxel_unregisterExporter(PyObject*, PyObject *arg)
 
   Py_RETURN_FALSE;
 }
+#endif

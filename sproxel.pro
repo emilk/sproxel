@@ -9,9 +9,6 @@ QT       += core gui opengl
 TARGET = sproxel
 TEMPLATE = app
 
-INCLUDEPATH += ../python/include
-LIBS += -L../python/libs -lpython27
-
 unix:!macx {
   INCLUDEPATH += Imath
 }

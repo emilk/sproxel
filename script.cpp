@@ -1,3 +1,4 @@
+#ifdef SPROXEL_USE_PYTHON
 #include <Python.h>
 #include <QtDebug>
 #include <QFileInfo>
@@ -282,3 +283,4 @@ bool run_script(const QString &fn)
     return false;
   }
 }
+#endif

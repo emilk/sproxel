@@ -1,3 +1,4 @@
+#ifdef SPROXEL_USE_PYTHON
 #include <Python.h>
 #include <QImage>
 #include <QBuffer>
@@ -1745,3 +1746,4 @@ void init_sproxel_bindings()
   Py_INCREF(&sproxelPyProjectType); PyModule_AddObject(mod, "Project", (PyObject*)&sproxelPyProjectType);
   Py_INCREF(&sproxelPyUndoManagerType); PyModule_AddObject(mod, "UndoManager", (PyObject*)&sproxelPyUndoManagerType);
 }
+#endif

@@ -19,11 +19,11 @@ class LayerObject
 public:
     LayerObject() : visible(true), name("") { }
     LayerObject(const std::string& n, bool v) : visible(v), name(n) { }
-    
+
 public:
     bool visible;
     std::string name;
-    
+
 public:
     LayerObject& operator=(const LayerObject& other)
     {
@@ -41,7 +41,7 @@ public:
 class LayersWidget : public QWidget
 {
     Q_OBJECT
-            
+
 public:
     LayersWidget(QWidget* parent = NULL);
     ~LayersWidget() {}
@@ -55,7 +55,7 @@ public slots:
     void duplicateSelected();
     //void moveSelectedUp();
     //void moveSelectedDown();
-    
+
 private:
     LayerListView* m_listView;
     LayerListModel* m_listModel;
@@ -66,7 +66,7 @@ private:
 class LayerListModel : public QAbstractListModel
 {
 public:
-    LayerListModel(QObject* parent = NULL) : 
+    LayerListModel(QObject* parent = NULL) :
         QAbstractListModel(parent),
         listdata(),
         eyePic(":/icons/layerEye.png"),
@@ -77,7 +77,7 @@ public:
         listdata.push_back(LayerObject(std::string("Layer 2"), false));
         listdata.push_back(LayerObject(std::string("Layer 3"), true));
         listdata.push_back(LayerObject(std::string("Layer 4"), true));
-        
+
         // Clear out the eye image so as to create an 'invisible' image.
         blankPic.fill(QColor(255, 255, 255, 0));
     }
@@ -94,7 +94,7 @@ public:
     {
         return listdata.size();
     }
-    
+
     bool insertRows(int row, int, const QModelIndex& parent = QModelIndex())
     {
         beginInsertRows(parent, row, row);
@@ -102,7 +102,7 @@ public:
         endInsertRows();
         return true;
     }
-    
+
     bool removeRows(int row, int, const QModelIndex& parent = QModelIndex())
     {
         beginRemoveRows(parent, row, row);
@@ -110,12 +110,12 @@ public:
         endRemoveRows();
         return true;
     }
-    
+
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const
     {
         if (!index.isValid())
             return QVariant();
-        
+
         if (role == Qt::DisplayRole || role == Qt::EditRole)
         {
             return QVariant(QString(listdata[index.row()].name.c_str()));
@@ -129,7 +129,7 @@ public:
         }
         return QVariant();
     }
-    
+
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole)
     {
         int row = index.row();
@@ -148,12 +148,12 @@ public:
         }
         return true;
     }
-    
+
     Qt::DropActions supportedDropActions() const
     {
         return Qt::MoveAction;
     }
-    
+
     Qt::ItemFlags flags(const QModelIndex& index) const
     {
         Qt::ItemFlags defaultFlags = Qt::ItemIsEnabled | Qt::ItemIsSelectable;
@@ -196,7 +196,7 @@ protected:
                 mdl->listdata[index.row()].visible = true;
             emit dataChanged(index, index);
         }
-        
+
         // Proceed with the parent's control
         QListView::mousePressEvent(event);
     }

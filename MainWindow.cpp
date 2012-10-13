@@ -269,9 +269,10 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     m_menuWindow->addAction(m_paletteDocker->toggleViewAction());
     m_menuWindow->addAction(m_projectDocker->toggleViewAction());
     //m_menuWindow->addAction(m_layersDocker->toggleViewAction());
+#ifdef SPROXEL_USE_PYTHON
     m_menuWindow->addAction(get_python_console_widget()->toggleViewAction());
     get_python_console_widget()->toggleViewAction()->setChecked(false);
-
+#endif
 
     // ------ toolbar hookups
     // Icons from the brilliant icon pack located at : http://pen-art.ru/
@@ -437,7 +438,9 @@ void MainWindow::closeEvent(QCloseEvent* event)
         //m_appSettings.setValue("layersWindow/visibility", m_layersDocker->isVisible());
     }
 
+#ifdef SPROXEL_USE_PYTHON
     if (event->isAccepted()) close_python_console();
+#endif
 }
 
 
@@ -574,8 +577,11 @@ void MainWindow::saveFile()
     if (m_activeFilename == "")
         return saveFileAs();
 
+#ifdef SPROXEL_USE_PYTHON
     bool success = save_project(m_activeFilename, m_project);
-
+#else
+    bool success = false;
+#endif
     if (success)
       m_undoManager.setClean();
     else
@@ -600,7 +606,10 @@ void MainWindow::saveFileAs()
     bool success = false;
     if (!filename.endsWith(".sxl", Qt::CaseInsensitive))
         filename.append(".sxl");
+
+#ifdef SPROXEL_USE_PYTHON
     success = save_project(filename, m_project);
+#endif
 
     if (success)
     {
@@ -640,7 +649,11 @@ void MainWindow::openFile(QString filename)
     }
 
     bool success = false;
-    SproxelProjectPtr project=load_project(filename);
+#ifdef SPROXEL_USE_PYTHON
+    SproxelProjectPtr project = load_project(filename);
+#else
+    SproxelProjectPtr project = SproxelProjectPtr(new SproxelProject());
+#endif
     if (project) { m_project=project; success=true; }
 
     if (success)

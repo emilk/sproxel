@@ -27,6 +27,10 @@ public:
     }
     mainPalette->setColor(0, SproxelColor(0, 0, 0, 0));
     palettes.push_back(mainPalette);
+
+    VoxelGridLayerPtr layer = VoxelGridLayerPtr(new VoxelGridLayer());
+    VoxelGridGroupPtr sprite = VoxelGridGroupPtr(new VoxelGridGroup(layer));
+    sprites.push_back(sprite);
   }
 };
 

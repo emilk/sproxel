@@ -67,7 +67,7 @@ public:
 
   int rowCount(const QModelIndex&) const
   {
-    return m_project->sprites.size();
+    return m_project ? m_project->sprites.size() : 0;
   }
 
 

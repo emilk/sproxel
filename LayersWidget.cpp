@@ -55,13 +55,13 @@ LayersWidget::LayersWidget(QWidget* parent) : QWidget(parent)
     // Move Layer Up
     //QPushButton* buttonUp = new QPushButton("UP");
     //buttonUp->setMaximumSize(50, 26);
-    //connect(buttonUp, SIGNAL(pressed()), 
+    //connect(buttonUp, SIGNAL(pressed()),
     //        this,     SLOT(moveSelectedUp()));
 
     // Move Layer Down
     //QPushButton* buttonDown = new QPushButton("DOWN");
     //buttonDown->setMaximumSize(50, 26);
-    //connect(buttonDown, SIGNAL(pressed()), 
+    //connect(buttonDown, SIGNAL(pressed()),
     //        this,       SLOT(moveSelectedDown()));
 
     // New Layer
@@ -76,7 +76,7 @@ LayersWidget::LayersWidget(QWidget* parent) : QWidget(parent)
     buttonDup->setToolTip("Duplicate Layer");
     buttonDup->setIcon(QIcon(QPixmap(":/icons/layerDuplicate.png")));
     buttonDup->setMaximumSize(50, 26);
-    connect(buttonDup, SIGNAL(pressed()), 
+    connect(buttonDup, SIGNAL(pressed()),
             this,      SLOT(duplicateSelected()));
 
     // Delete Layer
@@ -84,7 +84,7 @@ LayersWidget::LayersWidget(QWidget* parent) : QWidget(parent)
     buttonDel->setToolTip("Delete Layer");
     buttonDel->setIcon(QIcon(QPixmap(":/icons/layerDelete.png")));
     buttonDel->setMaximumSize(50, 26);
-    connect(buttonDel, SIGNAL(pressed()), 
+    connect(buttonDel, SIGNAL(pressed()),
             this,      SLOT(deleteSelected()));
 
     topGridLayout->addWidget(buttonNew,  2, 0, 1, 2);
@@ -139,7 +139,7 @@ void LayersWidget::duplicateSelected()
 //     int row = m_listView->currentIndex().row();
 //     if (row == 0 or row == -1)
 //         return;
-// 
+//
 //     std::swap(mdl->listdata[row-1],mdl->listdata[row]);
 //     m_listView->setCurrentIndex(mdl->index(row-1));
 // }
@@ -151,7 +151,7 @@ void LayersWidget::duplicateSelected()
 //     int row = m_listView->currentIndex().row();
 //     if (row == mdl->rowCount(QModelIndex())-1 or row == -1)
 //         return;
-// 
+//
 //     std::swap(mdl->listdata[row+1],mdl->listdata[row]);
 //     m_listView->setCurrentIndex(mdl->index(row+1));
 // }
