@@ -13,6 +13,9 @@
 #define CBOX_PX (25+m_cboxX)
 #define CBOX_PY  30
 
+#define LBOX_X m_lboxX
+#define LBOX_Y 20
+
 #define HR_Y 75
 
 #define PAL_X m_palX
@@ -46,7 +49,8 @@ void PaletteWidget::resizeEvent(QResizeEvent *event)
 
   m_palX=(w-m_pboxW*PAL_NX)/2;
 
-  m_cboxX=(w-(CBOX_PX-m_cboxX+CBOX_W))/2;
+  m_cboxX=((w/2)-(CBOX_PX-m_cboxX+CBOX_W))/2;
+  m_lboxX=m_cboxX+w/2;
 
   //printf("palette box: %dx%d\n", m_pboxW, m_pboxH);
 }
@@ -147,6 +151,11 @@ void PaletteWidget::paintEvent(QPaintEvent*)
   painter.fillRect(CBOX_AX+1, CBOX_AY+1, CBOX_W-2, CBOX_H-2, QBrush(QColor(255, 255, 255)));
   painter.fillRect(CBOX_AX+2, CBOX_AY+2, CBOX_W-4, CBOX_H-4, QBrush(toQColor(m_activeColor, 1)));
 
+  // Light color
+  painter.fillRect(m_lboxX  , LBOX_Y  , CBOX_W  , CBOX_H  , QBrush(QColor(0,0,0)));
+  painter.fillRect(m_lboxX+1, LBOX_Y+1, CBOX_W-2, CBOX_H-2, QBrush(QColor(255, 255, 255)));
+  painter.fillRect(m_lboxX+2, LBOX_Y+2, CBOX_W-4, CBOX_H-4, QBrush(toQColor(m_lightColor, 1)));
+
   // Horizontal rule
   painter.setPen(brighterBackgroundPen);
   painter.drawLine(QPoint(0, HR_Y), QPoint(width(), HR_Y));
@@ -217,6 +226,16 @@ void PaletteWidget::mousePressEvent(QMouseEvent* event)
       if (color.isValid()) setPassiveColor(toColor4f(color), -1);
       break;
 
+    case HIT_LIGHT_COLOR_BOX:
+      {
+        QColorDialog* qcd = new QColorDialog(toQColor(m_lightColor), this);
+        connect(qcd, SIGNAL(currentColorChanged(QColor)), this, SLOT(lightColorChanged(QColor)));
+        qcd->setWindowTitle("Select light color");
+        qcd->setOptions(QColorDialog::NoButtons);
+        qcd->show();
+      }
+      break;
+
     default:
       if (event->button()==Qt::LeftButton)
       {
@@ -278,6 +297,8 @@ int PaletteWidget::clickHit(const QPoint& p)
     return HIT_ACTIVE_COLOR_BOX;
   else if (p.x() >= CBOX_PX && p.y() >= CBOX_PY && p.x() < CBOX_PX+CBOX_W && p.y() < CBOX_PY+CBOX_H)
     return HIT_PASSIVE_COLOR_BOX;
+  else if (p.x() >= LBOX_X && p.y() >= LBOX_Y && p.x() < LBOX_X+CBOX_W && p.y() < LBOX_Y+CBOX_H)
+    return HIT_LIGHT_COLOR_BOX;
 
   int nx=p.x()-PAL_X, ny=p.y()-PAL_Y;
   if (nx>=0 && ny>=0)
@@ -312,6 +333,20 @@ void PaletteWidget::setPassiveColor(const Imath::Color4f& color, int index)
     repaint(0, 0, width(), HR_Y);
     repaint(palRect(oldIndex));
     repaint(palRect(m_passiveIndex));
+}
+
+
+void PaletteWidget::setLightColor(const Imath::Color4f& color)
+{
+    m_lightColor = color;
+    emit lightColorChanged(m_lightColor);
+    repaint(0, 0, width(), HR_Y);
+}
+
+void PaletteWidget::lightColorChanged(const QColor & color)
+{
+    if (color.isValid())
+        setLightColor(toColor4f(color));
 }
 
 

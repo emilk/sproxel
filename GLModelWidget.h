@@ -78,6 +78,7 @@ public slots:
     void setAxisY() { setCurrentAxis(Y_AXIS); }
     void setAxisZ() { setCurrentAxis(Z_AXIS); }
     void setActiveColor(const Imath::Color4f& c, int i) { m_activeColor = c; m_activeIndex=i; }
+    void setLightColor(const Imath::Color4f& c) { m_lightColor = c; update(); }
     void onSpriteChanged(VoxelGridGroupPtr spr) { if (spr==m_gvg) update(); }
     void onPaletteChanged(ColorPalettePtr pal) { if (m_gvg && m_gvg->hasPalette(pal)) update(); }
     void frameFull() { frame(true); }
@@ -108,6 +109,8 @@ private:
     Imath::V3i m_activeVoxel;
     Imath::Color4f m_activeColor;
     int m_activeIndex;
+
+    Imath::Color4f m_lightColor;
 
     QPoint m_lastMouse;
     bool m_drawGrid;

@@ -57,6 +57,8 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
     //addDockWidget(Qt::RightDockWidgetArea, m_layersDocker);
 
     // Connect some window signals together
+    QObject::connect(m_paletteWidget, SIGNAL(lightColorChanged(Imath::Color4f)),
+                     m_glModelWidget, SLOT(setLightColor(Imath::Color4f)));
     QObject::connect(m_paletteWidget, SIGNAL(activeColorChanged(Imath::Color4f, int)),
                      m_glModelWidget, SLOT(setActiveColor(Imath::Color4f, int)));
     QObject::connect(m_glModelWidget, SIGNAL(colorSampled(Imath::Color4f, int)),

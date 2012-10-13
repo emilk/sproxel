@@ -19,6 +19,7 @@ public:
         p_undoManager(um),
         m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
         m_passiveColor(0.0f, 0.0f, 0.0f, 1.0f),
+        m_lightColor(1.0f, 1.0f, 1.0f, 1.0f),
         m_activeIndex(-1),
         m_passiveIndex(-1),
         m_hilightIndex(HIT_NONE),
@@ -45,12 +46,17 @@ public:
 
 signals:
     void activeColorChanged(const Imath::Color4f& color, int index);
+    void lightColorChanged(const Imath::Color4f& color);
 
 public slots:
     void setActiveColor (const Imath::Color4f& color, int index);
     void setPassiveColor(const Imath::Color4f& color, int index);
+    void setLightColor(const Imath::Color4f& color);
     void swapColors();
     void onPaletteChanged(ColorPalettePtr pal) { if (pal==m_palette) update(); }
+
+private slots:
+    void lightColorChanged(const QColor & color);
 
 protected:
     void paintEvent(QPaintEvent *event);
@@ -67,6 +73,7 @@ private:
     Imath::Color4f m_activeColor;
     Imath::Color4f m_passiveColor;
     Imath::Color4f m_backgroundColor;
+    Imath::Color4f m_lightColor;
     int m_activeIndex;
     int m_passiveIndex;
 
@@ -76,7 +83,7 @@ private:
 
     UndoManager *p_undoManager;
 
-    int m_palX, m_pboxW, m_pboxH, m_cboxX;
+    int m_palX, m_pboxW, m_pboxH, m_cboxX, m_lboxX;
 
     QRect palRect(int index) const;
     void setHilight(int index);
@@ -90,6 +97,7 @@ private:
       HIT_NONE              = -1,
       HIT_ACTIVE_COLOR_BOX  = -2,
       HIT_PASSIVE_COLOR_BOX = -3,
+      HIT_LIGHT_COLOR_BOX   = -4,
     };
 
     int clickHit(const QPoint& clickSpot);

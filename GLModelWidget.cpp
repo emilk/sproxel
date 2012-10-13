@@ -25,6 +25,7 @@ GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, UndoManage
       p_undoManager(undoManager),
       m_activeVoxel(-1,-1,-1),
       m_activeColor(1.0f, 1.0f, 1.0f, 1.0f),
+      m_lightColor(1.0f, 1.0f, 1.0f, 1.0f),
       m_activeIndex(-1),
       m_lastMouse(),
       m_drawGrid(true),
@@ -429,9 +430,7 @@ void GLModelWidget::paintGL()
     lightDir[3] = 0.0; // w=0.0 means directional
 
     glLightfv(GL_LIGHT0, GL_POSITION, lightDir);
-
-    GLfloat diffuse[] = {0.8f, 0.8f, 0.8f, 1.0f};
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, m_lightColor.getValue());
 
     bool drawOutlines=p_appSettings->value("GLModelWidget/drawVoxelOutlines", 0).toBool();
     bool drawSmoothCubes=p_appSettings->value("GLModelWidget/drawSmoothVoxels", 0).toBool();
