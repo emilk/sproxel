@@ -41,10 +41,8 @@ void PaletteWidget::resizeEvent(QResizeEvent *event)
   int h=event->size().height();
 
   m_pboxW=(w-5*2)/PAL_NX;
-  m_pboxH=(h-PAL_Y-5)/PAL_NY;
-
   if (m_pboxW<2) m_pboxW=2;
-  if (m_pboxH<2) m_pboxH=2;
+  m_pboxH=m_pboxW;
 
   m_palX=(w-m_pboxW*PAL_NX)/2;
 
