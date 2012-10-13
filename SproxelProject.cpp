@@ -1,6 +1,63 @@
 #include <QImage>
 #include "SproxelProject.h"
 
+static SproxelColor colorFromHSV(float h, float s, float v)
+{
+  if (s == 0) {
+    return SproxelColor(v, v, v, 1);
+  }
+
+  float part     = h / 60.f;
+  int   i        = floor(part);
+  float fraction = part - (float)i;
+  float c0       = v * (1 - s );
+  float c1       = v * (1 - s * fraction);
+  float c2       = v * (1 - s * (1-fraction));
+
+  if (i == 0) {
+    return SproxelColor(v, c2, c0, 1);
+  } else if (i == 1) {
+    return SproxelColor(c1, v, c0, 1);
+  } else if (i == 2) {
+    return SproxelColor(c0, v, c2, 1);
+  } else if (i == 3) {
+    return SproxelColor(c0, c1, v, 1);
+  } else if (i == 4) {
+    return SproxelColor(c2, c0, v, 1);
+  } else {
+    return SproxelColor(v, c0, c1, 1);
+  }
+}
+
+SproxelProject::SproxelProject()
+{
+  mainPalette=new ColorPalette();
+  mainPalette->resize(256);
+  mainPalette->setName("main");
+  for (int y=0; y<15; ++y)
+  {
+    float sat = 1.f - (y / 16.f)*0.5f;
+    float value = 1.f - (y / 16.f);
+
+    for (int x=0; x<16; ++x)
+    {
+      float hue = x * 22.5f;
+      mainPalette->setColor(y*16+x, colorFromHSV(hue, sat, value));
+    }
+  }
+
+  for (int x=0; x<16; ++x)
+  {
+    float value = x / 16.f;
+    mainPalette->setColor(240+x, colorFromHSV(0, 0, value));
+  }
+  //mainPalette->setColor(0, SproxelColor(0, 0, 0, 0));
+  palettes.push_back(mainPalette);
+
+  VoxelGridLayerPtr layer = VoxelGridLayerPtr(new VoxelGridLayer());
+  VoxelGridGroupPtr sprite = VoxelGridGroupPtr(new VoxelGridGroup(layer));
+  sprites.push_back(sprite);
+}
 
 VoxelGridLayerPtr VoxelGridLayer::fromQImage(QImage readMe, ColorPalettePtr pal)
 {
