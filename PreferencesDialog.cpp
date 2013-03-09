@@ -3,6 +3,16 @@
 
 #include "PreferencesDialog.h"
 
+#include <QPushButton>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QCheckBox>
+#include <QGroupBox>
+#include <QLabel>
+#include <QSpinBox>
+#include <QLineEdit>
+#include <QColorDialog>
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Main preferences dialog /////////////////////////////////////////////////////
@@ -79,8 +89,8 @@ PreferencesDialog::PreferencesDialog(QWidget* parent, QSettings* appSettings) :
 
     QPushButton* okButton = new QPushButton(tr("OK"));
     connect(okButton, SIGNAL(clicked()), this, SLOT(accept()));
+	QHBoxLayout* horizontalLayout = new QHBoxLayout;
 
-    QHBoxLayout* horizontalLayout = new QHBoxLayout;
     horizontalLayout->addWidget(m_pContentsWidget);
     horizontalLayout->addWidget(m_pPagesWidget, 1);
 

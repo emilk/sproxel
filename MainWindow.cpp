@@ -13,6 +13,11 @@
 
 #include <QFileDialog>
 #include <QColorDialog>
+#include <QDockWidget>
+#include <QMenuBar>
+#include <QStatusBar>
+#include <QMessageBox>
+
 
 #define DEFAULT_VOXGRID_SZ (8)
 
@@ -595,7 +600,7 @@ void MainWindow::saveFile()
 void MainWindow::saveFileAs()
 {
     QFileDialog fd(this, "Save voxel file as...");
-    fd.setFilter(tr("Sproxel project (*.sxl)"));
+	fd.setNameFilter(tr("Sproxel project (*.sxl)"));
     fd.setAcceptMode(QFileDialog::AcceptSave);
     fd.exec();
     QStringList qsl = fd.selectedFiles();

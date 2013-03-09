@@ -295,7 +295,7 @@ public:
 
       // Write .mtl file
       QString mtlFilename = basedir + "/" + basename + ".mtl";
-      FILE* fp = fopen(mtlFilename.toAscii().constData(), "wb");
+	  FILE* fp = fopen(mtlFilename.toLocal8Bit().constData(), "wb");
       if (!fp) return false;
 
       for(std::map<std::string, std::string>::iterator p = mtlMap.begin();
@@ -314,7 +314,7 @@ public:
 
 
       // Create and write the obj file
-      fp = fopen(filename.toAscii().constData(), "wb");
+	  fp = fopen(filename.toLocal8Bit().constData(), "wb");
       if (!fp) return false;
 
       // Geometry
@@ -323,10 +323,10 @@ public:
       memset(vertList, 0, sizeof(int)*vertListLength);
 
       // Material library
-      fprintf(fp, "mtllib %s.mtl\n", basename.toAscii().constData());
+	  fprintf(fp, "mtllib %s.mtl\n", basename.toLocal8Bit().constData());
 
       // The object's name
-      fprintf(fp, "g %s\n", basename.toAscii().constData());
+	  fprintf(fp, "g %s\n", basename.toLocal8Bit().constData());
 
       // Populate the vert list
       int vertIndex = 1;
