@@ -894,7 +894,41 @@ void GLModelWidget::glDrawCubePoly(const CubeFaceMask mask, bool smooth)
   glEnd();
 }
 
+#if 1
+/* Much, much, MUCH quicker version of glDrawVoxelGrid  / Emil
+ */
+void GLModelWidget::glDrawVoxelGrid()
+{
+	const Imath::Box3i dim = m_gvg->bounds();
 
+	int other[3][2] = {{1,2},{0,2},{1,2}};
+
+	// WARNING: does not use GameVoxelGrid for orientation. But works the same.
+
+	glBegin(GL_LINES);
+
+	// for each axis...
+	for (int a0=0; a0<3; ++a0) {
+		int a1 = other[a0][0];
+		int a2 = other[a0][1];
+		for (int i1 = dim.min[a1]; i1 <= dim.max[a1]+1 ; ++i1) {
+			for (int i2 = dim.min[a2]; i2 <= dim.max[a2]+1 ; ++i2) {
+				Imath::V3i v_min;
+				v_min[a1] = i1;
+				v_min[a2] = i2;
+				Imath::V3i v_max = v_min;
+				v_min[a0] = dim.min[a0];
+				v_max[a0] = dim.max[a0]+1;
+
+				glVertex3f(v_min.x, v_min.y, v_min.z);
+				glVertex3f(v_max.x, v_max.y, v_max.z);
+			}
+		}
+	}
+
+	glEnd();
+}
+#else
 void GLModelWidget::glDrawVoxelGrid()
 {
     const Imath::Box3i dim = m_gvg->bounds();
@@ -927,7 +961,7 @@ void GLModelWidget::glDrawVoxelGrid()
                     continue;
                 }
 
-                const Imath::M44d mat = m_gvg->voxelTransform(Imath::V3i(x,y,z));
+				const Imath::M44d mat = m_gvg->voxelTransform(Imath::V3i(x,y,z));
 
                 glPushMatrix();
                 glMultMatrixd(glMatrix(mat));
@@ -1026,7 +1060,7 @@ void GLModelWidget::glDrawVoxelGrid()
         }
     }
 }
-
+#endif
 
 void GLModelWidget::glDrawActiveVoxel()
 {
