@@ -60,19 +60,19 @@ GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, UndoManage
 
 GLModelWidget::~GLModelWidget()
 {
-    //makeCurrent();
-    //glDeleteLists(object, 1);
+	//makeCurrent();
+	//glDeleteLists(object, 1);
 
-    delete m_activeTool;
+	delete m_activeTool;
 }
 
 
 void GLModelWidget::saveSettings()
 {
-  p_appSettings->setValue("GLModelWidget/drawGrid", m_drawGrid);
-  p_appSettings->setValue("GLModelWidget/drawVoxelGrid", m_drawVoxelGrid);
-  p_appSettings->setValue("GLModelWidget/drawBoundingBox", m_drawBoundingBox);
-  p_appSettings->setValue("GLModelWidget/drawSpriteBounds", m_drawSpriteBounds);
+	p_appSettings->setValue("GLModelWidget/drawGrid",          m_drawGrid);
+	p_appSettings->setValue("GLModelWidget/drawVoxelGrid",     m_drawVoxelGrid);
+	p_appSettings->setValue("GLModelWidget/drawBoundingBox",   m_drawBoundingBox);
+	p_appSettings->setValue("GLModelWidget/drawSpriteBounds",  m_drawSpriteBounds);
 }
 
 

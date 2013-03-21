@@ -140,10 +140,20 @@ public slots:
     void rotateCcw();
     void mirror();
 
-    void extendUp();
-    void extendDown();
+	void extendContractShift(int axis, int incr, int shift);
+	void extendUp();
+	void extendDown();
+	void extendLeft();
+	void extendRight();
+	void extendFront();
+	void extendBack();
     void contractUp();
     void contractDown();
+	void contractLeft();
+	void contractRight();
+	void contractFront();
+	void contractBack();
+
     void upRes();
     void downRes();
 

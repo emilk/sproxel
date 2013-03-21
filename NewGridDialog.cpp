@@ -7,46 +7,46 @@ bool NewGridDialog::lastIndexed=false;
 
 
 NewGridDialog::NewGridDialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::NewGridDialog)
+	QDialog(parent),
+	ui(new Ui::NewGridDialog)
 {
-    ui->setupUi(this);
-    ui->width ->setValue(lastSize.x);
-    ui->height->setValue(lastSize.y);
-    ui->depth ->setValue(lastSize.z);
+	ui->setupUi(this);
+	ui->width ->setValue(lastSize.x);
+	ui->height->setValue(lastSize.y);
+	ui->depth ->setValue(lastSize.z);
 
-    if (lastIndexed)
-      ui->dataIndexed->setChecked(true);
-    else
-      ui->dataRGBA->setChecked(true);
+	if (lastIndexed)
+		ui->dataIndexed->setChecked(true);
+	else
+		ui->dataRGBA->setChecked(true);
 }
 
 NewGridDialog::~NewGridDialog()
 {
-    delete ui;
+	delete ui;
 }
 
 int NewGridDialog::exec()
 {
-  int r=QDialog::exec();
+	int r=QDialog::exec();
 
-  if (r)
-  {
-    lastSize=getVoxelSize();
-    lastIndexed=isIndexed();
-  }
+	if (r)
+	{
+		lastSize=getVoxelSize();
+		lastIndexed=isIndexed();
+	}
 
-  return r;
+	return r;
 }
 
 Imath::V3i NewGridDialog::getVoxelSize()
 {
-    return Imath::V3i(ui->width->value(),
-                      ui->height->value(),
-                      ui->depth->value());
+	return Imath::V3i(ui->width->value(),
+					  ui->height->value(),
+					  ui->depth->value());
 }
 
 bool NewGridDialog::isIndexed()
 {
-  return ui->dataIndexed->isChecked();
+	return ui->dataIndexed->isChecked();
 }
