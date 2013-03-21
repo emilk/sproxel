@@ -45,7 +45,7 @@ GLModelWidget::GLModelWidget(QWidget* parent, QSettings* appSettings, UndoManage
     m_drawSpriteBounds=p_appSettings->value("GLModelWidget/drawSpriteBounds", true).toBool();
 
     // Default empty grid
-    //centerGrid();
+	centerGrid();
 
     // Always shoot rays through the scene - even when a mouse button isn't pressed
     setMouseTracking(true);
@@ -108,67 +108,67 @@ Imath::Box3i GLModelWidget::editBounds()
 
 void GLModelWidget::setSprite(VoxelGridGroupPtr sprite)
 {
-  m_gvg=sprite;
-  //centerGrid();
-  updateGL();
+	m_gvg=sprite;
+	//centerGrid();
+	updateGL();
 }
 
 
 void GLModelWidget::setCurrentAxis(const SproxelAxis val)
 {
-  m_currAxis = val;
+	m_currAxis = val;
 
-  int mino, maxo, range;
-  switch (m_currAxis)
-  {
-    case X_AXIS: mino=m_minBoundOffset.x; maxo=m_maxBoundOffset.x; range=m_gvg->bounds().size().x; break;
-    case Y_AXIS: mino=m_minBoundOffset.y; maxo=m_maxBoundOffset.y; range=m_gvg->bounds().size().y; break;
-    case Z_AXIS: mino=m_minBoundOffset.z; maxo=m_maxBoundOffset.z; range=m_gvg->bounds().size().z; break;
-    default: mino=0; maxo=0; range=0;
-  }
+	int mino, maxo, range;
+	switch (m_currAxis)
+	{
+	case X_AXIS: mino=m_minBoundOffset.x; maxo=m_maxBoundOffset.x; range=m_gvg->bounds().size().x; break;
+	case Y_AXIS: mino=m_minBoundOffset.y; maxo=m_maxBoundOffset.y; range=m_gvg->bounds().size().y; break;
+	case Z_AXIS: mino=m_minBoundOffset.z; maxo=m_maxBoundOffset.z; range=m_gvg->bounds().size().z; break;
+	default: mino=0; maxo=0; range=0;
+	}
 
-  emit sliceChanged(mino, maxo, range);
+	emit sliceChanged(mino, maxo, range);
 
-  // TODO: Change tool as well.
-  updateGL();
+	// TODO: Change tool as well.
+	updateGL();
 }
 
 
 void GLModelWidget::setMinSlice(int o)
 {
-  switch (m_currAxis)
-  {
-    case X_AXIS: m_minBoundOffset.x=o; break;
-    case Y_AXIS: m_minBoundOffset.y=o; break;
-    case Z_AXIS: m_minBoundOffset.z=o; break;
-  }
-  updateGL();
+	switch (m_currAxis)
+	{
+	case X_AXIS: m_minBoundOffset.x=o; break;
+	case Y_AXIS: m_minBoundOffset.y=o; break;
+	case Z_AXIS: m_minBoundOffset.z=o; break;
+	}
+	updateGL();
 }
 
 
 void GLModelWidget::setMaxSlice(int o)
 {
-  switch (m_currAxis)
-  {
-    case X_AXIS: m_maxBoundOffset.x=o; break;
-    case Y_AXIS: m_maxBoundOffset.y=o; break;
-    case Z_AXIS: m_maxBoundOffset.z=o; break;
-  }
-  updateGL();
+	switch (m_currAxis)
+	{
+	case X_AXIS: m_maxBoundOffset.x=o; break;
+	case Y_AXIS: m_maxBoundOffset.y=o; break;
+	case Z_AXIS: m_maxBoundOffset.z=o; break;
+	}
+	updateGL();
 }
 
 
 void GLModelWidget::resizeAndClearVoxelGrid(const Imath::V3i& size)
 {
-    VoxelGridLayerPtr layer(new VoxelGridLayer());
-    layer->resize(Imath::Box3i(Imath::V3i(0), size-Imath::V3i(1)));
-    layer->setName("main layer");
+	VoxelGridLayerPtr layer(new VoxelGridLayer());
+	layer->resize(Imath::Box3i(Imath::V3i(0), size-Imath::V3i(1)));
+	layer->setName("main layer");
 
-    m_gvg->clear();
-    m_gvg->insertLayerAbove(0, layer);
+	m_gvg->clear();
+	m_gvg->insertLayerAbove(0, layer);
 
-    centerGrid();
-    updateGL();
+	centerGrid();
+	updateGL();
 }
 
 
@@ -204,7 +204,7 @@ void GLModelWidget::resizeAndShiftVoxelGrid(const Imath::V3i& sizeInc,
     }
 
     p_undoManager->changeEntireVoxelGrid(m_gvg, newGridPtr);
-    centerGrid();
+	centerGrid();
     updateGL();
 }
 
@@ -382,7 +382,8 @@ void GLModelWidget::paintGL()
         // TODO: Eventually stop moving this to the floor and just keep it at 0,0,0
         Imath::Box3d worldBox = m_gvg->worldBounds();
         glPushMatrix();
-        glTranslatef(0, worldBox.min.y, 0);
+		//glTranslatef(0, worldBox.min.y, 0);
+		glTranslatef(worldBox.min.x, worldBox.min.y, worldBox.min.z);
 
         // Grid drawing with color conversion
         QColor tempG  = p_appSettings->value("GLModelWidget/gridColor", QColor(0,0,0)).value<QColor>();
@@ -900,10 +901,11 @@ void GLModelWidget::glDrawCubePoly(const CubeFaceMask mask, bool smooth)
 void GLModelWidget::glDrawVoxelGrid()
 {
 	const Imath::Box3i dim = m_gvg->bounds();
+	glPushMatrix();
+	auto mat = m_gvg->transform();
+	glMultMatrixd(glMatrix(mat));
 
 	int other[3][2] = {{1,2},{0,2},{1,2}};
-
-	// WARNING: does not use GameVoxelGrid for orientation. But works the same.
 
 	glBegin(GL_LINES);
 
@@ -927,6 +929,7 @@ void GLModelWidget::glDrawVoxelGrid()
 	}
 
 	glEnd();
+	glPopMatrix();
 }
 #else
 void GLModelWidget::glDrawVoxelGrid()
