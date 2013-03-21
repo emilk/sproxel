@@ -3,7 +3,11 @@
 
 #ifdef SPROXEL_USE_PYTHON
 
-#include <Python.h>
+#if defined(__APPLE__)
+#include <Python/Python.h>
+#else
+#  include <Python.h>
+#endif
 
 
 void init_script(const char *exe_path);

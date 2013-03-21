@@ -1,5 +1,4 @@
 #ifdef SPROXEL_USE_PYTHON
-#include <Python.h>
 #include <QPlainTextEdit>
 #include <QAction>
 #include <QDir>

@@ -1,8 +1,8 @@
 #ifdef SPROXEL_USE_PYTHON
-#include <Python.h>
 #include <QImage>
 #include <QBuffer>
 #include "pyConsole.h"
+#include "script.h"
 #include "pyBindings.h"
 #include "VoxelGridGroup.h"
 #include "SproxelProject.h"

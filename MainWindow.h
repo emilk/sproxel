@@ -19,6 +19,8 @@
 #define SPROXEL_VERSION "0.61"
 #define BASE_WINDOW_TITLE (tr("Sproxel " SPROXEL_VERSION))
 
+class Importer;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -129,6 +131,7 @@ public slots:
     void openFile(QString);
 
     void import();
+	void import(Importer* activeImporter, QString filename);
     void exportGrid();
 
     void shiftUp();

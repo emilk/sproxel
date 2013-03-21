@@ -1,5 +1,4 @@
 #ifdef SPROXEL_USE_PYTHON
-#include <Python.h>
 #include <QtDebug>
 #include <QFileInfo>
 #include <QDir>

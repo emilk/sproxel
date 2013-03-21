@@ -6,6 +6,9 @@
 
 QT       += core gui opengl
 
+#LIBS += -lpython
+#DEFINES += SPROXEL_USE_PYTHON
+
 TARGET = sproxel
 TEMPLATE = app
 

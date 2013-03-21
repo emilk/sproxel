@@ -94,7 +94,7 @@ MainWindow::MainWindow(const QString& initialFilename, QWidget *parent) :
 
     m_menuFile->addSeparator();
 
-    m_actFileOpen = new QAction("&Open", this);
+	m_actFileOpen = new QAction("&Open", this);
     m_actFileOpen->setShortcut(Qt::CTRL + Qt::Key_O);
     m_menuFile->addAction(m_actFileOpen);
     connect(m_actFileOpen, SIGNAL(triggered()),
@@ -632,10 +632,30 @@ void MainWindow::saveFileAs()
 
 void MainWindow::openFile()
 {
+#if 0
     QString filename = QFileDialog::getOpenFileName(this,
         tr("Select file to Open..."),
         QString(),
-        tr("Sproxel projects (*.sxl)"));
+		tr("Sproxel projects (*.sxl)"));
+#else
+	// Allow opening .png etc
+	const QList<Importer*> &importers=get_importers();
+
+	QStringList filters;
+	filters += tr("Sproxel projects (*.sxl)");
+	foreach (Importer *imp, importers) filters += imp->name()+" ("+imp->filter()+")";
+
+	QFileDialog fd(this, "Select file to Open...");
+	fd.setNameFilters(filters);
+	fd.setAcceptMode(QFileDialog::AcceptOpen);
+	fd.setFileMode(QFileDialog::ExistingFiles);
+	if (!fd.exec()) return;
+
+	QStringList files=fd.selectedFiles();
+	if (files.isEmpty()) return;
+	QString filename = files[0];
+#endif
+
     if (filename.isEmpty())
         return;
 
@@ -645,49 +665,61 @@ void MainWindow::openFile()
 
 void MainWindow::openFile(QString filename)
 {
-    // Confirmation dialog
-    if (!m_undoManager.isClean())
-    {
-        switch (fileModifiedDialog())
-        {
-            case QMessageBox::Save: saveFile(); break;
-            case QMessageBox::Discard: break;
-            case QMessageBox::Cancel: return; break;
-        }
-    }
+	// Confirmation dialog
+	if (!m_undoManager.isClean())
+	{
+		switch (fileModifiedDialog())
+		{
+		case QMessageBox::Save: saveFile(); break;
+		case QMessageBox::Discard: break;
+		case QMessageBox::Cancel: return; break;
+		}
+	}
 
-    bool success = false;
+	bool success = false;
 #ifdef SPROXEL_USE_PYTHON
-    SproxelProjectPtr project = load_project(filename);
+	SproxelProjectPtr project = load_project(filename);
 #else
-    SproxelProjectPtr project = SproxelProjectPtr(new SproxelProject());
+	SproxelProjectPtr project = SproxelProjectPtr(new SproxelProject());
+
+	const QList<Importer*> &importers=get_importers();
+
+	Importer* importer = NULL;
+
+	foreach (Importer *imp, importers) {
+		if (imp->filter() == "*.png") { // HACK FIXME
+			importer = imp;
+			break;
+		}
+	}
+	importer->doImport(filename, &m_undoManager, project, m_glModelWidget->getSprite());
 #endif
-    if (project) { m_project=project; success=true; }
+	if (project) { m_project=project; success=true; }
 
-    if (success)
-    {
-        m_undoManager.clear();
+	if (success)
+	{
+		m_undoManager.clear();
 
-        if (m_project->sprites.empty())
-        {
-          VoxelGridGroupPtr sprite(new VoxelGridGroup(
-            Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ),
-            ColorPalettePtr()));
-          sprite->setName("unnamed");
-          m_project->sprites.push_back(sprite);
-        }
+		if (m_project->sprites.empty())
+		{
+			VoxelGridGroupPtr sprite(new VoxelGridGroup(
+										 Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ),
+										 ColorPalettePtr()));
+			sprite->setName("unnamed");
+			m_project->sprites.push_back(sprite);
+		}
 
-        m_glModelWidget->setSprite(m_project->sprites[0]);
-        m_paletteWidget->setPalette(m_project->mainPalette);
-        m_projectWidget->setProject(m_project);
+		m_glModelWidget->setSprite(m_project->sprites[0]);
+		m_paletteWidget->setPalette(m_project->mainPalette);
+		m_projectWidget->setProject(m_project);
 
-        m_activeFilename = filename;
-        setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
-        if (m_appSettings.value("frameOnOpen", false).toBool())
-            m_glModelWidget->frame(true);
-    }
-    else
-      QMessageBox::critical(this, "Sproxel Error", QString("Error loading project from file ")+filename);
+		m_activeFilename = filename;
+		setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
+		if (m_appSettings.value("frameOnOpen", false).toBool())
+			m_glModelWidget->frame(true);
+	}
+	else
+		QMessageBox::critical(this, "Sproxel Error", QString("Error loading project from file ")+filename);
 }
 
 
@@ -718,8 +750,37 @@ void MainWindow::import()
   foreach (const QString &filename, files)
   {
     if (QFileInfo(filename).isDir()) continue;
-    activeImporter->doImport(filename, &m_undoManager, m_project, m_glModelWidget->getSprite());
+
+	//import(activeImporter, filename);
+	activeImporter->doImport(filename, &m_undoManager, m_project, m_glModelWidget->getSprite());
   }
+}
+
+void MainWindow::import(Importer* activeImporter, QString filename)
+{
+	m_project = SproxelProjectPtr(new SproxelProject());
+
+	m_undoManager.clear();
+
+	if (m_project->sprites.empty())
+	{
+	  VoxelGridGroupPtr sprite(new VoxelGridGroup(
+		Imath::V3i(DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ, DEFAULT_VOXGRID_SZ),
+		ColorPalettePtr()));
+	  sprite->setName("unnamed");
+	  m_project->sprites.push_back(sprite);
+	}
+
+	m_glModelWidget->setSprite(m_project->sprites[0]);
+	m_paletteWidget->setPalette(m_project->mainPalette);
+	m_projectWidget->setProject(m_project);
+
+	m_activeFilename = filename;
+	setWindowTitle(BASE_WINDOW_TITLE + " - " + m_activeFilename);  // TODO: Functionize (resetWindowTitle)
+	if (m_appSettings.value("frameOnOpen", false).toBool())
+		m_glModelWidget->frame(true);
+
+	activeImporter->doImport(filename, &m_undoManager, m_project, m_glModelWidget->getSprite());
 }
 
 
